@@ -23,78 +23,97 @@ import { renderMath } from '../utils/katex';
 const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
 ---
 
-<div class="question-container mt-6 not-prose" data-question-type={type} data-correct={correctOption}>
-  
-  <!-- Alternativas de Múltipla Escolha -->
-  {isMultipleChoice ? (
-    <div class="space-y-2 mb-6">
-      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center justify-between">
-        <span>Alternativas da Prova</span>
-        <span class="font-normal italic text-[11px]">Múltipla Escolha</span>
-      </div>
-      <div class="space-y-2 reader-text">
-        {options.map((opt) => (
-          <div
-            data-option-label={opt.label}
-            class="option-item flex items-start gap-3 p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] transition-all duration-200"
-          >
-            <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0">
-              ({opt.label})
-            </span>
-            <div
-              class="text-[var(--text-primary)] pt-0.5 leading-relaxed text-sm"
-              set:html={renderMath(opt.text)}
-            />
+<div class="question-container not-prose" data-question-type={type} data-correct={correctOption}>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+    
+    <!-- ============================================================
+         COLUNA ESQUERDA: Enunciado, Figuras e Alternativas
+         (Fixa/Sticky no Desktop para leitura contínua com a teoria/solução)
+         ============================================================ -->
+    <div class="xl:sticky xl:top-6 space-y-6">
+      <article class="p-6 sm:p-8 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6 shadow-xs xl:max-h-[calc(100vh-3.5rem)] xl:overflow-y-auto">
+        <!-- Conteúdo do Enunciado e Imagens passado via slot nomeado -->
+        <slot name="statement" />
+
+        <!-- Alternativas de Múltipla Escolha / Card de Dissertativa Aberta -->
+        {isMultipleChoice ? (
+          <div class="space-y-2 pt-4 border-t border-[var(--border-subtle)]">
+            <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center justify-between">
+              <span>Alternativas da Prova</span>
+              <span class="font-normal italic text-[11px]">Múltipla Escolha</span>
+            </div>
+            <div class="space-y-2.5 reader-text">
+              {options.map((opt) => (
+                <div
+                  data-option-label={opt.label}
+                  class="option-item flex items-start gap-3 p-3 sm:p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] transition-all duration-200"
+                >
+                  <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0 shadow-2xs">
+                    ({opt.label})
+                  </span>
+                  <div
+                    class="text-[var(--text-primary)] pt-0.5 leading-relaxed text-sm"
+                    set:html={renderMath(opt.text)}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        ) : (
+          <div class="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3 text-xs pt-4 border-t border-[var(--border-subtle)]">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-[var(--accent)] uppercase tracking-wider">Questão Dissertativa Aberta</span>
+              <span class="text-[var(--text-muted)]">•</span>
+              <span class="text-[var(--text-secondary)]">Desenvolvimento formal e demonstração requeridos</span>
+            </div>
+            <span class="text-[var(--text-muted)] italic font-serif">Resposta Aberta</span>
+          </div>
+        )}
+      </article>
     </div>
-  ) : (
-    <div class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3 text-xs mb-6">
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-[var(--accent)] uppercase tracking-wider">Questão Dissertativa Aberta</span>
-        <span class="text-[var(--text-muted)]">•</span>
-        <span class="text-[var(--text-secondary)]">Desenvolvimento formal e demonstração analítica requeridos</span>
-      </div>
-      <span class="text-[var(--text-muted)] italic font-serif">Resposta Aberta</span>
-    </div>
-  )}
 
-  <!-- Gabarito Oficial (será inserido DENTRO da Seção de Resolução pelo script) -->
-  {correctOption && (
-    <div id="resolution-gabarito-box" class="mb-6 p-3.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] flex items-center justify-between gap-3 not-prose">
-      <div class="flex items-center gap-2.5">
-        <span class="sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--border-subtle)]">
-          Gabarito Oficial
-        </span>
-        <span class="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
-          A alternativa correta é a <strong>(<span set:html={renderMath(correctOption)} />)</strong>.
-        </span>
+    <!-- ============================================================
+         COLUNA DIREITA: Explicação Teórica e Resolução Passo a Passo
+         (Cards colapsáveis independentes)
+         ============================================================ -->
+    <div class="space-y-4">
+      <!-- Gabarito Oficial (será inserido DENTRO da Seção de Resolução pelo script) -->
+      {correctOption && (
+        <div id="resolution-gabarito-box" class="mb-4 p-3.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] flex items-center justify-between gap-3 not-prose shadow-2xs">
+          <div class="flex items-center gap-2.5">
+            <span class="sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--border-subtle)]">
+              Gabarito Oficial
+            </span>
+            <span class="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+              A alternativa correta é a <strong>(<span set:html={renderMath(correctOption)} />)</strong>.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {expectedAnswer && (
+        <div id="resolution-expected-box" class="mb-4 p-3.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] not-prose shadow-2xs">
+          <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
+            Gabarito / Resposta Esperada
+          </div>
+          <div
+            class="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed font-mono"
+            set:html={renderMath(expectedAnswer)}
+          />
+        </div>
+      )}
+
+      <!-- Seções Expansíveis Independentes (<Theory /> e <Resolution />) -->
+      <div id="question-sections" class="space-y-4">
+        <slot />
       </div>
     </div>
-  )}
 
-  {expectedAnswer && (
-    <div id="resolution-expected-box" class="mb-6 p-3.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] not-prose">
-      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
-        Gabarito / Resposta Esperada
-      </div>
-      <div
-        class="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed font-mono"
-        set:html={renderMath(expectedAnswer)}
-      />
-    </div>
-  )}
-
-  <!-- Seções Expansíveis Independentes (<Theory /> e <Resolution />) -->
-  <div id="question-sections" class="space-y-4">
-    <slot />
   </div>
-
 </div>
 
 <script is:inline>
-  (() => {
+  function setupQuestionToggles() {
     const container = document.querySelector('.question-container');
     if (!container) return;
 
@@ -117,8 +136,8 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
     const gabaritoBox = document.getElementById('resolution-gabarito-box');
     const expectedBox = document.getElementById('resolution-expected-box');
     if (resolutionPanel) {
-      if (expectedBox) resolutionPanel.prepend(expectedBox);
-      if (gabaritoBox) resolutionPanel.prepend(gabaritoBox);
+      if (expectedBox && !resolutionPanel.contains(expectedBox)) resolutionPanel.prepend(expectedBox);
+      if (gabaritoBox && !resolutionPanel.contains(gabaritoBox)) resolutionPanel.prepend(gabaritoBox);
     }
 
     // Suporte a questões legadas sem componentes Theory/Resolution
@@ -188,7 +207,14 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
       }
     }
 
-    theoryCardHeader?.addEventListener('click', toggleTheory);
-    resolutionCardHeader?.addEventListener('click', toggleResolution);
-  })();
+    if (theoryCardHeader) {
+      theoryCardHeader.onclick = toggleTheory;
+    }
+    if (resolutionCardHeader) {
+      resolutionCardHeader.onclick = toggleResolution;
+    }
+  }
+
+  setupQuestionToggles();
+  document.addEventListener('astro:page-load', setupQuestionToggles);
 </script>

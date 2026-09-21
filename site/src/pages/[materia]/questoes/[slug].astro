@@ -74,8 +74,9 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
   materia={materia}
   toc={toc}
   questions={questionsLinks}
+  wide={true}
 >
-  <div class="space-y-8">
+  <div class="space-y-6">
     
     <!-- Navegação Superior Estilo Artigo -->
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
@@ -93,79 +94,78 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
       </span>
     </div>
 
-    <!-- Artigo da Questão -->
-    <article class="p-6 sm:p-10 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
-      
-      <!-- Cabeçalho do Exercício -->
-      <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
-        <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
-          <span>{questao.data.exam} ({questao.data.year}) • {questao.data.topic}</span>
-          <span class="rounded px-2 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] font-sans font-medium">
-            {questao.data.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
-          </span>
+    <!-- Enunciado e Resolução em Duas Colunas (quando houver largura lateral suficiente) -->
+    <QuestionToggle
+      type={questao.data.type || (questao.data.options && questao.data.options.length > 0 ? 'multipla_escolha' : 'discursiva')}
+      correctOption={questao.data.correctOption}
+      expectedAnswer={questao.data.expectedAnswer}
+      options={questao.data.options}
+    >
+      <!-- Slot do Enunciado e Figuras (Coluna Esquerda no Desktop) -->
+      <div slot="statement" class="space-y-6">
+        <!-- Cabeçalho do Exercício -->
+        <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
+          <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
+            <span>{questao.data.exam} ({questao.data.year}) • {questao.data.topic}</span>
+            <span class="rounded px-2 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] font-sans font-medium">
+              {questao.data.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
+            </span>
+          </div>
+          <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+            {questao.data.title}
+          </h1>
+          <div class="sans-ui text-xs text-[var(--text-muted)] italic">
+            Dificuldade estimada: {questao.data.difficulty}
+          </div>
         </div>
-        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-          {questao.data.title}
-        </h1>
-        <div class="sans-ui text-xs text-[var(--text-muted)] italic">
-          Dificuldade estimada: {questao.data.difficulty}
-        </div>
+
+        <!-- Enunciado -->
+        {questao.data.statement && (
+          <div class="space-y-2">
+            <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              Enunciado da Questão
+            </div>
+            <div
+              class="font-serif text-base sm:text-lg text-[var(--text-primary)] leading-relaxed"
+              set:html={renderMath(questao.data.statement)}
+            />
+          </div>
+        )}
+
+        <!-- Imagens / Diagramas -->
+        {formattedImages.length > 0 && (
+          <div class={`my-6 grid gap-4 items-start ${formattedImages.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+            {formattedImages.map((img, idx) => (
+              <figure class="flex flex-col items-center justify-center text-center">
+                <img
+                  src={img.src}
+                  alt={img.caption || `Figura ${idx + 1}`}
+                  data-zoomable-image="true"
+                  data-image-title={img.caption || `Figura ${idx + 1}`}
+                  class="zoomable-question-image max-h-72 w-auto object-contain cursor-zoom-in rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] transition-transform duration-200 hover:scale-[1.01]"
+                  loading="lazy"
+                  title="Clique para visualizar com zoom e navegação"
+                />
+                {img.caption && (
+                  <figcaption class="sans-ui text-xs text-[var(--text-muted)] italic mt-2 max-w-md">
+                    {img.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        )}
       </div>
 
-      <!-- Enunciado -->
-      {questao.data.statement && (
-        <div class="space-y-2">
-          <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Enunciado da Questão
-          </div>
-          <div
-            class="font-serif text-lg text-[var(--text-primary)] leading-relaxed"
-            set:html={renderMath(questao.data.statement)}
-          />
-        </div>
-      )}
-
-      <!-- Imagens / Diagramas -->
-      {formattedImages.length > 0 && (
-        <div class={`my-8 grid gap-6 items-start ${formattedImages.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
-          {formattedImages.map((img, idx) => (
-            <figure class="flex flex-col items-center justify-center text-center">
-              <img
-                src={img.src}
-                alt={img.caption || `Figura ${idx + 1}`}
-                data-zoomable-image="true"
-                data-image-title={img.caption || `Figura ${idx + 1}`}
-                class="zoomable-question-image max-h-84 w-auto object-contain cursor-zoom-in rounded transition-transform duration-200 hover:scale-[1.01]"
-                loading="lazy"
-                title="Clique para visualizar com zoom e navegação"
-              />
-              {img.caption && (
-                <figcaption class="sans-ui text-xs text-[var(--text-muted)] italic mt-2.5 max-w-md">
-                  {img.caption}
-                </figcaption>
-              )}
-            </figure>
-          ))}
-        </div>
-      )}
-
-      <!-- Alternativas e Resolução com Toggles Independentes -->
-      <QuestionToggle
-        type={questao.data.type || (questao.data.options && questao.data.options.length > 0 ? 'multipla_escolha' : 'discursiva')}
-        correctOption={questao.data.correctOption}
-        expectedAnswer={questao.data.expectedAnswer}
-        options={questao.data.options}
-      >
-        <Content components={{
-          BlockDiagram,
-          Theory,
-          Resolution,
-          QuestionTheory: Theory,
-          QuestionResolution: Resolution,
-        }} />
-      </QuestionToggle>
-
-    </article>
+      <!-- Slot Padrão: Explicação Teórica e Resolução Passo a Passo (Coluna Direita no Desktop) -->
+      <Content components={{
+        BlockDiagram,
+        Theory,
+        Resolution,
+        QuestionTheory: Theory,
+        QuestionResolution: Resolution,
+      }} />
+    </QuestionToggle>
 
     <!-- Navegação Anterior / Próxima -->
     <div class="sans-ui grid grid-cols-2 gap-4 text-xs pt-4">
