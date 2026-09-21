@@ -653,7 +653,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             // Adiciona a página especial do Banco de Questões
             const optBanco = document.createElement('option');
             optBanco.value = 'banco-questoes';
-            optBanco.textContent = '★ Banco de Questões (Todas as ' + Object.keys(DB.questoes).length + ' Questões Expandidas)';
+            optBanco.textContent = 'Banco de Questões (' + Object.keys(DB.questoes).length + ' Questões)';
             select.appendChild(optBanco);
 
             select.onchange = (e) => loadChapter(e.target.value);
