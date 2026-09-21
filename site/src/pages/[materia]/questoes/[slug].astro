@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
 import QuestionToggle from '../../../components/QuestionToggle.astro';
+import BlockDiagram from '../../../components/BlockDiagram.astro';
 import { MATERIAS, getMateria } from '../../../data/materias';
 
 export async function getStaticPaths() {
@@ -121,7 +122,7 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
         correctOption={questao.data.correctOption}
         options={questao.data.options}
       >
-        <Content />
+        <Content components={{ BlockDiagram }} />
       </QuestionToggle>
 
     </article>

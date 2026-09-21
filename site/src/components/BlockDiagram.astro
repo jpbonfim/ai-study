@@ -1,0 +1,831 @@
+---
+import katex from 'katex';
+
+interface Props {
+  title?: string;
+  preset?:
+    | 'feedback'
+    | 'feedback-disturbance'
+    | 'cascade'
+    | 'parallel'
+    | 'direct-form-1'
+    | 'direct-form-2'
+    | 'fir'
+    | 'state-space'
+    | 'custom';
+  input?: string;
+  output?: string;
+  controller?: string;
+  plant?: string;
+  feedback?: string;
+  feedbackSign?: '+' | '-';
+  disturbance?: string;
+  error?: string;
+  controlSignal?: string;
+  // Para filtros e PDS
+  zeros?: string[];
+  poles?: string[];
+  delayLabel?: string;
+  // Para espaço de estados
+  matrixA?: string;
+  matrixB?: string;
+  matrixC?: string;
+  matrixD?: string;
+  integratorLabel?: string;
+  stateVar?: string;
+  stateDotVar?: string;
+}
+
+const {
+  title = 'Diagrama de Blocos de Sistemas',
+  preset = 'feedback',
+  input = 'R(s)',
+  output = 'Y(s)',
+  controller = 'C(s)',
+  plant = 'G(s)',
+  feedback = 'H(s)',
+  feedbackSign = '-',
+  disturbance = 'D(s)',
+  error = 'E(s)',
+  controlSignal = 'U(s)',
+  zeros = ['b_0', 'b_1', 'b_2'],
+  poles = ['-a_1', '-a_2'],
+  delayLabel = 'z^{-1}',
+  matrixA = 'A',
+  matrixB = 'B',
+  matrixC = 'C',
+  matrixD = 'D',
+  integratorLabel = '\\frac{1}{s}',
+  stateVar = 'x(t)',
+  stateDotVar = '\\dot{x}(t)',
+} = Astro.props;
+
+// Função utilitária para renderizar texto ou KaTeX
+function math(str: string | undefined): string {
+  if (!str) return '';
+  try {
+    return katex.renderToString(str, { displayMode: false, throwOnError: false });
+  } catch {
+    return str;
+  }
+}
+
+const uid = Math.random().toString(36).substring(2, 9);
+const arrowId = `arrow-${uid}`;
+const arrowUrl = `url(#${arrowId})`;
+---
+
+<div
+  class="diagram-card system-block-card my-8"
+  data-scrollable="true"
+  data-diagram-title={title}
+>
+  <!-- Cabeçalho com Título, Badge de Controle e Botão de Zoom -->
+  <div class="diagram-card-header">
+    <div class="diagram-card-title flex items-center gap-2 min-w-0">
+      <svg class="w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+      </svg>
+      <span class="font-serif font-bold text-sm text-[var(--text-primary)] truncate">
+        {title}
+      </span>
+      <span class="text-[10px] font-mono uppercase font-semibold px-1.5 py-0.5 rounded border border-[var(--border-subtle)] text-[var(--accent)] bg-[var(--bg-subtle)] shrink-0 hidden sm:inline">
+        Sistemas & Controle
+      </span>
+    </div>
+
+    <button
+      type="button"
+      class="diagram-eye-btn flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-xs font-medium cursor-pointer shrink-0"
+      title="Visualizar diagrama com zoom interativo e navegação"
+      aria-label="Visualizar diagrama com zoom interativo e navegação"
+    >
+      <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+      <span>Visualizar</span>
+    </button>
+  </div>
+
+  <!-- Viewport Responsivo do Diagrama -->
+  <div
+    class="diagram-viewport overflow-x-auto p-4 flex justify-center items-center"
+    tabindex="0"
+    role="region"
+    aria-label="Diagrama esquemático de sistemas de controle com rolagem livre"
+  >
+    {preset === 'feedback' && (
+      <svg
+        viewBox="0 0 680 220"
+        class="system-diagram-svg w-full max-w-3xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada R(s) -->
+        <path d="M 25 80 L 102 80" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="35" y="45" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input)} /></div>
+        </foreignObject>
+
+        <!-- Ponto de Soma 1 -->
+        <circle cx="118" cy="80" r="16" class="system-sum-junction" />
+        <line x1="108" y1="80" x2="128" y2="80" class="system-sum-cross" />
+        <line x1="118" y1="70" x2="118" y2="90" class="system-sum-cross" />
+        <text x="96" y="74" class="system-port-sign">+</text>
+        <text x="126" y="112" class="system-port-sign">{feedbackSign}</text>
+
+        <!-- Erro E(s) -->
+        <path d="M 134 80 L 180 80" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="134" y="45" width="45" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(error)} /></div>
+        </foreignObject>
+
+        <!-- Controlador C(s) -->
+        <rect x="180" y="50" width="120" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="180" y="50" width="120" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(controller)} /></div>
+        </foreignObject>
+
+        <!-- Ação de Controle U(s) -->
+        <path d="M 300 80 L 360 80" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="305" y="45" width="50" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(controlSignal)} /></div>
+        </foreignObject>
+
+        <!-- Planta G(s) -->
+        <rect x="360" y="50" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="360" y="50" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(plant)} /></div>
+        </foreignObject>
+
+        <!-- Saída Y(s) e Nó de Derivação -->
+        <path d="M 490 80 L 640 80" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="540" cy="80" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="600" y="45" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output)} /></div>
+        </foreignObject>
+
+        <!-- Malha de Realimentação H(s) -->
+        <path d="M 540 80 L 540 170 L 440 170" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="320" y="140" width="120" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="320" y="140" width="120" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(feedback)} /></div>
+        </foreignObject>
+        <path d="M 320 170 L 118 170 L 118 104" class="system-diagram-line" marker-end={arrowUrl} />
+      </svg>
+    )}
+
+    {preset === 'feedback-disturbance' && (
+      <svg
+        viewBox="0 0 780 250"
+        class="system-diagram-svg w-full max-w-4xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada R(s) -->
+        <path d="M 25 95 L 98 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="35" y="60" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input)} /></div>
+        </foreignObject>
+
+        <!-- Somador 1 -->
+        <circle cx="114" cy="95" r="16" class="system-sum-junction" />
+        <line x1="104" y1="95" x2="124" y2="95" class="system-sum-cross" />
+        <line x1="114" y1="85" x2="114" y2="105" class="system-sum-cross" />
+        <text x="92" y="89" class="system-port-sign">+</text>
+        <text x="122" y="127" class="system-port-sign">{feedbackSign}</text>
+
+        <!-- Erro -->
+        <path d="M 130 95 L 175 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="130" y="60" width="45" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(error)} /></div>
+        </foreignObject>
+
+        <!-- Controlador -->
+        <rect x="175" y="65" width="115" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="175" y="65" width="115" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(controller)} /></div>
+        </foreignObject>
+
+        <!-- U(s) e Somador de Perturbação 2 -->
+        <path d="M 290 95 L 334 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="290" y="60" width="45" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(controlSignal)} /></div>
+        </foreignObject>
+
+        <circle cx="350" cy="95" r="16" class="system-sum-junction" />
+        <line x1="340" y1="95" x2="360" y2="95" class="system-sum-cross" />
+        <line x1="350" y1="85" x2="350" y2="105" class="system-sum-cross" />
+        <text x="328" y="89" class="system-port-sign">+</text>
+        <text x="358" y="75" class="system-port-sign">+</text>
+
+        <!-- Perturbação D(s) vindo de cima -->
+        <path d="M 350 25 L 350 79" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="360" y="30" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(disturbance)} /></div>
+        </foreignObject>
+
+        <!-- Para a Planta -->
+        <path d="M 366 95 L 430 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="430" y="65" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="430" y="65" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(plant)} /></div>
+        </foreignObject>
+
+        <!-- Saída Y(s) -->
+        <path d="M 560 95 L 740 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="630" cy="95" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="700" y="60" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output)} /></div>
+        </foreignObject>
+
+        <!-- Realimentação -->
+        <path d="M 630 95 L 630 195 L 450 195" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="330" y="165" width="120" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="330" y="165" width="120" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(feedback)} /></div>
+        </foreignObject>
+        <path d="M 330 195 L 114 195 L 114 119" class="system-diagram-line" marker-end={arrowUrl} />
+      </svg>
+    )}
+
+    {preset === 'cascade' && (
+      <svg
+        viewBox="0 0 580 120"
+        class="system-diagram-svg w-full max-w-2xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada -->
+        <path d="M 25 60 L 95 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="35" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input)} /></div>
+        </foreignObject>
+
+        <!-- Bloco 1 -->
+        <rect x="95" y="30" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="95" y="30" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(plant)} /></div>
+        </foreignObject>
+
+        <!-- Intermediário -->
+        <path d="M 225 60 L 305 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="235" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(controlSignal || 'W(s)')} /></div>
+        </foreignObject>
+
+        <!-- Bloco 2 -->
+        <rect x="305" y="30" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="305" y="30" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(controller)} /></div>
+        </foreignObject>
+
+        <!-- Saída -->
+        <path d="M 435 60 L 545 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="480" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output)} /></div>
+        </foreignObject>
+      </svg>
+    )}
+
+    {preset === 'parallel' && (
+      <svg
+        viewBox="0 0 580 220"
+        class="system-diagram-svg w-full max-w-2xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada e Nó de Derivação -->
+        <path d="M 25 110 L 95 110" class="system-diagram-line" />
+        <circle cx="95" cy="110" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="35" y="75" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input)} /></div>
+        </foreignObject>
+
+        <!-- Ramo Superior -->
+        <path d="M 95 110 L 95 60 L 165 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="30" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="165" y="30" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(plant)} /></div>
+        </foreignObject>
+        <path d="M 295 60 L 375 60 L 375 94" class="system-diagram-line" marker-end={arrowUrl} />
+        <text x="382" y="85" class="system-port-sign">+</text>
+
+        <!-- Ramo Inferior -->
+        <path d="M 95 110 L 95 160 L 165 160" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="130" width="130" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="165" y="130" width="130" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(controller)} /></div>
+        </foreignObject>
+        <path d="M 295 160 L 375 160 L 375 126" class="system-diagram-line" marker-end={arrowUrl} />
+        <text x="382" y="145" class="system-port-sign">+</text>
+
+        <!-- Somador e Saída -->
+        <circle cx="375" cy="110" r="16" class="system-sum-junction" />
+        <line x1="365" y1="110" x2="385" y2="110" class="system-sum-cross" />
+        <line x1="375" y1="100" x2="375" y2="120" class="system-sum-cross" />
+
+        <path d="M 391 110 L 540 110" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="460" y="75" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output)} /></div>
+        </foreignObject>
+      </svg>
+    )}
+
+    {preset === 'fir' && (
+      <svg
+        viewBox="0 0 640 230"
+        class="system-diagram-svg w-full max-w-3xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada x[n] -->
+        <path d="M 25 50 L 95 50" class="system-diagram-line" />
+        <circle cx="95" cy="50" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="35" y="15" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input || 'x[n]')} /></div>
+        </foreignObject>
+
+        <!-- Tap 0: b0 -->
+        <path d="M 95 50 L 95 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="70" y="95" width="50" height="38" rx="5" class="system-block-rect" />
+        <foreignObject x="70" y="95" width="50" height="38">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[0] || 'b_0')} /></div>
+        </foreignObject>
+        <path d="M 95 133 L 95 180 L 244 180" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Delay 1 -->
+        <path d="M 95 50 L 165 50" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="30" width="55" height="40" rx="5" class="system-block-rect" />
+        <foreignObject x="165" y="30" width="55" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Tap 1: b1 -->
+        <path d="M 220 50 L 260 50" class="system-diagram-line" />
+        <circle cx="260" cy="50" r="4.5" class="system-takeoff-dot" />
+        <path d="M 260 50 L 260 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="235" y="95" width="50" height="38" rx="5" class="system-block-rect" />
+        <foreignObject x="235" y="95" width="50" height="38">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[1] || 'b_1')} /></div>
+        </foreignObject>
+        <path d="M 260 133 L 260 164" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Somador 1 -->
+        <circle cx="260" cy="180" r="16" class="system-sum-junction" />
+        <line x1="250" y1="180" x2="270" y2="180" class="system-sum-cross" />
+        <line x1="260" y1="170" x2="260" y2="190" class="system-sum-cross" />
+
+        <!-- Delay 2 -->
+        <path d="M 260 50 L 330 50" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="330" y="30" width="55" height="40" rx="5" class="system-block-rect" />
+        <foreignObject x="330" y="30" width="55" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Tap 2: b2 -->
+        <path d="M 385 50 L 425 50" class="system-diagram-line" />
+        <circle cx="425" cy="50" r="4.5" class="system-takeoff-dot" />
+        <path d="M 425 50 L 425 95" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="400" y="95" width="50" height="38" rx="5" class="system-block-rect" />
+        <foreignObject x="400" y="95" width="50" height="38">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[2] || 'b_2')} /></div>
+        </foreignObject>
+        <path d="M 425 133 L 425 164" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Do Somador 1 para Somador 2 -->
+        <path d="M 276 180 L 409 180" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Somador 2 -->
+        <circle cx="425" cy="180" r="16" class="system-sum-junction" />
+        <line x1="415" y1="180" x2="435" y2="180" class="system-sum-cross" />
+        <line x1="425" y1="170" x2="425" y2="190" class="system-sum-cross" />
+
+        <!-- Saída y[n] -->
+        <path d="M 441 180 L 590 180" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="510" y="145" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output || 'y[n]')} /></div>
+        </foreignObject>
+      </svg>
+    )}
+
+    {preset === 'direct-form-1' && (
+      <svg
+        viewBox="0 0 740 310"
+        class="system-diagram-svg w-full max-w-4xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada x[n] -->
+        <path d="M 20 60 L 95 60" class="system-diagram-line" />
+        <circle cx="95" cy="60" r="4" class="system-takeoff-dot" />
+        <foreignObject x="25" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input || 'x[n]')} /></div>
+        </foreignObject>
+
+        <!-- Feedforward: b0 -->
+        <path d="M 95 60 L 165 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="42" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="165" y="42" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[0] || 'b_0')} /></div>
+        </foreignObject>
+        <path d="M 220 60 L 254 60" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Delay 1 (zeros) -->
+        <path d="M 95 60 L 95 98" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="70" y="98" width="50" height="40" rx="4" class="system-block-rect" />
+        <foreignObject x="70" y="98" width="50" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Feedforward: b1 -->
+        <path d="M 95 138 L 95 170" class="system-diagram-line" />
+        <circle cx="95" cy="170" r="4" class="system-takeoff-dot" />
+        <path d="M 95 170 L 165 170" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="152" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="165" y="152" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[1] || 'b_1')} /></div>
+        </foreignObject>
+        <path d="M 220 170 L 270 170 L 270 76" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Delay 2 (zeros) -->
+        <path d="M 95 170 L 95 208" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="70" y="208" width="50" height="40" rx="4" class="system-block-rect" />
+        <foreignObject x="70" y="208" width="50" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Feedforward: b2 -->
+        <path d="M 95 248 L 95 275 L 165 275" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="165" y="257" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="165" y="257" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[2] || 'b_2')} /></div>
+        </foreignObject>
+        <path d="M 220 275 L 270 275 L 270 170" class="system-diagram-line" />
+
+        <!-- Somador de Zeros -->
+        <circle cx="270" cy="60" r="16" class="system-sum-junction" />
+        <line x1="260" y1="60" x2="280" y2="60" class="system-sum-cross" />
+        <line x1="270" y1="50" x2="270" y2="70" class="system-sum-cross" />
+
+        <!-- Nó intermediário w[n] para Somador de Polos -->
+        <path d="M 286 60 L 374 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="300" y="25" width="55" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math('v[n]')} /></div>
+        </foreignObject>
+
+        <!-- Somador de Polos -->
+        <circle cx="390" cy="60" r="16" class="system-sum-junction" />
+        <line x1="380" y1="60" x2="400" y2="60" class="system-sum-cross" />
+        <line x1="390" y1="50" x2="390" y2="70" class="system-sum-cross" />
+
+        <!-- Saída y[n] e Nó de Derivação -->
+        <path d="M 406 60 L 700 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="490" cy="60" r="4" class="system-takeoff-dot" />
+        <foreignObject x="640" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output || 'y[n]')} /></div>
+        </foreignObject>
+
+        <!-- Feedback Delay 1 (polos) -->
+        <path d="M 490 60 L 490 98" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="465" y="98" width="50" height="40" rx="4" class="system-block-rect" />
+        <foreignObject x="465" y="98" width="50" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Feedback: -a1 -->
+        <path d="M 490 138 L 490 170" class="system-diagram-line" />
+        <circle cx="490" cy="170" r="4" class="system-takeoff-dot" />
+        <path d="M 490 170 L 440 170" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="385" y="152" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="385" y="152" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[0] || '-a_1')} /></div>
+        </foreignObject>
+        <path d="M 385 170 L 340 170 L 340 60 L 374 60" class="system-diagram-line" />
+
+        <!-- Feedback Delay 2 (polos) -->
+        <path d="M 490 170 L 490 208" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="465" y="208" width="50" height="40" rx="4" class="system-block-rect" />
+        <foreignObject x="465" y="208" width="50" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <!-- Feedback: -a2 -->
+        <path d="M 490 248 L 490 275 L 440 275" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="385" y="257" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="385" y="257" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[1] || '-a_2')} /></div>
+        </foreignObject>
+        <path d="M 385 275 L 340 275 L 340 170" class="system-diagram-line" />
+      </svg>
+    )}
+
+    {preset === 'direct-form-2' && (
+      <svg
+        viewBox="0 0 660 330"
+        class="system-diagram-svg w-full max-w-3xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada x[n] -->
+        <path d="M 25 60 L 114 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="35" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input || 'x[n]')} /></div>
+        </foreignObject>
+
+        <!-- Somador Esquerdo (Polos) -->
+        <circle cx="130" cy="60" r="16" class="system-sum-junction" />
+        <line x1="120" y1="60" x2="140" y2="60" class="system-sum-cross" />
+        <line x1="130" y1="50" x2="130" y2="70" class="system-sum-cross" />
+
+        <!-- Para a Coluna Central de Atrasadores w[n] -->
+        <path d="M 146 60 L 330 60" class="system-diagram-line" />
+        <circle cx="330" cy="60" r="4" class="system-takeoff-dot" />
+        <foreignObject x="315" y="25" width="50" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math('w[n]')} /></div>
+        </foreignObject>
+
+        <!-- Atrasador 1: z^-1 -->
+        <path d="M 330 60 L 330 102" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="300" y="102" width="60" height="42" rx="5" class="system-block-rect" />
+        <foreignObject x="300" y="102" width="60" height="42">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <circle cx="330" cy="180" r="4" class="system-takeoff-dot" />
+        <path d="M 330 144 L 330 180" class="system-diagram-line" />
+        <foreignObject x="335" y="165" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('w[n-1]')} /></div>
+        </foreignObject>
+
+        <!-- Atrasador 2: z^-1 -->
+        <path d="M 330 180 L 330 216" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="300" y="216" width="60" height="42" rx="5" class="system-block-rect" />
+        <foreignObject x="300" y="216" width="60" height="42">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(delayLabel)} /></div>
+        </foreignObject>
+
+        <circle cx="330" cy="285" r="4" class="system-takeoff-dot" />
+        <path d="M 330 258 L 330 285" class="system-diagram-line" />
+
+        <!-- Ganhos Feedforward (Zeros: b0, b1, b2) -->
+        <path d="M 330 60 L 420 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="420" y="42" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="420" y="42" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[0] || 'b_0')} /></div>
+        </foreignObject>
+        <path d="M 475 60 L 514 60" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <path d="M 330 180 L 420 180" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="420" y="162" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="420" y="162" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[1] || 'b_1')} /></div>
+        </foreignObject>
+        <path d="M 475 180 L 530 180 L 530 76" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <path d="M 330 285 L 420 285" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="420" y="267" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="420" y="267" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[2] || 'b_2')} /></div>
+        </foreignObject>
+        <path d="M 475 285 L 530 285 L 530 180" class="system-diagram-line" />
+
+        <!-- Somador Direito (Saída) -->
+        <circle cx="530" cy="60" r="16" class="system-sum-junction" />
+        <line x1="520" y1="60" x2="540" y2="60" class="system-sum-cross" />
+        <line x1="530" y1="50" x2="530" y2="70" class="system-sum-cross" />
+
+        <path d="M 546 60 L 635 60" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="580" y="25" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output || 'y[n]')} /></div>
+        </foreignObject>
+
+        <!-- Ganhos Feedback (Polos: -a1, -a2) -->
+        <path d="M 330 180 L 235 180" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="180" y="162" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="180" y="162" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[0] || '-a_1')} /></div>
+        </foreignObject>
+        <path d="M 180 180 L 130 180 L 130 76" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <path d="M 330 285 L 235 285" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="180" y="267" width="55" height="36" rx="4" class="system-block-rect" />
+        <foreignObject x="180" y="267" width="55" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[1] || '-a_2')} /></div>
+        </foreignObject>
+        <path d="M 180 285 L 130 285 L 130 180" class="system-diagram-line" />
+      </svg>
+    )}
+
+    {preset === 'state-space' && (
+      <svg
+        viewBox="0 0 680 260"
+        class="system-diagram-svg w-full max-w-3xl select-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <marker id={arrowId} viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 9 5 L 0 8.5 z" class="system-diagram-arrow" />
+          </marker>
+        </defs>
+
+        <!-- Entrada u(t) e Multiplicador B -->
+        <path d="M 25 100 L 95 100" class="system-diagram-line" />
+        <circle cx="95" cy="100" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="35" y="65" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(input || 'u(t)')} /></div>
+        </foreignObject>
+
+        <path d="M 95 100 L 135 100" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="135" y="75" width="50" height="50" rx="5" class="system-block-rect" />
+        <foreignObject x="135" y="75" width="50" height="50">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center font-serif font-bold text-base"><span set:html={math(matrixB)} /></div>
+        </foreignObject>
+
+        <!-- Somador de Estado -->
+        <path d="M 185 100 L 224 100" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="240" cy="100" r="16" class="system-sum-junction" />
+        <line x1="230" y1="100" x2="250" y2="100" class="system-sum-cross" />
+        <line x1="240" y1="90" x2="240" y2="110" class="system-sum-cross" />
+        <text x="218" y="94" class="system-port-sign">+</text>
+        <text x="248" y="132" class="system-port-sign">+</text>
+
+        <!-- x_dot(t) -->
+        <path d="M 256 100 L 315 100" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="260" y="65" width="50" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(stateDotVar)} /></div>
+        </foreignObject>
+
+        <!-- Bloco Integrador 1/s -->
+        <rect x="315" y="70" width="70" height="60" rx="6" class="system-block-rect" />
+        <foreignObject x="315" y="70" width="70" height="60">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(integratorLabel)} /></div>
+        </foreignObject>
+
+        <!-- x(t) e Nó de Derivação -->
+        <path d="M 385 100 L 450 100" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="415" cy="100" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="400" y="65" width="50" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(stateVar)} /></div>
+        </foreignObject>
+
+        <!-- Realimentação por Matriz A -->
+        <path d="M 415 100 L 415 190 L 350 190" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="300" y="165" width="50" height="50" rx="5" class="system-block-rect" />
+        <foreignObject x="300" y="165" width="50" height="50">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center font-serif font-bold text-base"><span set:html={math(matrixA)} /></div>
+        </foreignObject>
+        <path d="M 300 190 L 240 190 L 240 116" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Matriz C para Saída -->
+        <rect x="450" y="75" width="50" height="50" rx="5" class="system-block-rect" />
+        <foreignObject x="450" y="75" width="50" height="50">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center font-serif font-bold text-base"><span set:html={math(matrixC)} /></div>
+        </foreignObject>
+        <path d="M 500 100 L 554 100" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Somador de Saída -->
+        <circle cx="570" cy="100" r="16" class="system-sum-junction" />
+        <line x1="560" y1="100" x2="580" y2="100" class="system-sum-cross" />
+        <line x1="570" y1="90" x2="570" y2="110" class="system-sum-cross" />
+        <text x="548" y="94" class="system-port-sign">+</text>
+        <text x="578" y="78" class="system-port-sign">+</text>
+
+        <!-- Ramo Feedthrough com Matriz D (Caminho Superior) -->
+        <path d="M 95 100 L 95 25 L 310 25" class="system-diagram-line" marker-end={arrowUrl} />
+        <rect x="310" y="5" width="50" height="40" rx="5" class="system-block-rect" />
+        <foreignObject x="310" y="5" width="50" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center font-serif font-bold text-sm"><span set:html={math(matrixD)} /></div>
+        </foreignObject>
+        <path d="M 360 25 L 570 25 L 570 84" class="system-diagram-line" marker-end={arrowUrl} />
+
+        <!-- Saída y(t) -->
+        <path d="M 586 100 L 650 100" class="system-diagram-line" marker-end={arrowUrl} />
+        <foreignObject x="610" y="65" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math(output || 'y(t)')} /></div>
+        </foreignObject>
+      </svg>
+    )}
+
+    {preset === 'custom' && (
+      <slot />
+    )}
+  </div>
+</div>
+
+<style>
+  .system-block-card {
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .system-diagram-svg {
+    display: block;
+    height: auto;
+    font-family: var(--reader-font-family, serif);
+  }
+
+  .system-diagram-arrow {
+    fill: var(--border-strong);
+  }
+
+  .system-block-rect {
+    fill: var(--bg-page);
+    stroke: var(--border-strong);
+    stroke-width: 1.6;
+    transition: stroke 0.2s ease, fill 0.2s ease;
+  }
+
+  .system-block-card:hover .system-block-rect {
+    stroke: var(--accent);
+  }
+
+  .system-sum-junction {
+    fill: var(--bg-page);
+    stroke: var(--border-strong);
+    stroke-width: 1.6;
+  }
+
+  .system-sum-cross {
+    stroke: var(--text-secondary);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+
+  .system-takeoff-dot {
+    fill: var(--accent);
+  }
+
+  .system-diagram-line {
+    stroke: var(--border-strong);
+    stroke-width: 1.75;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .system-port-sign {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    fill: var(--text-secondary);
+    user-select: none;
+  }
+
+  .system-fo-center {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-primary);
+    overflow: visible;
+  }
+
+  .system-diagram-katex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95em;
+  }
+</style>

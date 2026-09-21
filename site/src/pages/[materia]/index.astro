@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import AcademicLayout from '../../layouts/AcademicLayout.astro';
 import QuestionCard from '../../components/QuestionCard.astro';
+import BlockDiagram from '../../components/BlockDiagram.astro';
 import { MATERIAS, getMateria } from '../../data/materias';
 
 export async function getStaticPaths() {
@@ -93,7 +94,7 @@ const renderedChapters = await Promise.all(
 
           <!-- Corpo do Capítulo (Markdown/MDX com KaTeX) -->
           <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
-            <Content components={{ QuestionCard }} />
+            <Content components={{ QuestionCard, BlockDiagram }} />
           </div>
 
           <!-- Divisor Clássico entre Capítulos -->

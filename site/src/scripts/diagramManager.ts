@@ -427,7 +427,27 @@ export async function initDiagrams(): Promise<void> {
     }
   }
 
-  // 2. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
+  // 2. Inicializa diagramas de blocos especializados de sistemas (.system-block-card)
+  document.querySelectorAll<HTMLElement>('.system-block-card').forEach((card) => {
+    if (card.dataset.diagramProcessed === 'true') return;
+    const eyeBtn = card.querySelector('.diagram-eye-btn');
+    const svgEl = card.querySelector('.diagram-viewport svg') as SVGElement;
+    const title = card.dataset.diagramTitle || 'Diagrama de Blocos de Sistemas';
+
+    if (svgEl) {
+      setupSvgResponsive(svgEl);
+    }
+
+    if (eyeBtn && svgEl) {
+      eyeBtn.addEventListener('click', () => {
+        openDiagramModal(svgEl, title);
+      });
+    }
+
+    card.setAttribute('data-diagram-processed', 'true');
+  });
+
+  // 3. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
   const mermaidCodeBlocks = Array.from(
     document.querySelectorAll<HTMLElement>('.academic-prose pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"]')
   );
