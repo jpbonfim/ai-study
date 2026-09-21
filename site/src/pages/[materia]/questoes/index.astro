@@ -1,0 +1,162 @@
+---
+import { getCollection } from 'astro:content';
+import AcademicLayout from '../../../layouts/AcademicLayout.astro';
+import { MATERIAS, getMateria } from '../../../data/materias';
+
+export async function getStaticPaths() {
+  return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
+    params: { materia: materia.slug },
+    props: { materia },
+  }));
+}
+
+const { materia } = Astro.props;
+
+const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
+const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+
+const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
+
+const toc = sortedResumos.map((resumo) => ({
+  id: `cap-${resumo.data.chapter}`,
+  title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
+  subsections: resumo.data.sections || [],
+}));
+
+const questionsLinks = allQuestoes.map((q) => ({
+  id: q.id,
+  title: q.data.title,
+  exam: q.data.exam,
+  year: q.data.year,
+}));
+
+// Tópicos únicos para filtro
+const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
+---
+
+<AcademicLayout
+  title={`Banco de Questões | ${materia.name}`}
+  materia={materia}
+  toc={toc}
+  questions={questionsLinks}
+>
+  <div class="space-y-10">
+    
+    <!-- Cabeçalho Acadêmico -->
+    <header class="pb-6 border-b border-[var(--border-strong)] space-y-2">
+      <div class="sans-ui text-xs font-mono tracking-wider uppercase text-[var(--accent)]">
+        Caderno de Exercícios & Provas Anteriores
+      </div>
+      <h1 class="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+        Banco de Testes Resolvidos
+      </h1>
+      <p class="font-serif text-base text-[var(--text-secondary)] italic">
+        Questões oficiais extraídas dos testes de {materia.name} com resolução comentada e verificação de alternativas.
+      </p>
+    </header>
+
+    <!-- Barra de Busca Minimalista -->
+    <div class="sans-ui p-4 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] space-y-3 text-xs">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Filtrar por enunciado, palavra-chave ou conceito..."
+          class="flex-1 px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+        />
+        <select
+          id="topic-filter"
+          class="px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+        >
+          <option value="">Todos os Tópicos</option>
+          {topics.map((t) => (
+            <option value={t}>{t}</option>
+          ))}
+        </select>
+      </div>
+      <div id="results-count" class="text-[var(--text-muted)] text-[11px]">
+        {allQuestoes.length} questões disponíveis no caderno.
+      </div>
+    </div>
+
+    <!-- Lista Acadêmica de Questões -->
+    <div id="questions-list" class="space-y-6">
+      {allQuestoes.map((q) => (
+        <article
+          class="question-entry p-6 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors space-y-3"
+          data-topic={q.data.topic}
+          data-text={`${q.data.title} ${q.data.statement || ''}`.toLowerCase()}
+        >
+          <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
+            <span class="font-mono font-bold text-[var(--accent)]">
+              {q.data.exam} ({q.data.year})
+            </span>
+            <span>Tópico: {q.data.topic}</span>
+            <span>Dificuldade: {q.data.difficulty}</span>
+          </div>
+
+          <h2 class="font-serif text-xl font-bold text-[var(--text-primary)]">
+            <a href={`/${materia.slug}/questoes/${q.id}`} class="hover:text-[var(--accent)] transition-colors">
+              {q.data.title}
+            </a>
+          </h2>
+
+          {q.data.statement && (
+            <p class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
+              {q.data.statement}
+            </p>
+          )}
+
+          <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">
+            <span class="text-[var(--text-muted)] font-mono">
+              Gabarito: ({q.data.correctOption})
+            </span>
+            <a
+              href={`/${materia.slug}/questoes/${q.id}`}
+              class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+            >
+              <span>Ver Solução Completa</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+
+  </div>
+</AcademicLayout>
+
+<script is:inline>
+  const search = document.getElementById('search-input');
+  const topic = document.getElementById('topic-filter');
+  const entries = document.querySelectorAll('.question-entry');
+  const count = document.getElementById('results-count');
+
+  function filter() {
+    const sVal = (search?.value || '').toLowerCase().trim();
+    const tVal = topic?.value || '';
+
+    let visible = 0;
+    entries.forEach((el) => {
+      const elTopic = el.getAttribute('data-topic') || '';
+      const elText = el.getAttribute('data-text') || '';
+
+      const matchSearch = !sVal || elText.includes(sVal);
+      const matchTopic = !tVal || elTopic === tVal;
+
+      if (matchSearch && matchTopic) {
+        el.classList.remove('hidden');
+        visible++;
+      } else {
+        el.classList.add('hidden');
+      }
+    });
+
+    if (count) {
+      count.textContent = `Exibindo ${visible} de ${entries.length} questões.`;
+    }
+  }
+
+  search?.addEventListener('input', filter);
+  topic?.addEventListener('change', filter);
+</script>

@@ -1,0 +1,61 @@
+---
+import { getEntry } from 'astro:content';
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+let questao = null;
+try {
+  questao = await getEntry('questoes', id);
+} catch (e) {
+  // Ignora se não existir
+}
+---
+
+{questao ? (
+  <div class="my-8 p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] not-prose">
+    <div class="sans-ui flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[var(--border-subtle)] text-xs">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-[var(--accent)] uppercase tracking-wider">
+          Exercício de Prova • {questao.data.exam} ({questao.data.year})
+        </span>
+        <span class="text-[var(--text-muted)]">•</span>
+        <span class="text-[var(--text-secondary)]">
+          {questao.data.topic}
+        </span>
+      </div>
+      <span class="text-[var(--text-muted)] italic">
+        Dificuldade: {questao.data.difficulty}
+      </span>
+    </div>
+
+    <h4 class="font-serif text-lg font-bold text-[var(--text-primary)] mb-2">
+      {questao.data.title}
+    </h4>
+
+    {questao.data.statement && (
+      <p class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 mb-4 leading-relaxed">
+        {questao.data.statement}
+      </p>
+    )}
+
+    <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">
+      <span class="text-[var(--text-muted)] italic">
+        Gabarito oficial comentado
+      </span>
+      <a
+        href={`/${questao.data.materia || 'pds'}/questoes/${questao.id}`}
+        class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+      >
+        <span>Consultar Resolução Passo a Passo</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+  </div>
+) : (
+  <div class="my-4 p-3 rounded border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] not-prose">
+    [Questão {id} não encontrada no banco]
+  </div>
+)}

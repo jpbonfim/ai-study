@@ -1,0 +1,152 @@
+---
+---
+
+<div class="flex items-center gap-1.5 sans-ui">
+  <!-- Botão Redondo de Tema (Apenas Ícone, Sem Texto) -->
+  <div class="relative theme-selector-root">
+    <button
+      type="button"
+      class="theme-dropdown-trigger w-8 h-8 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+      aria-label="Alternar tema de leitura (Papel, Escuro, OLED)"
+      title="Ajustar tema de leitura"
+    >
+      <!-- Ícone Sol / Modo Leitura -->
+      <svg class="w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    </button>
+
+    <!-- Menu Dropdown Popover -->
+    <div
+      class="theme-dropdown-menu hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-44 z-50 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] p-1 shadow-lg shadow-black/10 text-xs space-y-0.5"
+    >
+      <div class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border-subtle)] mb-1">
+        Modo de Leitura
+      </div>
+
+      <button
+        type="button"
+        data-theme-val="paper"
+        class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#e8decb] border border-[#b8ab96]"></span>
+          <span>Papel / Sépia</span>
+        </div>
+        <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
+      </button>
+
+      <button
+        type="button"
+        data-theme-val="dark"
+        class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#2a2d36] border border-[#484e5c]"></span>
+          <span>Escuro</span>
+        </div>
+        <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
+      </button>
+
+      <button
+        type="button"
+        data-theme-val="oled"
+        class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#000000] border border-[#444444]"></span>
+          <span>Preto OLED</span>
+        </div>
+        <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Botão Redondo de Engrenagem (Configurações) -->
+  <a
+    href="/configuracoes"
+    class="w-8 h-8 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center cursor-pointer shadow-xs shrink-0"
+    aria-label="Abrir configurações de leitura"
+    title="Configurações (Fonte, Tamanho, Largura)"
+  >
+    <svg class="w-4 h-4 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </a>
+</div>
+
+<script is:inline>
+  function setupHeaderThemeActions() {
+    function getThemeName() {
+      return localStorage.getItem('study_theme') || 'paper';
+    }
+
+    function applyThemeGlobal(themeName) {
+      const root = document.documentElement;
+      root.classList.remove('theme-paper', 'theme-dark', 'theme-oled', 'dark');
+
+      if (themeName === 'oled') {
+        root.classList.add('dark', 'theme-oled');
+      } else if (themeName === 'dark') {
+        root.classList.add('dark', 'theme-dark');
+      } else {
+        root.classList.add('theme-paper');
+      }
+
+      localStorage.setItem('study_theme', themeName);
+      updateAllThemeUI(themeName);
+    }
+
+    function updateAllThemeUI(themeName) {
+      document.querySelectorAll('.theme-opt-btn').forEach((btn) => {
+        const val = btn.getAttribute('data-theme-val');
+        const check = btn.querySelector('.theme-check');
+        if (val === themeName) {
+          btn.classList.add('font-semibold', 'text-[var(--text-primary)]', 'bg-[var(--bg-subtle)]');
+          check?.classList.remove('hidden');
+        } else {
+          btn.classList.remove('font-semibold', 'text-[var(--text-primary)]', 'bg-[var(--bg-subtle)]');
+          check?.classList.add('hidden');
+        }
+      });
+    }
+
+    // Inicialização
+    const current = getThemeName();
+    updateAllThemeUI(current);
+
+    // Gerencia abertura/fechamento dos menus
+    document.querySelectorAll('.theme-selector-root').forEach((root) => {
+      const trigger = root.querySelector('.theme-dropdown-trigger');
+      const menu = root.querySelector('.theme-dropdown-menu');
+
+      trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !menu?.classList.contains('hidden');
+        document.querySelectorAll('.theme-dropdown-menu').forEach((m) => m.classList.add('hidden'));
+
+        if (!isOpen) {
+          menu?.classList.remove('hidden');
+        }
+      });
+
+      root.querySelectorAll('.theme-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = btn.getAttribute('data-theme-val');
+          if (val) {
+            applyThemeGlobal(val);
+          }
+          menu?.classList.add('hidden');
+        });
+      });
+    });
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.theme-dropdown-menu').forEach((m) => m.classList.add('hidden'));
+    });
+  }
+
+  setupHeaderThemeActions();
+</script>

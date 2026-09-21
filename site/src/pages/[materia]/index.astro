@@ -1,0 +1,121 @@
+---
+import { getCollection, render } from 'astro:content';
+import AcademicLayout from '../../layouts/AcademicLayout.astro';
+import QuestionCard from '../../components/QuestionCard.astro';
+import { MATERIAS, getMateria } from '../../data/materias';
+
+export async function getStaticPaths() {
+  return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
+    params: { materia: materia.slug },
+    props: { materia },
+  }));
+}
+
+const { materia } = Astro.props;
+
+// Busca todos os resumos e questões pertencentes a esta matéria
+const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
+const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+
+const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
+
+// Constrói a estrutura do Sumário (TOC) para o menu lateral
+const toc = sortedResumos.map((resumo) => ({
+  id: `cap-${resumo.data.chapter}`,
+  title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
+  subsections: resumo.data.sections || [],
+}));
+
+// Lista de questões para atalho no menu lateral
+const questionsLinks = allQuestoes.map((q) => ({
+  id: q.id,
+  title: q.data.title,
+  exam: q.data.exam,
+  year: q.data.year,
+}));
+
+// Renderiza o conteúdo de todos os capítulos para leitura contínua em página única
+const renderedChapters = await Promise.all(
+  sortedResumos.map(async (resumo) => {
+    const { Content } = await render(resumo);
+    return {
+      resumo,
+      Content,
+    };
+  })
+);
+---
+
+<AcademicLayout
+  title={`${materia.name} (${materia.code})`}
+  materia={materia}
+  toc={toc}
+  questions={questionsLinks}
+>
+  <article class="space-y-16 w-full min-w-0">
+    
+    <!-- Cabeçalho Acadêmico do Caderno Completo -->
+    <header class="text-center pb-12 border-b border-[var(--border-strong)] space-y-4">
+      <div class="sans-ui text-xs font-mono tracking-widest uppercase text-[var(--text-muted)]">
+        {materia.institution} • {materia.code}
+      </div>
+      <h1 class="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-[var(--text-primary)] leading-tight">
+        {materia.name}
+      </h1>
+      <p class="font-serif text-lg sm:text-xl text-[var(--text-secondary)] italic max-w-2xl mx-auto">
+        {materia.period} — Caderno Integral de Estudos Teóricos e Testes Resolvidos
+      </p>
+
+      <div class="sans-ui flex items-center justify-center gap-4 pt-3 text-xs text-[var(--text-muted)]">
+        <span>{sortedResumos.length} Capítulos em Fluxo Contínuo</span>
+        <span>•</span>
+        <span>{allQuestoes.length} Questões com Gabarito e Solução</span>
+      </div>
+    </header>
+
+    <!-- Fluxo Contínuo de Leitura de Todos os Capítulos -->
+    <div class="space-y-20 w-full min-w-0">
+      {renderedChapters.map(({ resumo, Content }, idx) => (
+        <section id={`cap-${resumo.data.chapter}`} class="scroll-mt-12 space-y-8 w-full min-w-0">
+          
+          <!-- Título do Capítulo -->
+          <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
+            <div class="sans-ui text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
+              Capítulo {resumo.data.chapter}
+            </div>
+            <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+              {resumo.data.title}
+            </h2>
+            <p class="font-serif text-base text-[var(--text-secondary)] italic">
+              {resumo.data.description}
+            </p>
+          </div>
+
+          <!-- Corpo do Capítulo (Markdown/MDX com KaTeX) -->
+          <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
+            <Content components={{ QuestionCard }} />
+          </div>
+
+          <!-- Divisor Clássico entre Capítulos -->
+          {idx < renderedChapters.length - 1 && (
+            <div class="text-center py-8 text-[var(--text-muted)] font-serif select-none">
+              * * *
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+
+    <!-- Final do Documento -->
+    <div class="text-center pt-12 border-t border-[var(--border-strong)] sans-ui text-xs text-[var(--text-muted)] space-y-2">
+      <p>Fim do Caderno Teórico de {materia.name}.</p>
+      <p>
+        Para praticar com mais exercícios, consulte o{' '}
+        <a href={`/${materia.slug}/questoes`} class="text-[var(--accent)] font-semibold hover:underline">
+          Banco Completo de Testes Resolvidos
+        </a>.
+      </p>
+    </div>
+
+  </article>
+</AcademicLayout>

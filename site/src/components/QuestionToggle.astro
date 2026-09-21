@@ -1,0 +1,115 @@
+---
+interface Option {
+  label: string;
+  text: string;
+}
+
+interface Props {
+  correctOption: string;
+  options?: Option[];
+}
+
+const { correctOption, options = [] } = Astro.props;
+---
+
+<div class="question-container mt-8 space-y-6 not-prose">
+  
+  <!-- Alternativas de Múltipla Escolha -->
+  {options.length > 0 && (
+    <div class="space-y-2">
+      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">
+        Alternativas da Questão
+      </div>
+      <div class="space-y-2 reader-text">
+        {options.map((opt) => (
+          <div
+            data-option-label={opt.label}
+            class="option-item flex items-start gap-3 p-3.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] transition-colors"
+          >
+            <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-1 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0">
+              ({opt.label})
+            </span>
+            <div class="text-[var(--text-primary)] pt-0.5 leading-relaxed">
+              {opt.text}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Botão Discreto de Toggle -->
+  <div class="pt-2">
+    <button
+      type="button"
+      id="toggle-resolution-btn"
+      class="sans-ui inline-flex items-center gap-2 px-4 py-2 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+      data-correct={correctOption}
+    >
+      <span id="btn-text">Exibir Gabarito e Solução Comentada</span>
+      <span id="chevron-icon" class="text-[var(--text-muted)] transition-transform duration-150">&darr;</span>
+    </button>
+  </div>
+
+  <!-- Bloco Revelável de Resolução -->
+  <div id="resolution-panel" class="hidden mt-6 pt-6 border-t border-[var(--border-subtle)] space-y-6">
+    
+    <!-- Indicação do Gabarito Oficial -->
+    <div class="p-4 rounded border border-[var(--border-strong)] bg-[var(--bg-subtle)]">
+      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
+        Gabarito Oficial
+      </div>
+      <p class="reader-text text-[var(--text-primary)]">
+        A resposta correta é a <strong>Alternativa ({correctOption})</strong>.
+      </p>
+    </div>
+
+    <!-- Texto Passo a Passo -->
+    <div class="space-y-4 reader-text leading-relaxed text-[var(--text-primary)]">
+      <div class="sans-ui text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] pb-2 border-b border-[var(--border-subtle)]">
+        Desenvolvimento Matemático Passo a Passo
+      </div>
+      <div class="resolution-content">
+        <slot />
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script is:inline>
+  const toggleBtn = document.getElementById('toggle-resolution-btn');
+  const panel = document.getElementById('resolution-panel');
+  const btnText = document.getElementById('btn-text');
+  const chevron = document.getElementById('chevron-icon');
+  const correctOpt = toggleBtn?.getAttribute('data-correct');
+
+  let isOpen = false;
+
+  toggleBtn?.addEventListener('click', () => {
+    isOpen = !isOpen;
+    if (isOpen) {
+      panel?.classList.remove('hidden');
+      if (btnText) btnText.textContent = 'Ocultar Solução Comentada';
+      if (chevron) chevron.textContent = '↑';
+
+      // Destaca a alternativa correta suavemente
+      if (correctOpt) {
+        document.querySelectorAll('.option-item').forEach((item) => {
+          const label = item.getAttribute('data-option-label');
+          if (label === correctOpt) {
+            item.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+          }
+        });
+      }
+    } else {
+      panel?.classList.add('hidden');
+      if (btnText) btnText.textContent = 'Exibir Gabarito e Solução Comentada';
+      if (chevron) chevron.textContent = '↓';
+
+      document.querySelectorAll('.option-item').forEach((item) => {
+        item.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+      });
+    }
+  });
+</script>

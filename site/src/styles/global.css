@@ -1,0 +1,342 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "katex/dist/katex.min.css";
+
+@layer base {
+  /* ============================================================
+     1. MODO PAPEL / SÉPIA CLÁSSICO (Padrão Livro Didático)
+     ============================================================ */
+  :root, html.theme-paper {
+    --bg-page: #fbf8f2;
+    --bg-surface: #f4eee3;
+    --bg-surface-hover: #ede4d5;
+    --bg-subtle: #f8f3ea;
+    --border-subtle: #e5dccf;
+    --border-strong: #cfc2af;
+    --text-primary: #24221f;
+    --text-secondary: #5e5850;
+    --text-muted: #877f74;
+    --accent: #8b3a2b; /* Terracota clássica */
+    --accent-hover: #6e2c1f;
+    --accent-subtle: #f6ebe7;
+    --code-bg: #ece5d8;
+    color-scheme: light;
+  }
+
+  /* ============================================================
+     2. MODO ESCURO BIBLIOTECA (Suave para os olhos)
+     ============================================================ */
+  html.theme-dark {
+    --bg-page: #151619;
+    --bg-surface: #1e2025;
+    --bg-surface-hover: #262930;
+    --bg-subtle: #191b20;
+    --border-subtle: #2b2e37;
+    --border-strong: #3d424e;
+    --text-primary: #e6e3dc;
+    --text-secondary: #a39f97;
+    --text-muted: #74716a;
+    --accent: #d89b65; /* Âmbar acadêmico */
+    --accent-hover: #e8b07e;
+    --accent-subtle: #2a231b;
+    --code-bg: #22252c;
+    color-scheme: dark;
+  }
+
+  /* ============================================================
+     3. MODO ESCURO OLED (Preto Absoluto #000000)
+     ============================================================ */
+  html.theme-oled {
+    --bg-page: #000000;
+    --bg-surface: #0a0a0a;
+    --bg-surface-hover: #141414;
+    --bg-subtle: #050505;
+    --border-subtle: #1c1c1c;
+    --border-strong: #2c2c2c;
+    --text-primary: #e6e6e6;
+    --text-secondary: #949494;
+    --text-muted: #666666;
+    --accent: #e5b378;
+    --accent-hover: #f0c594;
+    --accent-subtle: #1a150e;
+    --code-bg: #0d0d0d;
+    color-scheme: dark;
+  }
+}
+
+/* Variáveis de Configuração Pessoal de Leitura */
+:root {
+  --reader-font-family: 'Newsreader', 'EB Garamond', 'Lora', Charter, 'Bitstream Charter', Cambria, Georgia, serif;
+  --reader-font-size: 1.125rem;
+  --reader-max-width: 48rem; /* 768px */
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Tipografia de Livro e Documento Acadêmico Customizável */
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--reader-font-family);
+  font-size: var(--reader-font-size);
+  line-height: 1.78;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.reader-column {
+  max-width: var(--reader-max-width) !important;
+  width: 100%;
+}
+
+/* Elementos de navegação e botões em sans-serif neutra */
+nav, button, input, select, .sans-ui {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Cabeçalhos estilo publicação acadêmica */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* ============================================================
+   CONTENÇÃO TOTAL DE VAZAMENTO DE LAYOUT E SCROLL HORIZONTAL
+   ============================================================ */
+
+.academic-prose,
+.reader-text,
+.reader-content,
+.resolution-content {
+  font-family: var(--reader-font-family) !important;
+  font-size: var(--reader-font-size) !important;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.academic-prose p,
+.academic-prose li,
+.academic-prose td,
+.academic-prose th,
+.reader-text p,
+.reader-text td,
+.reader-text th,
+.reader-content p,
+.reader-content td,
+.reader-content th,
+.resolution-content p,
+.resolution-content li,
+.resolution-content td,
+.resolution-content th,
+table.academic-table th,
+table.academic-table td {
+  font-family: var(--reader-font-family) !important;
+}
+
+/* Blocos de Equações Matemáticas com Scroll Horizontal Independente */
+.katex-display {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.85rem 1rem !important;
+  margin: 1.5rem 0 !important;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-subtle);
+  border-radius: 4px;
+}
+
+.katex-display > .katex {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  min-width: min-content;
+  text-align: center;
+}
+
+/* Equações inline continuam no fluxo normal sem quebrar */
+.katex {
+  font-size: 1.08em;
+}
+
+/* ============================================================
+   TABELAS ACADÊMICAS OTIMIZADAS COM CONTENÇÃO E ERGONOMIA
+   ============================================================ */
+
+/* Wrapper de contenção para scroll horizontal independente sem sobreposições */
+.academic-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin: 2rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+/* Tabela acadêmica com preservação da medida ergonômica */
+table.academic-table,
+.academic-prose table,
+article table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  box-sizing: border-box;
+  font-family: var(--reader-font-family) !important;
+  line-height: 1.62;
+}
+
+/* Fallback para tabelas não envolvidas por script */
+.academic-prose table:not(.academic-table),
+article table:not(.academic-table) {
+  display: block;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+  margin: 2rem 0;
+}
+
+/* Cabeçalho th - Rigorosamente na fonte do leitor, estilo livro */
+.academic-prose th,
+article th,
+table.academic-table th {
+  background-color: var(--bg-subtle);
+  border-bottom: 2px solid var(--border-strong);
+  border-right: 1px solid var(--border-subtle);
+  padding: 0.85rem 1.15rem;
+  font-family: var(--reader-font-family) !important;
+  font-size: 0.95em;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  vertical-align: bottom;
+  box-sizing: border-box;
+  white-space: normal;
+  word-break: normal;
+}
+
+.academic-prose th:last-child,
+article th:last-child,
+table.academic-table th:last-child {
+  border-right: none;
+}
+
+/* Células td - Altura ideal, legibilidade e respiração */
+.academic-prose td,
+article td,
+table.academic-table td {
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  padding: 0.9rem 1.15rem;
+  font-family: var(--reader-font-family) !important;
+  font-size: 0.96em;
+  line-height: 1.62;
+  color: var(--text-secondary);
+  vertical-align: top;
+  box-sizing: border-box;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.academic-prose td:last-child,
+article td:last-child,
+table.academic-table td:last-child {
+  border-right: none;
+}
+
+.academic-prose tr:last-child td,
+article tr:last-child td,
+table.academic-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Classes dinâmicas de altura geradas pelo algoritmo */
+tr.academic-row-singleline td {
+  padding: 0.75rem 1.1rem;
+  vertical-align: middle;
+}
+
+tr.academic-row-multiline td {
+  padding: 0.95rem 1.15rem;
+  vertical-align: top;
+}
+
+/* Fórmulas matemáticas em células de tabela */
+table.academic-table td .katex,
+.academic-prose td .katex,
+article td .katex {
+  white-space: nowrap !important;
+  display: inline-block;
+}
+
+.academic-prose tbody tr:hover,
+article tbody tr:hover,
+table.academic-table tbody tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* Blocos de Código */
+.academic-prose pre {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--code-bg);
+}
+
+/* Caixas de Teorema e Definição Acadêmica */
+.academic-box {
+  border-left: 3px solid var(--accent);
+  background-color: var(--bg-subtle);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.academic-box-title {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* Scrollbar fina clássica */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-page);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

@@ -1,0 +1,157 @@
+---
+import { getCollection, render } from 'astro:content';
+import AcademicLayout from '../../../layouts/AcademicLayout.astro';
+import QuestionToggle from '../../../components/QuestionToggle.astro';
+import { MATERIAS, getMateria } from '../../../data/materias';
+
+export async function getStaticPaths() {
+  const allQuestoes = await getCollection('questoes');
+  return allQuestoes.map((questao) => {
+    const materiaObj = getMateria(questao.data.materia) || MATERIAS[0];
+    return {
+      params: {
+        materia: questao.data.materia,
+        slug: questao.id,
+      },
+      props: {
+        questao,
+        materia: materiaObj,
+      },
+    };
+  });
+}
+
+const { questao, materia } = Astro.props;
+const { Content } = await render(questao);
+
+// Busca dados para o menu lateral
+const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
+const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+
+const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
+
+const toc = sortedResumos.map((resumo) => ({
+  id: `cap-${resumo.data.chapter}`,
+  title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
+  subsections: resumo.data.sections || [],
+}));
+
+const questionsLinks = allQuestoes.map((q) => ({
+  id: q.id,
+  title: q.data.title,
+  exam: q.data.exam,
+  year: q.data.year,
+}));
+
+// Navegação anterior e próxima
+const currentIndex = allQuestoes.findIndex((q) => q.id === questao.id);
+const prevQ = currentIndex > 0 ? allQuestoes[currentIndex - 1] : null;
+const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex + 1] : null;
+---
+
+<AcademicLayout
+  title={`${questao.data.title} | ${materia.name}`}
+  materia={materia}
+  toc={toc}
+  questions={questionsLinks}
+>
+  <div class="space-y-8">
+    
+    <!-- Navegação Superior Estilo Artigo -->
+    <div class="sans-ui flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
+      <div class="flex items-center gap-2">
+        <a href={`/${materia.slug}/questoes`} class="hover:text-[var(--accent)] transition-colors">
+          &larr; Banco de Testes
+        </a>
+        <span>•</span>
+        <a href={`/${materia.slug}#${questao.data.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
+          Ir para a Teoria do Capítulo &rarr;
+        </a>
+      </div>
+      <span class="font-mono font-bold text-[var(--accent)]">
+        {questao.data.exam} • {questao.data.year}
+      </span>
+    </div>
+
+    <!-- Artigo da Questão -->
+    <article class="p-6 sm:p-10 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
+      
+      <!-- Cabeçalho do Exercício -->
+      <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
+        <div class="sans-ui text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
+          {questao.data.exam} ({questao.data.year}) • {questao.data.topic}
+        </div>
+        <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+          {questao.data.title}
+        </h1>
+        <div class="sans-ui text-xs text-[var(--text-muted)] italic">
+          Dificuldade estimada: {questao.data.difficulty}
+        </div>
+      </div>
+
+      <!-- Enunciado -->
+      {questao.data.statement && (
+        <div class="space-y-2">
+          <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            Enunciado da Questão
+          </div>
+          <p class="font-serif text-lg text-[var(--text-primary)] leading-relaxed">
+            {questao.data.statement}
+          </p>
+        </div>
+      )}
+
+      <!-- Imagem de Diagrama se houver -->
+      {questao.data.image && (
+        <div class="my-6 p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-center">
+          <img
+            src={questao.data.image}
+            alt={`Diagrama referente a ${questao.data.title}`}
+            class="max-h-96 mx-auto object-contain"
+            loading="lazy"
+          />
+          <span class="sans-ui block text-xs text-[var(--text-muted)] italic mt-2">
+            Diagrama esquemático oficial da questão
+          </span>
+        </div>
+      )}
+
+      <!-- Alternativas e Resolução com Toggle Clássico -->
+      <QuestionToggle
+        correctOption={questao.data.correctOption}
+        options={questao.data.options}
+      >
+        <Content />
+      </QuestionToggle>
+
+    </article>
+
+    <!-- Navegação Anterior / Próxima -->
+    <div class="sans-ui grid grid-cols-2 gap-4 text-xs pt-4">
+      {prevQ ? (
+        <a
+          href={`/${materia.slug}/questoes/${prevQ.id}`}
+          class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors"
+        >
+          <span class="text-[var(--text-muted)] block">&larr; Questão Anterior</span>
+          <span class="font-bold text-[var(--text-primary)] font-serif text-sm line-clamp-1 mt-0.5">
+            {prevQ.data.title}
+          </span>
+        </a>
+      ) : <div />}
+
+      {nextQ ? (
+        <a
+          href={`/${materia.slug}/questoes/${nextQ.id}`}
+          class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors text-right ml-auto w-full"
+        >
+          <span class="text-[var(--text-muted)] block">Próxima Questão &rarr;</span>
+          <span class="font-bold text-[var(--text-primary)] font-serif text-sm line-clamp-1 mt-0.5">
+            {nextQ.data.title}
+          </span>
+        </a>
+      ) : <div />}
+    </div>
+
+  </div>
+</AcademicLayout>

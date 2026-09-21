@@ -1,0 +1,266 @@
+---
+import '../styles/global.css';
+import HeaderActions from '../components/HeaderActions.astro';
+import type { Subject } from '../data/materias';
+
+interface TocItem {
+  id: string;
+  title: string;
+  subsections?: { id: string; title: string }[];
+}
+
+interface QuestionLink {
+  id: string;
+  title: string;
+  exam: string;
+  year: number;
+}
+
+interface Props {
+  title: string;
+  materia?: Subject;
+  toc?: TocItem[];
+  questions?: QuestionLink[];
+  activeSectionId?: string;
+}
+
+const { title, materia, toc = [], questions = [], activeSectionId } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Caderno de Estudos</title>
+
+    <!-- Fontes Acadêmicas Clássicas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400..700;1,400..700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Script inline para inicialização imediata do tema e preferências de leitura sem flash -->
+    <script is:inline>
+      const savedTheme = localStorage.getItem('study_theme') || 'paper';
+      const root = document.documentElement;
+      root.classList.remove('theme-paper', 'theme-dark', 'theme-oled', 'dark');
+      if (savedTheme === 'oled') {
+        root.classList.add('dark', 'theme-oled');
+      } else if (savedTheme === 'dark') {
+        root.classList.add('dark', 'theme-dark');
+      } else {
+        root.classList.add('theme-paper');
+      }
+
+      // Aplica preferências personalizadas salvas
+      const font = localStorage.getItem('study_font_family');
+      const size = localStorage.getItem('study_font_size');
+      const width = localStorage.getItem('study_max_width');
+      if (font) root.style.setProperty('--reader-font-family', font);
+      if (size) root.style.setProperty('--reader-font-size', size);
+      if (width) root.style.setProperty('--reader-max-width', width);
+    </script>
+  </head>
+  <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
+    
+    <!-- Barra Superior Mobile -->
+    <header class="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-page)]/95 backdrop-blur-sm">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <button
+          id="mobile-sidebar-toggle"
+          type="button"
+          aria-label="Abrir Índice e Sumário"
+          class="sans-ui p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 cursor-pointer"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
+        <span class="font-serif text-sm font-bold truncate text-[var(--text-primary)]">
+          {materia ? materia.name : 'Caderno de Estudos'}
+        </span>
+      </div>
+      <div class="shrink-0 pl-2">
+        <HeaderActions />
+      </div>
+    </header>
+
+    <div class="flex w-full min-w-0">
+      
+      <!-- MENU LATERAL ESQUERDO (Fixo no Desktop, Gaveta no Mobile) -->
+      <aside
+        id="academic-sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between overflow-y-auto"
+      >
+        <div class="p-6 space-y-6">
+          
+          <!-- Cabeçalho do Menu Lateral -->
+          <div class="space-y-3 pb-5 border-b border-[var(--border-subtle)]">
+            <div class="flex items-center justify-between gap-2">
+              <a
+                href="/"
+                class="sans-ui inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Todas as Matérias</span>
+              </a>
+
+              <!-- Dois Botões Redondos (Tema + Configurações) -->
+              <HeaderActions />
+            </div>
+
+            {materia && (
+              <div class="pt-1">
+                <span class="sans-ui text-[11px] font-mono uppercase tracking-widest text-[var(--accent)] block font-semibold">
+                  {materia.code} • {materia.institution}
+                </span>
+                <h2 class="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug mt-1">
+                  <a href={`/${materia.slug}`} class="hover:text-[var(--accent)] transition-colors">
+                    {materia.name}
+                  </a>
+                </h2>
+              </div>
+            )}
+          </div>
+
+          <!-- Sumário do Documento (Capítulos e Seções) -->
+          {toc.length > 0 && (
+            <div class="space-y-3">
+              <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span>Sumário do Livro</span>
+                <span class="text-[10px] lowercase font-normal opacity-80">(clique para ir)</span>
+              </div>
+              <nav class="space-y-2 text-sm">
+                {toc.map((chap) => (
+                  <div class="space-y-1">
+                    <a
+                      href={`#${chap.id}`}
+                      class="block font-serif font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-0.5"
+                    >
+                      {chap.title}
+                    </a>
+                    {chap.subsections && chap.subsections.length > 0 && (
+                      <div class="pl-3 border-l border-[var(--border-subtle)] space-y-1">
+                        {chap.subsections.map((sub) => (
+                          <a
+                            href={`#${sub.id}`}
+                            class="sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] py-0.5 transition-colors leading-tight"
+                          >
+                            {sub.title}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
+            </div>
+          )}
+
+          <!-- Banco de Questões / Testes Resolvidos -->
+          {questions.length > 0 && materia && (
+            <div class="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
+              <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span>Testes Resolvidos</span>
+                <a
+                  href={`/${materia.slug}/questoes`}
+                  class="text-[11px] font-normal text-[var(--accent)] hover:underline lowercase"
+                >
+                  ver banco
+                </a>
+              </div>
+              <div class="space-y-1.5">
+                {questions.map((q) => (
+                  <a
+                    href={`/${materia.slug}/questoes/${q.id}`}
+                    class="sans-ui block text-xs p-2 rounded-md hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  >
+                    <div class="font-semibold text-[var(--text-primary)] truncate">
+                      {q.exam} ({q.year}) — {q.title}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        <!-- Rodapé do Menu Lateral -->
+        <div class="p-4 border-t border-[var(--border-subtle)] text-center text-xs text-[var(--text-muted)] sans-ui">
+          Caderno Acadêmico de Estudos
+        </div>
+      </aside>
+
+      <!-- Overlay para Mobile quando o Menu estiver aberto -->
+      <div
+        id="sidebar-backdrop"
+        class="fixed inset-0 z-30 bg-black/50 lg:hidden hidden"
+      ></div>
+
+      <!-- ÁREA DE LEITURA PRINCIPAL (Largura configurável e contenção de layout) -->
+      <main class="flex-1 lg:pl-80 w-full min-w-0 overflow-x-hidden">
+        <div class="reader-column mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-16 w-full min-w-0">
+          <slot />
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Script de rastreamento de matéria recente -->
+    {materia && (
+      <script is:inline define:vars={{ curMat: { slug: materia.slug, name: materia.name, code: materia.code, institution: materia.institution, period: materia.period, chaptersCount: materia.chaptersCount, questionsCount: materia.questionsCount } }}>
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const data = {
+              ...curMat,
+              visitedAt: new Date().toISOString()
+            };
+            localStorage.setItem('last_visited_subject', JSON.stringify(data));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      </script>
+    )}
+
+    <!-- Script de toggle do menu lateral no mobile -->
+    <script is:inline>
+      const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
+      const sidebar = document.getElementById('academic-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar?.classList.remove('-translate-x-full');
+        backdrop?.classList.remove('hidden');
+      }
+
+      function closeSidebar() {
+        sidebar?.classList.add('-translate-x-full');
+        backdrop?.classList.add('hidden');
+      }
+
+      sidebarToggle?.addEventListener('click', openSidebar);
+      backdrop?.addEventListener('click', closeSidebar);
+
+      sidebar?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1024) closeSidebar();
+        });
+      });
+    </script>
+
+    <!-- Algoritmo de Otimização Ergonômica de Tabelas Acadêmicas -->
+    <script>
+      import { initTableOptimizer } from '../scripts/tableOptimizer';
+      initTableOptimizer();
+    </script>
+  </body>
+</html>
