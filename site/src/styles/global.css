@@ -881,13 +881,20 @@ html:not([data-code-theme]) .code-block-card,
   --code-badge-color: #cba6f7;
 }
 
+html[data-code-theme="mocha"] .astro-code,
+html[data-code-theme="mocha"] .astro-code span,
 html[data-code-theme="mocha"] .shiki,
 html[data-code-theme="mocha"] .shiki span,
+html:not([data-code-theme]) .astro-code,
+html:not([data-code-theme]) .astro-code span,
 html:not([data-code-theme]) .shiki,
 html:not([data-code-theme]) .shiki span,
+.code-block-card[data-code-theme="mocha"] .astro-code,
+.code-block-card[data-code-theme="mocha"] .astro-code span,
 .code-block-card[data-code-theme="mocha"] .shiki,
 .code-block-card[data-code-theme="mocha"] .shiki span {
-  color: var(--shiki-mocha) !important;
+  color: var(--shiki-mocha, inherit) !important;
+  font-style: var(--shiki-mocha-font-style, inherit);
 }
 
 html[data-code-theme="mocha"] pre.astro-code,
@@ -905,11 +912,16 @@ html[data-code-theme="tokyo"] .code-block-card,
   --code-badge-color: #7aa2f7;
 }
 
+html[data-code-theme="tokyo"] .astro-code,
+html[data-code-theme="tokyo"] .astro-code span,
 html[data-code-theme="tokyo"] .shiki,
 html[data-code-theme="tokyo"] .shiki span,
+.code-block-card[data-code-theme="tokyo"] .astro-code,
+.code-block-card[data-code-theme="tokyo"] .astro-code span,
 .code-block-card[data-code-theme="tokyo"] .shiki,
 .code-block-card[data-code-theme="tokyo"] .shiki span {
-  color: var(--shiki-tokyo) !important;
+  color: var(--shiki-tokyo, inherit) !important;
+  font-style: var(--shiki-tokyo-font-style, inherit);
 }
 
 html[data-code-theme="tokyo"] pre.astro-code {
@@ -926,11 +938,16 @@ html[data-code-theme="dracula"] .code-block-card,
   --code-badge-color: #bd93f9;
 }
 
+html[data-code-theme="dracula"] .astro-code,
+html[data-code-theme="dracula"] .astro-code span,
 html[data-code-theme="dracula"] .shiki,
 html[data-code-theme="dracula"] .shiki span,
+.code-block-card[data-code-theme="dracula"] .astro-code,
+.code-block-card[data-code-theme="dracula"] .astro-code span,
 .code-block-card[data-code-theme="dracula"] .shiki,
 .code-block-card[data-code-theme="dracula"] .shiki span {
-  color: var(--shiki-dracula) !important;
+  color: var(--shiki-dracula, inherit) !important;
+  font-style: var(--shiki-dracula-font-style, inherit);
 }
 
 html[data-code-theme="dracula"] pre.astro-code {
@@ -947,11 +964,16 @@ html[data-code-theme="onedark"] .code-block-card,
   --code-badge-color: #61afef;
 }
 
+html[data-code-theme="onedark"] .astro-code,
+html[data-code-theme="onedark"] .astro-code span,
 html[data-code-theme="onedark"] .shiki,
 html[data-code-theme="onedark"] .shiki span,
+.code-block-card[data-code-theme="onedark"] .astro-code,
+.code-block-card[data-code-theme="onedark"] .astro-code span,
 .code-block-card[data-code-theme="onedark"] .shiki,
 .code-block-card[data-code-theme="onedark"] .shiki span {
-  color: var(--shiki-onedark) !important;
+  color: var(--shiki-onedark, inherit) !important;
+  font-style: var(--shiki-onedark-font-style, inherit);
 }
 
 html[data-code-theme="onedark"] pre.astro-code {
@@ -968,11 +990,16 @@ html[data-code-theme="monokai"] .code-block-card,
   --code-badge-color: #a6e22e;
 }
 
+html[data-code-theme="monokai"] .astro-code,
+html[data-code-theme="monokai"] .astro-code span,
 html[data-code-theme="monokai"] .shiki,
 html[data-code-theme="monokai"] .shiki span,
+.code-block-card[data-code-theme="monokai"] .astro-code,
+.code-block-card[data-code-theme="monokai"] .astro-code span,
 .code-block-card[data-code-theme="monokai"] .shiki,
 .code-block-card[data-code-theme="monokai"] .shiki span {
-  color: var(--shiki-monokai) !important;
+  color: var(--shiki-monokai, inherit) !important;
+  font-style: var(--shiki-monokai-font-style, inherit);
 }
 
 html[data-code-theme="monokai"] pre.astro-code {

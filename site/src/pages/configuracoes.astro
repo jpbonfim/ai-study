@@ -649,6 +649,32 @@ import { MATERIAS } from '../data/materias';
                     <span class="code-size-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
                   </button>
                 </div>
+
+                <!-- Campo Numérico Manual para Tamanho da Fonte do Código -->
+                <div class="pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <span class="text-[var(--text-secondary)] font-medium">
+                    Ou digite o tamanho exato da fonte do código em pixels:
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="number"
+                      id="custom-code-size-input"
+                      min="8"
+                      max="32"
+                      step="1"
+                      value="13"
+                      class="w-24 px-3 py-1.5 rounded border border-[var(--border-strong)] bg-[var(--bg-page)] text-[var(--text-primary)] font-mono font-bold text-center focus:outline-none focus:border-[var(--accent)]"
+                    />
+                    <span class="font-mono text-[var(--text-muted)]">pixels (px)</span>
+                    <button
+                      type="button"
+                      id="apply-custom-code-size-btn"
+                      class="px-3 py-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] font-semibold transition-colors cursor-pointer"
+                    >
+                      Testar
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -840,8 +866,10 @@ import { MATERIAS } from '../data/materias';
 
       savedState.fontSize = normalizePx(savedState.fontSize);
       savedState.maxWidth = normalizePx(savedState.maxWidth);
+      savedState.codeSize = normalizePx(savedState.codeSize);
       draftState.fontSize = normalizePx(draftState.fontSize);
       draftState.maxWidth = normalizePx(draftState.maxWidth);
+      draftState.codeSize = normalizePx(draftState.codeSize);
 
       // Elementos do DOM
       const previewWrapper = document.getElementById('preview-box-wrapper');
@@ -849,6 +877,7 @@ import { MATERIAS } from '../data/materias';
       const previewMeta = document.getElementById('preview-meta-info');
       const customSizeInput = document.getElementById('custom-size-input');
       const customWidthInput = document.getElementById('custom-width-input');
+      const customCodeSizeInput = document.getElementById('custom-code-size-input');
       const statusDot = document.getElementById('status-dot');
       const statusMessage = document.getElementById('status-message');
       const previewCodeCard = document.getElementById('preview-sample-code-card');
@@ -1023,6 +1052,11 @@ import { MATERIAS } from '../data/materias';
           }
         });
 
+        const numericDraftCodeSize = parseInt(draftState.codeSize, 10) || 13;
+        if (customCodeSizeInput && document.activeElement !== customCodeSizeInput) {
+          customCodeSizeInput.value = numericDraftCodeSize;
+        }
+
         const activeCodeBadge = document.getElementById('active-code-badge');
         if (activeCodeBadge) {
           const cThemeName = codeThemeLabels[savedState.codeTheme] || savedState.codeTheme;
@@ -1144,6 +1178,17 @@ import { MATERIAS } from '../data/materias';
         });
       });
 
+      // Evento do input numérico personalizado de Tamanho do Código
+      function handleCustomCodeSize() {
+        const val = parseInt(customCodeSizeInput?.value, 10);
+        if (val && val >= 8 && val <= 36) {
+          draftState.codeSize = val + 'px';
+          updateUI();
+        }
+      }
+      customCodeSizeInput?.addEventListener('input', handleCustomCodeSize);
+      document.getElementById('apply-custom-code-size-btn')?.addEventListener('click', handleCustomCodeSize);
+
       // Função de Salvamento Global
       function saveChanges() {
         savedState = { ...draftState };
@@ -1198,35 +1243,6 @@ import { MATERIAS } from '../data/materias';
         if (statusMessage) {
           statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Padrões de fábrica restaurados!</strong>';
         }
-      });
-
-      // Inicializa a interface
-      updateUI();
-
-      // Drawer Mobile nas Configurações
-      const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
-      const sidebar = document.getElementById('settings-sidebar');
-      const backdrop = document.getElementById('settings-sidebar-backdrop');
-
-      function openSidebar() {
-        sidebar?.classList.remove('-translate-x-full');
-        backdrop?.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
-      }
-
-      function closeSidebar() {
-        sidebar?.classList.add('-translate-x-full');
-        backdrop?.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
-      }
-
-      sidebarToggle?.addEventListener('click', openSidebar);
-      backdrop?.addEventListener('click', closeSidebar);
-
-      sidebar?.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => {
-          if (window.innerWidth < 1024) closeSidebar();
-        });
       });
 
       // Inicializa a interface
