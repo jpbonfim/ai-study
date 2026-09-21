@@ -135,3 +135,22 @@ O sistema foi arquitetado para máxima simplicidade operacional diretamente no s
    - O site descobre dinamicamente a matéria, contabiliza automaticamente os capítulos e questões e gera todas as rotas e sumários!
 5. **Remover uma matéria**:
    - Basta apagar a pasta `archive/<materia>/`.
+
+---
+
+## 5. Uso da Skill de Diagramas de Blocos (`block-diagram-generator`)
+
+Ao produzir ou atualizar cadernos de estudo (resumos) e resoluções de questões que envolvam **Sistemas de Controle**, **Sinais e Sistemas** e **Processamento Digital de Sinais (PDS)**, o agente pode e deve utilizar a skill **`block-diagram-generator`** para ilustrar conceitos estruturais com diagramas de blocos vetoriais nítidos em KaTeX (`<BlockDiagram />`).
+
+### Quando utilizar:
+* **Sistemas de Controle**:
+  - Malha fechada canônica com controlador, planta e sensor (`preset="feedback"`).
+  - Rejeição a perturbações de carga e distúrbios na planta (`preset="feedback-disturbance"`).
+  - Modelos dinâmicos matriciais em espaço de estados contínuo/discreto (`preset="state-space"`).
+* **Sinais e Sistemas e PDS**:
+  - Associação de subsistemas LTI em cascata (`preset="cascade"`) e em paralelo (`preset="parallel"`).
+  - Realizações canônicas de filtros IIR: Forma Direta I (`preset="direct-form-1"`) e Forma Canônica / Direta II de memória mínima (`preset="direct-form-2"`).
+  - Filtros FIR não-recursivos transversais em linha de retardo (*tapped delay line*) (`preset="fir"`).
+  - Topologias não-convencionais (ex: controle feedforward, múltiplos loops, filtros biquad em cascata) através do modo customizado (`preset="custom"`).
+
+Consulte as instruções detalhadas e a tabela completa de parâmetros em [`.agents/skills/block-diagram-generator/SKILL.md`](file:///home/joao/faculdade/processamento-digital-de-sinais/estudo-p1/.agents/skills/block-diagram-generator/SKILL.md) e modelos prontos em [`.agents/skills/block-diagram-generator/examples/diagram_examples.mdx`](file:///home/joao/faculdade/processamento-digital-de-sinais/estudo-p1/.agents/skills/block-diagram-generator/examples/diagram_examples.mdx).
