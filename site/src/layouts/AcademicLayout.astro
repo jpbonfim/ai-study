@@ -86,7 +86,7 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
       root.style.setProperty('--katex-min-font-size', mathMinSize);
     </script>
   </head>
-  <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
+  <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200">
     
     <!-- Barra Superior Mobile (Sempre Visível e Fixada no Topo) -->
     <header class="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 border-b border-[var(--border-subtle)] bg-[var(--bg-page)]/95 backdrop-blur-md shadow-xs">
@@ -246,7 +246,7 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
       ></div>
 
       <!-- ÁREA DE LEITURA PRINCIPAL (Largura configurável e contenção de layout) -->
-      <main class="flex-1 lg:pl-80 w-full min-w-0 overflow-x-hidden">
+      <main class:list={["flex-1 lg:pl-80 w-full min-w-0", wide ? "" : "overflow-x-clip"]}>
         <div class:list={[
           "mx-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-14 w-full min-w-0",
           wide ? "max-w-7xl 2xl:max-w-[94rem]" : "reader-column"

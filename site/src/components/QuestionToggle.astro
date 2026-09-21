@@ -30,8 +30,8 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
          COLUNA ESQUERDA: Enunciado, Figuras e Alternativas
          (Fixa/Sticky no Desktop para leitura contínua com a teoria/solução)
          ============================================================ -->
-    <div class="xl:sticky xl:top-6 space-y-6">
-      <article class="p-6 sm:p-8 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6 shadow-xs xl:max-h-[calc(100vh-3.5rem)] xl:overflow-y-auto">
+    <div class="question-sticky-col xl:sticky xl:top-6 xl:self-start w-full">
+      <article class="p-6 sm:p-8 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6 shadow-xs xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto reader-scrollbar">
         <!-- Conteúdo do Enunciado e Imagens passado via slot nomeado -->
         <slot name="statement" />
 
@@ -218,3 +218,15 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
   setupQuestionToggles();
   document.addEventListener('astro:page-load', setupQuestionToggles);
 </script>
+
+<style>
+  @media (min-width: 1280px) {
+    .question-sticky-col {
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      top: 1.5rem !important;
+      align-self: flex-start !important;
+      z-index: 20;
+    }
+  }
+</style>
