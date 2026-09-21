@@ -174,6 +174,21 @@ table.academic-table td {
 }
 
 /* ============================================================
+   AJUSTE DE ESCALA PARA SUBSCRITOS E SOBRESCRITOS (KaTeX)
+   ============================================================ */
+/* Subscritos e sobrescritos mais delicados, legíveis e proporcionais (padrão TeX é ~0.70em, ajustado para 0.63em) */
+.katex .msupsub .sizing.reset-size6.size3,
+.katex .msupsub .katex-sizing.reset-size6.size3 {
+  font-size: 0.63em !important;
+}
+
+/* Subscritos e sobrescritos de 2º nível aninhados (ex: x_{n_k}) */
+.katex .msupsub .sizing.reset-size3.size1,
+.katex .msupsub .katex-sizing.reset-size3.size1 {
+  font-size: 0.44em !important;
+}
+
+/* ============================================================
    TABELAS ACADÊMICAS OTIMIZADAS COM CONTENÇÃO E ERGONOMIA
    ============================================================ */
 
