@@ -276,9 +276,16 @@ function setupModalEvents(modal: HTMLElement): void {
     }
   }, { passive: true });
 
-  canvas?.addEventListener('touchend', () => {
-    modalState.isDragging = false;
-    modalState.initialPinchDist = 0;
+  canvas?.addEventListener('touchend', (e: TouchEvent) => {
+    if (e.touches.length === 1) {
+      modalState.isDragging = true;
+      modalState.startX = e.touches[0].clientX - modalState.panX;
+      modalState.startY = e.touches[0].clientY - modalState.panY;
+      modalState.initialPinchDist = 0;
+    } else if (e.touches.length === 0) {
+      modalState.isDragging = false;
+      modalState.initialPinchDist = 0;
+    }
   }, { passive: true });
 }
 
@@ -293,6 +300,27 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
 
   modalContent.innerHTML = '';
   const clonedSvg = svgSource.cloneNode(true) as SVGElement;
+
+  // Isola IDs de markers e defs no SVG clonado para evitar conflitos com o documento original
+  const markerDefs = clonedSvg.querySelectorAll('defs marker[id], defs [id]');
+  markerDefs.forEach((def) => {
+    const oldId = def.getAttribute('id');
+    if (!oldId) return;
+    const newId = `${oldId}-modal`;
+    def.setAttribute('id', newId);
+    clonedSvg.querySelectorAll(`[marker-end="url(#${oldId})"]`).forEach((el) => {
+      el.setAttribute('marker-end', `url(#${newId})`);
+    });
+    clonedSvg.querySelectorAll(`[marker-start="url(#${oldId})"]`).forEach((el) => {
+      el.setAttribute('marker-start', `url(#${newId})`);
+    });
+    clonedSvg.querySelectorAll(`[marker-mid="url(#${oldId})"]`).forEach((el) => {
+      el.setAttribute('marker-mid', `url(#${newId})`);
+    });
+    clonedSvg.querySelectorAll(`[fill="url(#${oldId})"]`).forEach((el) => {
+      el.setAttribute('fill', `url(#${newId})`);
+    });
+  });
 
   // Obtém as dimensões reais do viewBox da SVG
   const vb = svgSource.viewBox?.baseVal;
@@ -436,6 +464,11 @@ export async function initDiagrams(): Promise<void> {
 
     if (svgEl) {
       setupSvgResponsive(svgEl);
+      const viewport = card.querySelector('.diagram-viewport');
+      viewport?.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        openDiagramModal(svgEl, title);
+      });
     }
 
     if (eyeBtn && svgEl) {

@@ -138,7 +138,7 @@ const arrowUrl = `url(#${arrowId})`;
         <line x1="108" y1="80" x2="128" y2="80" class="system-sum-cross" />
         <line x1="118" y1="70" x2="118" y2="90" class="system-sum-cross" />
         <text x="96" y="74" class="system-port-sign">+</text>
-        <text x="126" y="112" class="system-port-sign">{feedbackSign}</text>
+        <text x="124" y="108" class="system-port-sign">{feedbackSign}</text>
 
         <!-- Erro E(s) -->
         <path d="M 134 80 L 180 80" class="system-diagram-line" marker-end={arrowUrl} />
@@ -177,7 +177,7 @@ const arrowUrl = `url(#${arrowId})`;
         <foreignObject x="320" y="140" width="120" height="60">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(feedback)} /></div>
         </foreignObject>
-        <path d="M 320 170 L 118 170 L 118 104" class="system-diagram-line" marker-end={arrowUrl} />
+        <path d="M 320 170 L 118 170 L 118 96" class="system-diagram-line" marker-end={arrowUrl} />
       </svg>
     )}
 
@@ -204,7 +204,7 @@ const arrowUrl = `url(#${arrowId})`;
         <line x1="104" y1="95" x2="124" y2="95" class="system-sum-cross" />
         <line x1="114" y1="85" x2="114" y2="105" class="system-sum-cross" />
         <text x="92" y="89" class="system-port-sign">+</text>
-        <text x="122" y="127" class="system-port-sign">{feedbackSign}</text>
+        <text x="120" y="123" class="system-port-sign">{feedbackSign}</text>
 
         <!-- Erro -->
         <path d="M 130 95 L 175 95" class="system-diagram-line" marker-end={arrowUrl} />
@@ -256,7 +256,7 @@ const arrowUrl = `url(#${arrowId})`;
         <foreignObject x="330" y="165" width="120" height="60">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(feedback)} /></div>
         </foreignObject>
-        <path d="M 330 195 L 114 195 L 114 119" class="system-diagram-line" marker-end={arrowUrl} />
+        <path d="M 330 195 L 114 195 L 114 111" class="system-diagram-line" marker-end={arrowUrl} />
       </svg>
     )}
 
@@ -390,6 +390,9 @@ const arrowUrl = `url(#${arrowId})`;
         <!-- Tap 1: b1 -->
         <path d="M 220 50 L 260 50" class="system-diagram-line" />
         <circle cx="260" cy="50" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="230" y="15" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('x[n-1]')} /></div>
+        </foreignObject>
         <path d="M 260 50 L 260 95" class="system-diagram-line" marker-end={arrowUrl} />
         <rect x="235" y="95" width="50" height="38" rx="5" class="system-block-rect" />
         <foreignObject x="235" y="95" width="50" height="38">
@@ -401,6 +404,8 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="260" cy="180" r="16" class="system-sum-junction" />
         <line x1="250" y1="180" x2="270" y2="180" class="system-sum-cross" />
         <line x1="260" y1="170" x2="260" y2="190" class="system-sum-cross" />
+        <text x="238" y="174" class="system-port-sign">+</text>
+        <text x="268" y="158" class="system-port-sign">+</text>
 
         <!-- Delay 2 -->
         <path d="M 260 50 L 330 50" class="system-diagram-line" marker-end={arrowUrl} />
@@ -412,6 +417,9 @@ const arrowUrl = `url(#${arrowId})`;
         <!-- Tap 2: b2 -->
         <path d="M 385 50 L 425 50" class="system-diagram-line" />
         <circle cx="425" cy="50" r="4.5" class="system-takeoff-dot" />
+        <foreignObject x="395" y="15" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('x[n-2]')} /></div>
+        </foreignObject>
         <path d="M 425 50 L 425 95" class="system-diagram-line" marker-end={arrowUrl} />
         <rect x="400" y="95" width="50" height="38" rx="5" class="system-block-rect" />
         <foreignObject x="400" y="95" width="50" height="38">
@@ -426,6 +434,8 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="425" cy="180" r="16" class="system-sum-junction" />
         <line x1="415" y1="180" x2="435" y2="180" class="system-sum-cross" />
         <line x1="425" y1="170" x2="425" y2="190" class="system-sum-cross" />
+        <text x="403" y="174" class="system-port-sign">+</text>
+        <text x="433" y="158" class="system-port-sign">+</text>
 
         <!-- Saída y[n] -->
         <path d="M 441 180 L 590 180" class="system-diagram-line" marker-end={arrowUrl} />
@@ -472,6 +482,9 @@ const arrowUrl = `url(#${arrowId})`;
         <!-- Feedforward: b1 -->
         <path d="M 95 138 L 95 170" class="system-diagram-line" />
         <circle cx="95" cy="170" r="4" class="system-takeoff-dot" />
+        <foreignObject x="35" y="155" width="55" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('x[n-1]')} /></div>
+        </foreignObject>
         <path d="M 95 170 L 165 170" class="system-diagram-line" marker-end={arrowUrl} />
         <rect x="165" y="152" width="55" height="36" rx="4" class="system-block-rect" />
         <foreignObject x="165" y="152" width="55" height="36">
@@ -488,6 +501,10 @@ const arrowUrl = `url(#${arrowId})`;
 
         <!-- Feedforward: b2 -->
         <path d="M 95 248 L 95 275 L 165 275" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="95" cy="275" r="4" class="system-takeoff-dot" />
+        <foreignObject x="35" y="260" width="55" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('x[n-2]')} /></div>
+        </foreignObject>
         <rect x="165" y="257" width="55" height="36" rx="4" class="system-block-rect" />
         <foreignObject x="165" y="257" width="55" height="36">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(zeros[2] || 'b_2')} /></div>
@@ -498,8 +515,10 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="270" cy="60" r="16" class="system-sum-junction" />
         <line x1="260" y1="60" x2="280" y2="60" class="system-sum-cross" />
         <line x1="270" y1="50" x2="270" y2="70" class="system-sum-cross" />
+        <text x="248" y="54" class="system-port-sign">+</text>
+        <text x="276" y="88" class="system-port-sign">+</text>
 
-        <!-- Nó intermediário w[n] para Somador de Polos -->
+        <!-- Nó intermediário v[n] para Somador de Polos -->
         <path d="M 286 60 L 374 60" class="system-diagram-line" marker-end={arrowUrl} />
         <foreignObject x="300" y="25" width="55" height="30">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span set:html={math('v[n]')} /></div>
@@ -509,6 +528,8 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="390" cy="60" r="16" class="system-sum-junction" />
         <line x1="380" y1="60" x2="400" y2="60" class="system-sum-cross" />
         <line x1="390" y1="50" x2="390" y2="70" class="system-sum-cross" />
+        <text x="368" y="54" class="system-port-sign">+</text>
+        <text x="396" y="88" class="system-port-sign">+</text>
 
         <!-- Saída y[n] e Nó de Derivação -->
         <path d="M 406 60 L 700 60" class="system-diagram-line" marker-end={arrowUrl} />
@@ -527,12 +548,15 @@ const arrowUrl = `url(#${arrowId})`;
         <!-- Feedback: -a1 -->
         <path d="M 490 138 L 490 170" class="system-diagram-line" />
         <circle cx="490" cy="170" r="4" class="system-takeoff-dot" />
+        <foreignObject x="500" y="155" width="55" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('y[n-1]')} /></div>
+        </foreignObject>
         <path d="M 490 170 L 440 170" class="system-diagram-line" marker-end={arrowUrl} />
         <rect x="385" y="152" width="55" height="36" rx="4" class="system-block-rect" />
         <foreignObject x="385" y="152" width="55" height="36">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[0] || '-a_1')} /></div>
         </foreignObject>
-        <path d="M 385 170 L 340 170 L 340 60 L 374 60" class="system-diagram-line" />
+        <path d="M 385 170 L 350 170 L 350 105 L 390 105 L 390 76" class="system-diagram-line" marker-end={arrowUrl} />
 
         <!-- Feedback Delay 2 (polos) -->
         <path d="M 490 170 L 490 208" class="system-diagram-line" marker-end={arrowUrl} />
@@ -543,11 +567,15 @@ const arrowUrl = `url(#${arrowId})`;
 
         <!-- Feedback: -a2 -->
         <path d="M 490 248 L 490 275 L 440 275" class="system-diagram-line" marker-end={arrowUrl} />
+        <circle cx="490" cy="275" r="4" class="system-takeoff-dot" />
+        <foreignObject x="500" y="260" width="55" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('y[n-2]')} /></div>
+        </foreignObject>
         <rect x="385" y="257" width="55" height="36" rx="4" class="system-block-rect" />
         <foreignObject x="385" y="257" width="55" height="36">
           <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center"><span class="system-diagram-katex" set:html={math(poles[1] || '-a_2')} /></div>
         </foreignObject>
-        <path d="M 385 275 L 340 275 L 340 170" class="system-diagram-line" />
+        <path d="M 385 275 L 350 275 L 350 170" class="system-diagram-line" />
       </svg>
     )}
 
@@ -573,6 +601,8 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="130" cy="60" r="16" class="system-sum-junction" />
         <line x1="120" y1="60" x2="140" y2="60" class="system-sum-cross" />
         <line x1="130" y1="50" x2="130" y2="70" class="system-sum-cross" />
+        <text x="108" y="54" class="system-port-sign">+</text>
+        <text x="136" y="88" class="system-port-sign">+</text>
 
         <!-- Para a Coluna Central de Atrasadores w[n] -->
         <path d="M 146 60 L 330 60" class="system-diagram-line" />
@@ -602,6 +632,9 @@ const arrowUrl = `url(#${arrowId})`;
         </foreignObject>
 
         <circle cx="330" cy="285" r="4" class="system-takeoff-dot" />
+        <foreignObject x="335" y="270" width="60" height="30">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="system-fo-center text-xs"><span set:html={math('w[n-2]')} /></div>
+        </foreignObject>
         <path d="M 330 258 L 330 285" class="system-diagram-line" />
 
         <!-- Ganhos Feedforward (Zeros: b0, b1, b2) -->
@@ -630,6 +663,8 @@ const arrowUrl = `url(#${arrowId})`;
         <circle cx="530" cy="60" r="16" class="system-sum-junction" />
         <line x1="520" y1="60" x2="540" y2="60" class="system-sum-cross" />
         <line x1="530" y1="50" x2="530" y2="70" class="system-sum-cross" />
+        <text x="508" y="54" class="system-port-sign">+</text>
+        <text x="536" y="88" class="system-port-sign">+</text>
 
         <path d="M 546 60 L 635 60" class="system-diagram-line" marker-end={arrowUrl} />
         <foreignObject x="580" y="25" width="60" height="30">
@@ -764,6 +799,13 @@ const arrowUrl = `url(#${arrowId})`;
     font-family: var(--reader-font-family, serif);
   }
 
+  .system-diagram-svg foreignObject {
+    overflow: visible;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
   .system-diagram-arrow {
     fill: var(--border-strong);
   }
@@ -809,6 +851,8 @@ const arrowUrl = `url(#${arrowId})`;
     font-size: 13px;
     fill: var(--text-secondary);
     user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
   }
 
   .system-fo-center {
@@ -819,7 +863,10 @@ const arrowUrl = `url(#${arrowId})`;
     justify-content: center;
     text-align: center;
     color: var(--text-primary);
+    line-height: 1.2;
     overflow: visible;
+    pointer-events: none;
+    user-select: none;
   }
 
   .system-diagram-katex {
@@ -827,5 +874,24 @@ const arrowUrl = `url(#${arrowId})`;
     align-items: center;
     justify-content: center;
     font-size: 0.95em;
+    max-width: 95%;
+  }
+
+  .system-diagram-katex :global(.katex) {
+    font-size: 1.05em;
+  }
+
+  .diagram-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .diagram-viewport::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .diagram-viewport::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 9999px;
   }
 </style>
