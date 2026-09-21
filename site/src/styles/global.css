@@ -391,7 +391,7 @@ table.academic-table tbody tr:hover {
 }
 
 /* ============================================================
-   ANIMAÇÃO DE ATERRISSAGEM E ROLAGEM ADAPTATIVA
+   ROLAGEM ADAPTATIVA E MARGEM DE SCROLL
    ============================================================ */
 section[id],
 div[id],
@@ -400,18 +400,4 @@ h2[id],
 h3[id],
 h4[id] {
   scroll-margin-top: 5rem;
-}
-
-@keyframes sectionHighlightFade {
-  0% {
-    background-color: var(--accent-subtle);
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-.section-jump-highlight {
-  animation: sectionHighlightFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  border-radius: 6px;
 }

@@ -310,11 +310,6 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
           if (history.pushState) {
             history.pushState(null, '', href);
           }
-
-          // Efeito visual sutil de aterrissagem na seção para orientar a leitura
-          targetEl.classList.remove('section-jump-highlight');
-          void targetEl.offsetWidth;
-          targetEl.classList.add('section-jump-highlight');
         });
       });
 
