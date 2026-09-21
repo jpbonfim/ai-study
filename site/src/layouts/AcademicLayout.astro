@@ -28,7 +28,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
 ---
 
 <!doctype html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
@@ -55,6 +55,11 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
         root.classList.add('dark', 'theme-dark');
       } else {
         root.classList.add('theme-paper');
+      }
+
+      // Evita animação indesejada de scroll ao navegar para âncoras/seções
+      if (window.location.hash) {
+        root.style.scrollBehavior = 'auto';
       }
 
       // Aplica preferências personalizadas salvas
@@ -317,12 +322,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
 
           if (isFar) {
             // Salto instantâneo sem rolagem excessiva
-            const root = document.documentElement;
-            root.classList.remove('scroll-smooth');
             window.scrollTo({ top: targetPos, behavior: 'auto' });
-            requestAnimationFrame(() => {
-              root.classList.add('scroll-smooth');
-            });
           } else {
             // Para distâncias curtas, mantém rolagem suave agradável
             window.scrollTo({ top: targetPos, behavior: 'smooth' });
@@ -336,17 +336,21 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       });
 
       // Se a página carregar com âncora na URL (ex: navegou de uma questão direto para uma seção da teoria):
+      // Pousa instantaneamente sem animação de rolagem desde o topo
       if (window.location.hash) {
+        document.documentElement.style.scrollBehavior = 'auto';
         const initialHashId = window.location.hash.slice(1);
-        const initialHashEl = document.getElementById(initialHashId);
-        if (initialHashEl) {
-          setTimeout(() => {
+        const scrollToTarget = () => {
+          const initialHashEl = document.getElementById(initialHashId);
+          if (initialHashEl) {
             const isMobile = window.innerWidth < 1024;
             const headerOffset = isMobile ? 70 : 35;
             const targetPos = Math.max(0, initialHashEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-            window.scrollTo({ top: targetPos, behavior: 'auto' });
-          }, 80);
-        }
+            window.scrollTo({ top: targetPos, behavior: 'instant' });
+          }
+        };
+        scrollToTarget();
+        requestAnimationFrame(scrollToTarget);
       }
 
       // 1. Validação de Gestos Touch no Celular:
