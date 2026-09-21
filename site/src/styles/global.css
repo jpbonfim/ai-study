@@ -64,11 +64,14 @@
   }
 }
 
-/* Variáveis de Configuração Pessoal de Leitura */
+/* Variáveis de Configuração Pessoal de Leitura e Código */
 :root {
   --reader-font-family: 'Newsreader', 'EB Garamond', 'Lora', Charter, 'Bitstream Charter', Cambria, Georgia, serif;
   --reader-font-size: 1.125rem;
   --reader-max-width: 48rem; /* 768px */
+  --code-font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  --code-font-size: 0.8125rem; /* ~13px */
+  --code-line-height: 1.58;
 }
 
 html, body {
@@ -842,48 +845,150 @@ h4[id] {
 }
 
 /* ============================================================
-   BLOCOS DE CÓDIGO (.code-block-card)
+   ESTILIZAÇÃO ACADÊMICA DE BLOCOS DE CÓDIGO (.code-block-card)
    ============================================================ */
 
+/* Variáveis padrão de tema do cartão de código (Dark por padrão) */
 .code-block-card {
+  --code-card-bg: #1a1d24;
+  --code-card-header-bg: #14161b;
+  --code-card-border: #2c323d;
+  --code-card-text: #e1e4e8;
+  --code-badge-color: var(--accent);
   width: 100%;
   max-width: 100%;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--code-card-border);
   border-radius: 8px;
-  background-color: var(--code-bg);
+  background-color: var(--code-card-bg);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  margin: 1.5rem 0;
+}
+
+/* Tema de Código: Papel / Sépia */
+html[data-code-theme="paper"] .code-block-card,
+html[data-code-theme="match"].theme-paper .code-block-card {
+  --code-card-bg: #f4ebd9;
+  --code-card-header-bg: #ebe0cc;
+  --code-card-border: #d4c5b0;
+  --code-card-text: #2c251e;
+  --code-badge-color: #8b3e1f;
+}
+
+/* Tema de Código: OLED */
+html[data-code-theme="oled"] .code-block-card,
+html[data-code-theme="match"].theme-oled .code-block-card {
+  --code-card-bg: #000000;
+  --code-card-header-bg: #0d0d0d;
+  --code-card-border: #222222;
+  --code-card-text: #f0f0f0;
+  --code-badge-color: #e5b378;
+}
+
+/* Tema de Código: Escuro */
+html[data-code-theme="dark"] .code-block-card,
+html[data-code-theme="match"].theme-dark .code-block-card {
+  --code-card-bg: #1a1d24;
+  --code-card-header-bg: #14161b;
+  --code-card-border: #2c323d;
+  --code-card-text: #e1e4e8;
+  --code-badge-color: var(--accent);
 }
 
 .code-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.45rem 0.85rem;
-  background-color: var(--bg-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.85rem;
+  background-color: var(--code-card-header-bg);
+  border-bottom: 1px solid var(--code-card-border);
+}
+
+.code-block-lang {
+  color: var(--code-badge-color);
 }
 
 .code-copy-btn {
   user-select: none;
   touch-action: manipulation;
+  background-color: var(--code-card-header-bg);
+  border-color: var(--code-card-border);
+  color: var(--code-card-text);
+  opacity: 0.85;
 }
 
 .code-copy-btn:hover {
+  opacity: 1;
   border-color: var(--accent);
 }
 
 .code-copy-btn.is-copied {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
 }
 
-.code-block-card pre {
+/* Elemento <pre> e <code> interno com tipografia rigorosamente monoespaçada e tamanho reduzido */
+.code-block-card pre,
+.academic-prose pre,
+.reader-content pre,
+.resolution-content pre {
   margin: 0 !important;
   border: none !important;
   border-radius: 0 !important;
   max-width: 100% !important;
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 1.25rem !important;
+  padding: 0.95rem 1.25rem !important;
+  background-color: transparent !important;
+  font-family: var(--code-font-family) !important;
+  font-size: var(--code-font-size) !important;
+  line-height: var(--code-line-height) !important;
+}
+
+.code-block-card pre code,
+.academic-prose pre code,
+.reader-content pre code,
+.resolution-content pre code {
+  font-family: var(--code-font-family) !important;
+  font-size: var(--code-font-size) !important;
+  line-height: var(--code-line-height) !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  letter-spacing: normal !important;
+}
+
+/* Código Inline (`variavel`) */
+:not(pre) > code {
+  font-family: var(--code-font-family) !important;
+  font-size: 0.84em !important;
+  padding: 0.15em 0.38em !important;
+  border-radius: 4px !important;
+  background-color: var(--code-bg) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--accent) !important;
+}
+
+/* Customização dos Nós e Arestas do Mermaid no estilo acadêmico */
+.diagram-viewport svg .node rect,
+.diagram-viewport svg .node circle,
+.diagram-viewport svg .node polygon,
+.diagram-modal-content svg .node rect,
+.diagram-modal-content svg .node circle,
+.diagram-modal-content svg .node polygon {
+  stroke-width: 1.5px !important;
+  rx: 5px !important;
+  ry: 5px !important;
+}
+
+.diagram-viewport svg .cluster rect,
+.diagram-modal-content svg .cluster rect {
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 4 3 !important;
+  rx: 8px !important;
+}
+
+.diagram-viewport svg .edgePath .path,
+.diagram-modal-content svg .edgePath .path {
+  stroke-width: 1.5px !important;
 }

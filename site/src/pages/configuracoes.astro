@@ -450,7 +450,196 @@ import { MATERIAS } from '../data/materias';
               </div>
             </div>
 
-            <!-- 4. Demonstração Dinâmica da Pré-Visualização -->
+            <!-- 4. Exibição de Código (Tema e Fonte Monoespaçada) -->
+            <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
+              <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+                <div>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">
+                    4. Exibição de Blocos de Código
+                  </label>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Personalize o tema visual, a fonte monoespaçada e o tamanho das fontes dos algoritmos:
+                  </p>
+                </div>
+                <span id="active-code-badge" class="font-mono text-xs text-[var(--accent)] font-semibold bg-[var(--bg-subtle)] px-2.5 py-1 rounded border border-[var(--border-subtle)]">
+                  JetBrains • 13px (Salvo)
+                </span>
+              </div>
+
+              <!-- 4.1 Tema do Código -->
+              <div class="space-y-2.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                  Tema de Cores do Código
+                </span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    data-code-theme-opt="dark"
+                    class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-3 h-3 rounded-full bg-[#1e2227] border border-[#3d4450]"></span>
+                      <span class="font-bold text-xs">Escuro</span>
+                    </div>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">GitHub Dark</span>
+                    <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-theme-opt="paper"
+                    class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-3 h-3 rounded-full bg-[#f4ebd9] border border-[#c2b3a0]"></span>
+                      <span class="font-bold text-xs">Papel</span>
+                    </div>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Sépia / Livro</span>
+                    <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-theme-opt="oled"
+                    class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-3 h-3 rounded-full bg-[#000000] border border-[#444444]"></span>
+                      <span class="font-bold text-xs">OLED</span>
+                    </div>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Preto Puro</span>
+                    <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-theme-opt="match"
+                    class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-3 h-3 rounded-full bg-gradient-to-r from-[#f4ebd9] to-[#1e2227] border border-[var(--border-subtle)]"></span>
+                      <span class="font-bold text-xs">Acompanhar</span>
+                    </div>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Modo de Leitura</span>
+                    <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 4.2 Fonte Monoespaçada -->
+              <div class="space-y-2.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                  Família da Fonte Monoespaçada
+                </span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    data-code-font-opt="jetbrains"
+                    class="code-font-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span style="font-family: 'JetBrains Mono', monospace;" class="text-sm font-bold">
+                        JetBrains Mono
+                      </span>
+                      <span class="code-font-status-tag text-[9px] font-mono font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)]">Otimizada para leitura técnica de equações e algoritmos.</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-font-opt="fira"
+                    class="code-font-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span style="font-family: 'Fira Code', monospace;" class="text-sm font-bold">
+                        Fira Code
+                      </span>
+                      <span class="code-font-status-tag text-[9px] font-mono font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)]">Geométrica e nítida com caracteres diferenciados.</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-font-opt="system"
+                    class="code-font-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" class="text-sm font-bold">
+                        SF Mono / Sistema
+                      </span>
+                      <span class="code-font-status-tag text-[9px] font-mono font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)]">Nativa do sistema operacional (alta performance gráfica).</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-font-opt="courier"
+                    class="code-font-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span style="font-family: 'Courier New', Courier, monospace;" class="text-sm font-bold">
+                        Courier New (Retrô)
+                      </span>
+                      <span class="code-font-status-tag text-[9px] font-mono font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                    </div>
+                    <p class="text-xs text-[var(--text-muted)]">Estilo clássico de relatórios científicos impressos.</p>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 4.3 Tamanho da Fonte do Código -->
+              <div class="space-y-2.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                  Tamanho da Fonte do Código (Compacto por Padrão)
+                </span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    data-code-size-opt="12px"
+                    class="code-size-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Compacto</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">12px</span>
+                    <span class="code-size-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-size-opt="13px"
+                    class="code-size-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Padrão</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">13px</span>
+                    <span class="code-size-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-size-opt="14px"
+                    class="code-size-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Médio</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">14px</span>
+                    <span class="code-size-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-size-opt="15px"
+                    class="code-size-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Grande</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">15px</span>
+                    <span class="code-size-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Demonstração Dinâmica da Pré-Visualização -->
             <div class="space-y-2 pt-2">
               <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Pré-Visualização em Tempo Real</span>
@@ -487,29 +676,42 @@ import { MATERIAS } from '../data/materias';
                     <!-- Demonstração de Tabela Acadêmica no Preview -->
                     <div class="pt-4 border-t border-[var(--border-subtle)] space-y-2">
                       <div class="sans-ui text-[11px] font-mono uppercase tracking-wider text-[var(--accent)] font-semibold">
-                        Tabela de Síntese (Cabeçalho na Fonte Selecionada e Células Otimizadas)
+                        Tabela de Síntese
                       </div>
                       <table class="academic-table" id="preview-sample-table">
                         <thead>
                           <tr>
                             <th>Critério Fundamental</th>
                             <th>Relação Matemática</th>
-                            <th>Descrição Teórica e Comportamento</th>
+                            <th>Descrição Teórica</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
                             <td><strong>Taxa de Nyquist</strong></td>
                             <td>&omega;<sub>s</sub> &gt; 2 &omega;<sub>M</sub></td>
-                            <td>Condição necessária e suficiente para reconstrução sem distorção espectral.</td>
-                          </tr>
-                          <tr>
-                            <td><strong>Filtro Reconstrutor</strong></td>
-                            <td>H<sub>r</sub>(j&omega;) = T, &nbsp; |&omega;| &le; &pi;/T</td>
-                            <td>Interpolação ideal do tipo sinc no tempo contínuo com ganho uniforme T.</td>
+                            <td>Condição necessária e suficiente para reconstrução sem distorção.</td>
                           </tr>
                         </tbody>
                       </table>
+                    </div>
+
+                    <!-- Demonstração de Bloco de Código no Preview -->
+                    <div class="pt-4 border-t border-[var(--border-subtle)] space-y-2">
+                      <div class="sans-ui text-[11px] font-mono uppercase tracking-wider text-[var(--accent)] font-semibold">
+                        Bloco de Código (Fonte Mono e Tema Selecionados)
+                      </div>
+                      <div class="code-block-card" id="preview-sample-code-card">
+                        <div class="code-block-header">
+                          <div class="code-block-lang flex items-center gap-1.5 font-mono text-xs font-bold">
+                            <span>PYTHON</span>
+                          </div>
+                          <span class="text-[10px] font-mono opacity-60">Prévia</span>
+                        </div>
+                        <pre id="preview-sample-code"><code id="preview-sample-code-inner">def filtro_fir(x, b):
+    # Convolução temporal discreta
+    return [sum(b[k] * x[n-k] for k in range(len(b)) if n-k >= 0) for n in range(len(x))]</code></pre>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -566,16 +768,37 @@ import { MATERIAS } from '../data/materias';
         mono: 'JetBrains Mono'
       };
 
+      const codeFontsMap = {
+        jetbrains: "'JetBrains Mono', monospace",
+        fira: "'Fira Code', monospace",
+        system: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+        courier: "'Courier New', Courier, monospace"
+      };
+
+      const codeFontLabels = {
+        jetbrains: 'JetBrains Mono',
+        fira: 'Fira Code',
+        system: 'SF Mono',
+        courier: 'Courier New'
+      };
+
       const defaultFontKey = 'garamond';
       const defaultSize = '18px';
       const defaultWidth = '768px';
+      const defaultCodeTheme = 'match';
+      const defaultCodeFontKey = 'jetbrains';
+      const defaultCodeSize = '13px';
 
       // 1. Estado Salvo Atualmente no Sistema
       let savedState = {
         fontKey: localStorage.getItem('study_font_key') || defaultFontKey,
         fontFamily: localStorage.getItem('study_font_family') || fontsMap[defaultFontKey],
         fontSize: localStorage.getItem('study_font_size') || defaultSize,
-        maxWidth: localStorage.getItem('study_max_width') || defaultWidth
+        maxWidth: localStorage.getItem('study_max_width') || defaultWidth,
+        codeTheme: localStorage.getItem('study_code_theme') || defaultCodeTheme,
+        codeFontKey: localStorage.getItem('study_code_font_key') || defaultCodeFontKey,
+        codeFont: localStorage.getItem('study_code_font') || codeFontsMap[defaultCodeFontKey],
+        codeSize: localStorage.getItem('study_code_size') || defaultCodeSize
       };
 
       // 2. Estado de Rascunho / Demonstração (Não salvo até clicar em Salvar)
@@ -607,6 +830,9 @@ import { MATERIAS } from '../data/materias';
       const customWidthInput = document.getElementById('custom-width-input');
       const statusDot = document.getElementById('status-dot');
       const statusMessage = document.getElementById('status-message');
+      const previewCodeCard = document.getElementById('preview-sample-code-card');
+      const previewCode = document.getElementById('preview-sample-code');
+      const previewCodeInner = document.getElementById('preview-sample-code-inner');
 
       function updatePreview() {
         if (previewText) {
@@ -624,13 +850,26 @@ import { MATERIAS } from '../data/materias';
           const fName = fontLabels[draftState.fontKey] || draftState.fontKey;
           previewMeta.textContent = `${fName} • ${draftState.fontSize} • ${draftState.maxWidth}`;
         }
+        if (previewCode) {
+          previewCode.style.fontFamily = draftState.codeFont;
+          previewCode.style.fontSize = draftState.codeSize;
+          previewCode.style.setProperty('--code-font-family', draftState.codeFont);
+          previewCode.style.setProperty('--code-font-size', draftState.codeSize);
+        }
+        if (previewCodeInner) {
+          previewCodeInner.style.fontFamily = draftState.codeFont;
+          previewCodeInner.style.fontSize = draftState.codeSize;
+        }
+        if (previewCodeCard) {
+          previewCodeCard.setAttribute('data-code-theme', draftState.codeTheme);
+        }
         if (typeof window !== 'undefined' && typeof window.__reoptimizeAcademicTables === 'function') {
           window.__reoptimizeAcademicTables();
         }
       }
 
       function updateUI() {
-        // 1. Atualiza seleção de Fonte
+        // 1. Atualiza seleção de Fonte de Leitura
         document.querySelectorAll('.font-opt-btn').forEach((btn) => {
           const k = btn.getAttribute('data-font');
           const isDraft = k === draftState.fontKey;
@@ -653,7 +892,7 @@ import { MATERIAS } from '../data/materias';
           activeFontBadge.textContent = `${fontLabels[savedState.fontKey] || savedState.fontKey} (Salvo)`;
         }
 
-        // 2. Atualiza seleção de Tamanho
+        // 2. Atualiza seleção de Tamanho de Leitura
         const numericDraftSize = parseInt(draftState.fontSize, 10) || 18;
         if (customSizeInput && document.activeElement !== customSizeInput) {
           customSizeInput.value = numericDraftSize;
@@ -681,7 +920,7 @@ import { MATERIAS } from '../data/materias';
           activeSizeBadge.textContent = `${savedState.fontSize} (Salvo)`;
         }
 
-        // 3. Atualiza seleção de Largura
+        // 3. Atualiza seleção de Largura da Página
         const numericDraftWidth = parseInt(draftState.maxWidth, 10) || 768;
         if (customWidthInput && document.activeElement !== customWidthInput) {
           customWidthInput.value = numericDraftWidth;
@@ -709,11 +948,74 @@ import { MATERIAS } from '../data/materias';
           activeWidthBadge.textContent = `${savedState.maxWidth} (Salvo)`;
         }
 
-        // 4. Verifica se há alterações pendentes de salvamento
+        // 4. Atualiza seleção de Tema do Código
+        document.querySelectorAll('.code-theme-opt-btn').forEach((btn) => {
+          const t = btn.getAttribute('data-code-theme-opt');
+          const isDraft = t === draftState.codeTheme;
+          const isSaved = t === savedState.codeTheme;
+
+          const tag = btn.querySelector('.code-theme-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        // 5. Atualiza seleção de Fonte do Código
+        document.querySelectorAll('.code-font-opt-btn').forEach((btn) => {
+          const f = btn.getAttribute('data-code-font-opt');
+          const isDraft = f === draftState.codeFontKey;
+          const isSaved = f === savedState.codeFontKey;
+
+          const tag = btn.querySelector('.code-font-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        // 6. Atualiza seleção de Tamanho do Código
+        document.querySelectorAll('.code-size-opt-btn').forEach((btn) => {
+          const s = btn.getAttribute('data-code-size-opt');
+          const isDraft = s === draftState.codeSize;
+          const isSaved = s === savedState.codeSize;
+
+          const tag = btn.querySelector('.code-size-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        const activeCodeBadge = document.getElementById('active-code-badge');
+        if (activeCodeBadge) {
+          const cFontName = codeFontLabels[savedState.codeFontKey] || savedState.codeFontKey;
+          activeCodeBadge.textContent = `${cFontName} • ${savedState.codeSize} (Salvo)`;
+        }
+
+        // 7. Verifica se há alterações pendentes de salvamento
         const hasUnsavedChanges =
           draftState.fontKey !== savedState.fontKey ||
           draftState.fontSize !== savedState.fontSize ||
-          draftState.maxWidth !== savedState.maxWidth;
+          draftState.maxWidth !== savedState.maxWidth ||
+          draftState.codeTheme !== savedState.codeTheme ||
+          draftState.codeFontKey !== savedState.codeFontKey ||
+          draftState.codeSize !== savedState.codeSize;
 
         if (statusDot) {
           statusDot.className = hasUnsavedChanges
@@ -786,6 +1088,40 @@ import { MATERIAS } from '../data/materias';
       customWidthInput?.addEventListener('input', handleCustomWidth);
       document.getElementById('apply-custom-width-btn')?.addEventListener('click', handleCustomWidth);
 
+      // Eventos de clique nas opções de Código: Tema
+      document.querySelectorAll('.code-theme-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const t = btn.getAttribute('data-code-theme-opt');
+          if (t) {
+            draftState.codeTheme = t;
+            updateUI();
+          }
+        });
+      });
+
+      // Eventos de clique nas opções de Código: Fonte
+      document.querySelectorAll('.code-font-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const f = btn.getAttribute('data-code-font-opt');
+          if (f && codeFontsMap[f]) {
+            draftState.codeFontKey = f;
+            draftState.codeFont = codeFontsMap[f];
+            updateUI();
+          }
+        });
+      });
+
+      // Eventos de clique nas opções de Código: Tamanho
+      document.querySelectorAll('.code-size-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = btn.getAttribute('data-code-size-opt');
+          if (s) {
+            draftState.codeSize = s;
+            updateUI();
+          }
+        });
+      });
+
       // Função de Salvamento Global
       function saveChanges() {
         savedState = { ...draftState };
@@ -796,11 +1132,20 @@ import { MATERIAS } from '../data/materias';
         localStorage.setItem('study_font_size', savedState.fontSize);
         localStorage.setItem('study_max_width', savedState.maxWidth);
 
+        localStorage.setItem('study_code_theme', savedState.codeTheme);
+        localStorage.setItem('study_code_font_key', savedState.codeFontKey);
+        localStorage.setItem('study_code_font', savedState.codeFont);
+        localStorage.setItem('study_code_size', savedState.codeSize);
+
         // Aplica imediatamente ao documento
         const root = document.documentElement;
         root.style.setProperty('--reader-font-family', savedState.fontFamily);
         root.style.setProperty('--reader-font-size', savedState.fontSize);
         root.style.setProperty('--reader-max-width', savedState.maxWidth);
+
+        root.setAttribute('data-code-theme', savedState.codeTheme);
+        root.style.setProperty('--code-font-family', savedState.codeFont);
+        root.style.setProperty('--code-font-size', savedState.codeSize);
 
         updateUI();
 
@@ -819,7 +1164,11 @@ import { MATERIAS } from '../data/materias';
           fontKey: defaultFontKey,
           fontFamily: fontsMap[defaultFontKey],
           fontSize: defaultSize,
-          maxWidth: defaultWidth
+          maxWidth: defaultWidth,
+          codeTheme: defaultCodeTheme,
+          codeFontKey: defaultCodeFontKey,
+          codeFont: codeFontsMap[defaultCodeFontKey],
+          codeSize: defaultCodeSize
         };
 
         saveChanges();
@@ -827,6 +1176,35 @@ import { MATERIAS } from '../data/materias';
         if (statusMessage) {
           statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Padrões de fábrica restaurados!</strong>';
         }
+      });
+
+      // Inicializa a interface
+      updateUI();
+
+      // Drawer Mobile nas Configurações
+      const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
+      const sidebar = document.getElementById('settings-sidebar');
+      const backdrop = document.getElementById('settings-sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar?.classList.remove('-translate-x-full');
+        backdrop?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+      }
+
+      function closeSidebar() {
+        sidebar?.classList.add('-translate-x-full');
+        backdrop?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+      }
+
+      sidebarToggle?.addEventListener('click', openSidebar);
+      backdrop?.addEventListener('click', closeSidebar);
+
+      sidebar?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1024) closeSidebar();
+        });
       });
 
       // Inicializa a interface

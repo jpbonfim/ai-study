@@ -5,14 +5,13 @@ import mermaid from 'mermaid';
  * - Detecta blocos de código com linguagem 'mermaid' (```mermaid ... ```) e blocos com classe .diagram-block
  * - Renderiza os fluxogramas/diagramas com o Mermaid usando tema adaptado ao modo de leitura
  * - Empacota o SVG em um container ergonômico (.diagram-card):
- *    - Tenta mostrar todo o diagrama na tela quando possível (max-width: 100%)
- *    - Se exceder a largura ou para preservar legibilidade, permite scroll horizontal livre (overflow-x: auto)
- *    - Limita a altura vertical máxima sem scroll vertical no bloco (max-height: 480px, overflow-y: hidden)
- *    - Adiciona botão com ícone de olho para abrir modal com visualização, pan (navegação) e zoom
+ *    - Mostra todo o diagrama na tela quando possível sem corte vertical ou horizontal (object-fit: contain)
+ *    - Se exceder a largura em telas estreitas, permite scroll horizontal livre (overflow-x: auto)
+ *    - Limita a altura vertical máxima sem scroll vertical no bloco (max-height: 520px, overflow-y: hidden)
+ *    - Adiciona botão com ícone de olho para abrir modal com visualização completa, pan (navegação) e zoom
  *    - Modal interativo com botões de zoom (+, -, reset), controle por mouse wheel, drag e pinch, e botão de X para fechar
  */
 
-// Estado global do modal de visualização
 interface ModalState {
   scale: number;
   panX: number;
@@ -148,7 +147,7 @@ function setupModalEvents(modal: HTMLElement): void {
 
   function applyTransform(smooth = false): void {
     if (!modalContent) return;
-    modalContent.style.transition = smooth ? 'transform 0.18s ease-out' : 'none';
+    modalContent.style.transition = smooth ? 'transform 0.15s ease-out' : 'none';
     modalContent.style.transform = `translate3d(${modalState.panX}px, ${modalState.panY}px, 0) scale(${modalState.scale})`;
     if (modalZoomLevelEl) {
       modalZoomLevelEl.textContent = `${Math.round(modalState.scale * 100)}%`;
@@ -156,12 +155,27 @@ function setupModalEvents(modal: HTMLElement): void {
   }
 
   function setZoom(newScale: number, smooth = true): void {
-    modalState.scale = Math.max(0.2, Math.min(5.0, newScale));
+    modalState.scale = Math.max(0.15, Math.min(6.0, newScale));
     applyTransform(smooth);
   }
 
   function resetView(): void {
-    modalState.scale = 1;
+    if (!modalState.svgElement || !modalCanvas) {
+      modalState.scale = 1;
+      modalState.panX = 0;
+      modalState.panY = 0;
+      applyTransform(true);
+      return;
+    }
+
+    const svgW = parseFloat(modalState.svgElement.getAttribute('width') || '800') || 800;
+    const svgH = parseFloat(modalState.svgElement.getAttribute('height') || '600') || 600;
+    const canvasRect = modalCanvas.getBoundingClientRect();
+    const padW = Math.max(200, canvasRect.width - 60);
+    const padH = Math.max(200, canvasRect.height - 60);
+
+    const fitScale = Math.min(1.2, padW / svgW, padH / svgH);
+    modalState.scale = Math.max(0.2, fitScale);
     modalState.panX = 0;
     modalState.panY = 0;
     applyTransform(true);
@@ -198,7 +212,7 @@ function setupModalEvents(modal: HTMLElement): void {
     const mouseY = e.clientY - rect.top - rect.height / 2;
 
     const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const newScale = Math.max(0.2, Math.min(5.0, modalState.scale * zoomFactor));
+    const newScale = Math.max(0.15, Math.min(6.0, modalState.scale * zoomFactor));
 
     // Ajusta o pan para aproximar/afastar do ponto do mouse
     modalState.panX -= (mouseX - modalState.panX) * (newScale / modalState.scale - 1);
@@ -256,7 +270,7 @@ function setupModalEvents(modal: HTMLElement): void {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.hypot(dx, dy);
       const factor = dist / modalState.initialPinchDist;
-      modalState.scale = Math.max(0.2, Math.min(5.0, modalState.initialScale * factor));
+      modalState.scale = Math.max(0.15, Math.min(6.0, modalState.initialScale * factor));
       applyTransform(false);
     }
   }, { passive: true });
@@ -268,7 +282,7 @@ function setupModalEvents(modal: HTMLElement): void {
 }
 
 /**
- * Abre o modal de visualização de diagrama com o SVG selecionado
+ * Abre o modal de visualização de diagrama com o SVG selecionado garantindo dimensões reais
  */
 export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   const modal = getOrCreateModal();
@@ -277,14 +291,20 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   modalContent.innerHTML = '';
   const clonedSvg = svgSource.cloneNode(true) as SVGElement;
 
-  // Garante que o SVG no modal tenha tamanho intrínseco livre para zoom
-  clonedSvg.removeAttribute('width');
-  clonedSvg.removeAttribute('height');
+  // Obtém as dimensões reais do viewBox da SVG
+  const vb = svgSource.viewBox?.baseVal;
+  let w = vb && vb.width > 0 ? vb.width : (svgSource.clientWidth || 800);
+  let h = vb && vb.height > 0 ? vb.height : (svgSource.clientHeight || 600);
+
+  // Fixa dimensões intrínsecas explícitas no SVG clonado para que NUNCA colapse para 0x0
+  clonedSvg.setAttribute('width', `${w}`);
+  clonedSvg.setAttribute('height', `${h}`);
+  clonedSvg.removeAttribute('style');
+  clonedSvg.style.width = `${w}px`;
+  clonedSvg.style.height = `${h}px`;
+  clonedSvg.style.display = 'block';
   clonedSvg.style.maxWidth = 'none';
   clonedSvg.style.maxHeight = 'none';
-  clonedSvg.style.width = 'auto';
-  clonedSvg.style.height = 'auto';
-  clonedSvg.style.display = 'block';
 
   modalContent.appendChild(clonedSvg);
   modalState.svgElement = clonedSvg;
@@ -293,14 +313,23 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
     modalTitleEl.textContent = title || 'Visualizador de Diagrama';
   }
 
-  // Reseta estado para visualização inicial
-  modalState.scale = 1;
+  // Dimensões da janela visível para ajuste inicial automático
+  const canvasW = modalCanvas ? modalCanvas.clientWidth : window.innerWidth;
+  const canvasH = modalCanvas ? modalCanvas.clientHeight : (window.innerHeight - 80);
+
+  const padW = Math.max(200, canvasW - 80);
+  const padH = Math.max(200, canvasH - 80);
+
+  // Escala que ajusta perfeitamente o diagrama à tela no carregamento inicial
+  const fitScale = Math.min(1.2, padW / w, padH / h);
+  modalState.scale = Math.max(0.2, fitScale);
   modalState.panX = 0;
   modalState.panY = 0;
   modalState.isDragging = false;
-  modalContent.style.transform = 'translate3d(0, 0, 0) scale(1)';
+
+  modalContent.style.transform = `translate3d(0, 0, 0) scale(${modalState.scale})`;
   if (modalZoomLevelEl) {
-    modalZoomLevelEl.textContent = '100%';
+    modalZoomLevelEl.textContent = `${Math.round(modalState.scale * 100)}%`;
   }
 
   // Trava o scroll da página
@@ -318,43 +347,60 @@ export function closeModal(): void {
 }
 
 /**
+ * Retorna as variáveis de tema refinadas no estilo acadêmico clássico
+ */
+function getMermaidConfig(isDark: boolean, isOled: boolean) {
+  return {
+    startOnLoad: false,
+    securityLevel: 'loose' as const,
+    theme: 'base' as const,
+    themeVariables: {
+      darkMode: isDark,
+      fontFamily: 'var(--reader-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
+      fontSize: '13px',
+      primaryColor: isDark ? (isOled ? '#141414' : '#1e2229') : '#fdfbf7',
+      primaryTextColor: isDark ? '#e6e4df' : '#221e1a',
+      primaryBorderColor: isDark ? '#4a5568' : '#7d6f61',
+      lineColor: isDark ? '#9da7b7' : '#5c5042',
+      secondaryColor: isDark ? '#16191f' : '#f4ebd9',
+      tertiaryColor: isDark ? '#0f1115' : '#fcf8ef',
+      clusterBkg: isDark ? (isOled ? '#0a0a0a' : '#16191f') : '#f5ece0',
+      clusterBorder: isDark ? '#3d4450' : '#b8a896',
+      edgeLabelBackground: isDark ? '#1e2229' : '#fdfbf7',
+      nodeBorder: isDark ? '#4a5568' : '#7d6f61',
+      mainBkg: isDark ? (isOled ? '#141414' : '#1e2229') : '#fdfbf7',
+      titleColor: isDark ? '#e6e4df' : '#221e1a',
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis' as const,
+      padding: 16,
+      nodeSpacing: 42,
+      rankSpacing: 42,
+      useMaxWidth: false,
+    },
+  };
+}
+
+/**
  * Inicializa e processa todos os diagramas da página
  */
 export async function initDiagrams(): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  // Cria modal singleton de visualização
   getOrCreateModal();
 
-  // Obtém o tema atual para estilizar o Mermaid
-  const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('academic_theme') || 'paper';
+  const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('study_theme') || 'paper';
   const isDark = currentTheme === 'dark' || currentTheme === 'oled';
+  const isOled = currentTheme === 'oled';
 
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: 'loose',
-    theme: isDark ? 'dark' : 'neutral',
-    fontFamily: 'inherit',
-  });
+  mermaid.initialize(getMermaidConfig(isDark, isOled));
 
-  let lastTheme = '';
-
-  // 1. Busca blocos gerados por markdown (```mermaid)
-  const mermaidCodeBlocks = Array.from(
-    document.querySelectorAll<HTMLElement>('.academic-prose pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"]')
-  );
-
-  // 2. Busca blocos dedicados .diagram-block
-  const customDiagramBlocks = Array.from(
-    document.querySelectorAll<HTMLElement>('.diagram-block')
-  );
-
-  // 3. Busca cartões já existentes para re-renderizar caso o tema tenha mudado
+  // 1. Re-renderiza cartões já criados se o tema tiver mudado
   const existingCards = Array.from(
     document.querySelectorAll<HTMLElement>('.diagram-card[data-mermaid-code]')
   );
 
-  // Se o tema mudou e já temos cards existentes, re-renderiza
   for (const card of existingCards) {
     const code = card.dataset.mermaidCode;
     const title = card.dataset.diagramTitle || '';
@@ -368,10 +414,7 @@ export async function initDiagrams(): Promise<void> {
         viewport.innerHTML = svg;
         const svgEl = viewport.querySelector('svg') as SVGElement;
         if (svgEl) {
-          const viewBox = svgEl.viewBox?.baseVal;
-          if (viewBox && viewBox.width > 480) {
-            svgEl.style.minWidth = `${Math.min(viewBox.width, 560)}px`;
-          }
+          setupSvgResponsive(svgEl);
           const eyeBtn = card.querySelector('.diagram-eye-btn');
           if (eyeBtn) {
             eyeBtn.onclick = () => {
@@ -381,9 +424,17 @@ export async function initDiagrams(): Promise<void> {
         }
       }
     } catch {
-      // Ignora falhas pontuais de re-renderização
+      // Ignora falhas de re-renderização pontual
     }
   }
+
+  // 2. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
+  const mermaidCodeBlocks = Array.from(
+    document.querySelectorAll<HTMLElement>('.academic-prose pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"]')
+  );
+  const customDiagramBlocks = Array.from(
+    document.querySelectorAll<HTMLElement>('.diagram-block')
+  );
 
   const targets = [...mermaidCodeBlocks, ...customDiagramBlocks];
   if (targets.length === 0) return;
@@ -392,7 +443,6 @@ export async function initDiagrams(): Promise<void> {
     const el = targets[i];
     if (el.dataset.diagramProcessed === 'true') continue;
 
-    // Extrai o código Mermaid
     let code = '';
     let title = el.getAttribute('data-diagram-title') || '';
 
@@ -406,7 +456,6 @@ export async function initDiagrams(): Promise<void> {
     code = code.trim();
     if (!code) continue;
 
-    // Tenta extrair título definido em comentário %% title: Meu Título
     const titleMatch = code.match(/%%\s*title:\s*(.+)/i);
     if (titleMatch && !title) {
       title = titleMatch[1].trim();
@@ -415,10 +464,8 @@ export async function initDiagrams(): Promise<void> {
     const diagramId = `mermaid-diagram-${Date.now()}-${i}`;
 
     try {
-      // Renderiza com a API do Mermaid
       const { svg } = await mermaid.render(diagramId, code);
 
-      // Cria o cartão de apresentação do diagrama (.diagram-card)
       const card = document.createElement('div');
       card.className = 'diagram-card my-8';
       card.setAttribute('data-scrollable', 'true');
@@ -439,10 +486,9 @@ export async function initDiagrams(): Promise<void> {
           <button
             type="button"
             class="diagram-eye-btn flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-xs font-medium cursor-pointer"
-            title="Visualizar diagrama na tela com zoom e navegação"
-            aria-label="Visualizar diagrama na tela com zoom e navegação"
+            title="Visualizar diagrama completo com zoom e navegação"
+            aria-label="Visualizar diagrama completo com zoom e navegação"
           >
-            <!-- Ícone de Olho -->
             <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -451,7 +497,6 @@ export async function initDiagrams(): Promise<void> {
           </button>
         </div>
 
-        <!-- Viewport do Diagrama: Mostra todo na tela quando possível, permite scroll horizontal se exceder, sem scroll vertical no bloco -->
         <div
           class="diagram-viewport"
           tabindex="0"
@@ -462,14 +507,10 @@ export async function initDiagrams(): Promise<void> {
         </div>
       `;
 
-      // Registra evento no botão de Olho e calibra min-width se necessário
       const eyeBtn = card.querySelector('.diagram-eye-btn');
       const svgEl = card.querySelector('.diagram-viewport svg') as SVGElement;
       if (svgEl) {
-        const viewBox = svgEl.viewBox?.baseVal;
-        if (viewBox && viewBox.width > 480) {
-          svgEl.style.minWidth = `${Math.min(viewBox.width, 560)}px`;
-        }
+        setupSvgResponsive(svgEl);
       }
 
       if (eyeBtn && svgEl) {
@@ -478,13 +519,32 @@ export async function initDiagrams(): Promise<void> {
         });
       }
 
-      // Substitui o bloco original pelo cartão renderizado
       el.parentNode?.replaceChild(card, el);
       card.setAttribute('data-diagram-processed', 'true');
     } catch (err) {
       console.warn('[DiagramManager] Erro ao renderizar diagrama mermaid:', err);
-      // Mantém legível com aviso discreto
       el.setAttribute('data-diagram-processed', 'true');
     }
+  }
+}
+
+/**
+ * Calibra a visualização da SVG para que caiba com perfeição sem cortes
+ */
+function setupSvgResponsive(svgEl: SVGElement): void {
+  const vb = svgEl.viewBox?.baseVal;
+  if (!vb) return;
+
+  // Garante que o SVG escale proporcionalmente mantendo seu aspect ratio natural
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svgEl.style.maxWidth = '100%';
+  svgEl.style.maxHeight = '480px';
+  svgEl.style.width = 'auto';
+  svgEl.style.height = 'auto';
+  svgEl.style.display = 'block';
+
+  // Se o diagrama for largo (> 520px) em telas estreitas, garante largura mínima legível para acionar scroll horizontal
+  if (vb.width > 520) {
+    svgEl.style.minWidth = `min(${vb.width}px, 520px)`;
   }
 }
