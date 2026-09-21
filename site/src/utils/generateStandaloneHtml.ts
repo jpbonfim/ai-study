@@ -287,8 +287,8 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
             transition: border-color 0.2s;
         }
 
@@ -297,22 +297,62 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             cursor: pointer;
             outline: none;
             user-select: none;
+            font-size: 13px;
         }
 
         details > div {
             border-top: 1px solid var(--border-subtle);
-            padding-top: 14px;
-            margin-top: 12px;
+            padding-top: 10px;
+            margin-top: 8px;
             overflow-x: auto;
         }
 
         .question-card {
             border: 1px solid var(--border-strong);
             border-radius: 8px;
-            padding: 20px;
-            margin: 28px 0;
+            padding: 14px 16px;
+            margin: 12px 0;
             background: var(--bg-surface);
-            box-shadow: 0 2px 5px var(--card-shadow);
+            box-shadow: 0 1px 3px var(--card-shadow);
+        }
+
+        .question-card.question-card-preview {
+            padding: 12px 14px;
+            margin: 10px 0;
+            border-color: var(--border-strong);
+            background: var(--bg-subtle);
+        }
+
+        .question-card.question-card-preview .question-title {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .question-sequence-toggle-wrap {
+            margin: 12px 0 16px 0;
+            text-align: center;
+        }
+
+        .question-sequence-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-surface);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 2px var(--card-shadow);
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .question-sequence-toggle-btn:hover {
+            background: var(--bg-surface-hover);
+            border-color: var(--accent);
         }
 
         .question-badge-bar {
@@ -320,23 +360,24 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            font-size: 11px;
+            gap: 6px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--accent);
             font-family: monospace;
             font-weight: bold;
             border-bottom: 1px solid var(--border-subtle);
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .question-title {
             color: var(--text-primary);
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+            line-height: 1.35;
         }
 
         img {
@@ -532,11 +573,12 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             return text;
         }
 
-        function renderQuestion(id) {
+        function renderQuestion(id, isPreview) {
             const q = DB.questoes[id];
             if (!q) return '<div class="question-card"><i>Questão ' + id + ' não encontrada no banco.</i></div>';
             
-            let html = '<div class="question-card" id="' + id + '" data-question-id="' + id + '" data-topic="' + (q.frontmatter.topic || '') + '" data-exam="' + (q.frontmatter.exam || '') + '">';
+            const cardClasses = isPreview ? 'question-card question-card-preview' : 'question-card';
+            let html = '<div class="' + cardClasses + '" id="' + id + '" data-question-id="' + id + '" data-topic="' + (q.frontmatter.topic || '') + '" data-exam="' + (q.frontmatter.exam || '') + '">';
             
             html += '<div class="question-badge-bar">';
             html += '<span>' + (q.frontmatter.exam || 'Exercício') + ' (' + (q.frontmatter.year || '') + ') • ' + (q.frontmatter.topic || '') + '</span>';
@@ -581,6 +623,86 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             return html;
         }
 
+        function applyQuestionSequenceCollapsing(container) {
+            const allCards = Array.from(container.querySelectorAll('.question-card-preview'));
+            if (allCards.length === 0) return;
+
+            const groups = [];
+            let currentGroup = [];
+
+            for (let i = 0; i < allCards.length; i++) {
+                const card = allCards[i];
+                if (currentGroup.length === 0) {
+                    currentGroup.push(card);
+                } else {
+                    const prevCard = currentGroup[currentGroup.length - 1];
+                    let next = prevCard.nextElementSibling;
+                    while (next && next !== card && next.tagName === 'P' && !next.textContent.trim()) {
+                        next = next.nextElementSibling;
+                    }
+
+                    if (next === card) {
+                        currentGroup.push(card);
+                    } else {
+                        if (currentGroup.length > 2) {
+                            groups.push(currentGroup);
+                        }
+                        currentGroup = [card];
+                    }
+                }
+            }
+
+            if (currentGroup.length > 2) {
+                groups.push(currentGroup);
+            }
+
+            groups.forEach(group => {
+                if (group[0].dataset.sequenceGrouped === 'true') return;
+                group.forEach(card => card.dataset.sequenceGrouped = 'true');
+
+                const hiddenCards = group.slice(2);
+                const hiddenCount = hiddenCards.length;
+
+                hiddenCards.forEach(card => {
+                    card.style.display = 'none';
+                });
+
+                const toggleWrap = document.createElement('div');
+                toggleWrap.className = 'question-sequence-toggle-wrap';
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'question-sequence-toggle-btn';
+
+                let isExpanded = false;
+
+                function renderBtn() {
+                    if (isExpanded) {
+                        toggleBtn.innerHTML = '▲ Recolher questões do bloco (' + hiddenCount + ' ocultadas)';
+                    } else {
+                        toggleBtn.innerHTML = '▼ Ver mais ' + hiddenCount + ' ' + (hiddenCount === 1 ? 'questão' : 'questões') + ' deste bloco';
+                    }
+                }
+
+                toggleBtn.onclick = (e) => {
+                    e.preventDefault();
+                    isExpanded = !isExpanded;
+                    hiddenCards.forEach(card => {
+                        card.style.display = isExpanded ? '' : 'none';
+                    });
+                    renderBtn();
+                };
+
+                renderBtn();
+                toggleWrap.appendChild(toggleBtn);
+
+                const lastCard = group[group.length - 1];
+                if (lastCard.parentNode) {
+                    lastCard.parentNode.insertBefore(toggleWrap, lastCard.nextSibling);
+                }
+            });
+        }
+
         function loadChapter(val) {
             const contentEl = document.getElementById('content');
             
@@ -596,7 +718,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
                 
                 html += '<div id="banco-questoes-list">';
                 questionIds.forEach(id => {
-                    html += renderQuestion(id);
+                    html += renderQuestion(id, false);
                 });
                 html += '</div>';
                 
@@ -613,12 +735,13 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             
             const regex = /<QuestionCard\\s+id="([^"]+)"\\s*\\/>/g;
             body = body.replace(regex, (match, id) => {
-                return renderQuestion(id);
+                return '\\n\\n' + renderQuestion(id, true) + '\\n\\n';
             });
 
             const html = marked.parse(preprocessMDX(body));
             contentEl.innerHTML = '<h2>' + cap.frontmatter.title + '</h2>' + html;
             
+            applyQuestionSequenceCollapsing(contentEl);
             setTimeout(renderMath, 100);
         }
 

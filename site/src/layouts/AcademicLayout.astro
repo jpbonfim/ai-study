@@ -524,15 +524,22 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       }
     </script>
 
-    <!-- Otimizadores Ergonômicos: Tabelas, Código e Diagramas/Fluxogramas -->
+    <!-- Otimizadores Ergonômicos: Tabelas, Código, Diagramas e Sequências de Questões -->
     <script>
       import { initTableOptimizer } from '../scripts/tableOptimizer';
       import { initDiagrams } from '../scripts/diagramManager';
       import { initCodeBlocks } from '../scripts/codeBlocks';
+      import { initQuestionSequences } from '../scripts/questionSequenceManager';
 
-      initTableOptimizer();
-      initCodeBlocks();
-      initDiagrams();
+      function setupOptimizers() {
+        initTableOptimizer();
+        initCodeBlocks();
+        initDiagrams();
+        initQuestionSequences();
+      }
+
+      setupOptimizers();
+      document.addEventListener('astro:page-load', setupOptimizers);
 
       // Atualiza blocos se houver mudança de tema dinâmico
       const themeObserver = new MutationObserver((mutations) => {
