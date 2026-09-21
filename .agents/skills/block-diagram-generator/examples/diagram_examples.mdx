@@ -1,0 +1,63 @@
+# Exemplos Práticos de Uso do <BlockDiagram />
+
+## 1. Malha Fechada com Controle PID e Motor DC
+
+```mdx
+<BlockDiagram
+  preset="feedback"
+  title="Controle de Posição de Motor DC com PID"
+  input="\Theta_r(s)"
+  controller="C_{PID}(s)"
+  plant="\frac{K_m}{s(J s + b)}"
+  feedback="1"
+  output="\Theta(s)"
+  error="E(s)"
+  controlSignal="V_a(s)"
+  feedbackSign="-"
+/>
+```
+
+## 2. Filtro Digital IIR Chebyshev em Forma Canônica (Forma Direta II)
+
+```mdx
+<BlockDiagram
+  preset="direct-form-2"
+  title="Filtro Passa-Faixas IIR de 2ª Ordem"
+  input="x[n]"
+  output="y[n]"
+  zeros={["0.15", "0", "-0.15"]}
+  poles={["-1.34", "0.72"]}
+  delayLabel="z^{-1}"
+/>
+```
+
+## 3. Filtro FIR Média Móvel de 3 Pontos
+
+```mdx
+<BlockDiagram
+  preset="fir"
+  title="Filtro FIR de Média Móvel de 3 Pontos"
+  input="x[n]"
+  output="y[n]"
+  zeros={["\\frac{1}{3}", "\\frac{1}{3}", "\\frac{1}{3}"]}
+  delayLabel="z^{-1}"
+/>
+```
+
+## 4. Representação em Espaço de Estados
+
+```mdx
+<BlockDiagram
+  preset="state-space"
+  title="Modelo de Estados de Sistema Massa-Mola-Amortecedor"
+  input="F(t)"
+  output="y(t)"
+  matrixA="\mathbf{A}"
+  matrixB="\mathbf{B}"
+  matrixC="\mathbf{C}"
+  matrixD="\mathbf{D}"
+  integratorLabel="\frac{1}{s}"
+  stateVar="\mathbf{x}(t)"
+  stateDotVar="\mathbf{\dot{x}}(t)"
+/>
+```
