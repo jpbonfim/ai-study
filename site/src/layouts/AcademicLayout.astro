@@ -266,6 +266,58 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
         });
       });
 
+      // Rolagem Adaptativa Inteligente para Âncoras do Documento e Sumário:
+      // Se a seção estiver muito longe (> 950px ou 1.2 telas), salta instantaneamente
+      // evitando a rolagem longa e nauseante por milhares de pixels de fórmulas e texto.
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener('click', (e) => {
+          const href = anchor.getAttribute('href');
+          if (!href || href === '#' || href.length < 2) return;
+
+          const targetId = href.slice(1);
+          const targetEl = document.getElementById(targetId);
+          if (!targetEl) return;
+
+          e.preventDefault();
+
+          const isMobile = window.innerWidth < 1024;
+          if (isMobile) {
+            closeSidebar();
+          }
+
+          const headerOffset = isMobile ? 70 : 35;
+          const currentScroll = window.scrollY;
+          const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+          const distance = Math.abs(targetPos - currentScroll);
+
+          // Limite adaptativo de distância: > 950px ou 1.2 telas é considerado muito longe
+          const isFar = distance > Math.max(950, window.innerHeight * 1.2);
+
+          if (isFar) {
+            // Salto instantâneo sem rolagem excessiva
+            const root = document.documentElement;
+            root.classList.remove('scroll-smooth');
+            window.scrollTo({ top: targetPos, behavior: 'auto' });
+            requestAnimationFrame(() => {
+              root.classList.add('scroll-smooth');
+            });
+          } else {
+            // Para distâncias curtas, mantém rolagem suave agradável
+            window.scrollTo({ top: targetPos, behavior: 'smooth' });
+          }
+
+          // Atualiza o hash na URL
+          if (history.pushState) {
+            history.pushState(null, '', href);
+          }
+
+          // Efeito visual sutil de aterrissagem na seção para orientar a leitura
+          targetEl.classList.remove('section-jump-highlight');
+          void targetEl.offsetWidth;
+          targetEl.classList.add('section-jump-highlight');
+        });
+      });
+
       // 1. Validação de Gestos Touch no Celular:
       // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos
       function isInsideScrollable(el) {

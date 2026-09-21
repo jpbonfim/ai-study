@@ -76,7 +76,7 @@ const renderedChapters = await Promise.all(
     <!-- Fluxo Contínuo de Leitura de Todos os Capítulos -->
     <div class="space-y-20 w-full min-w-0">
       {renderedChapters.map(({ resumo, Content }, idx) => (
-        <section id={`cap-${resumo.data.chapter}`} class="scroll-mt-12 space-y-8 w-full min-w-0">
+        <section id={`cap-${resumo.data.chapter}`} class="scroll-mt-20 space-y-8 w-full min-w-0">
           
           <!-- Título do Capítulo -->
           <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
