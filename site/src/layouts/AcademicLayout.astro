@@ -68,8 +68,8 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
   </head>
   <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
     
-    <!-- Barra Superior Mobile (Sempre Visível) -->
-    <header class="lg:hidden sticky top-0 z-30 flex items-center px-4 py-2.5 border-b border-[var(--border-subtle)] bg-[var(--bg-page)]/95 backdrop-blur-md shadow-xs w-full min-w-0">
+    <!-- Barra Superior Mobile (Sempre Visível e Fixada no Topo) -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 border-b border-[var(--border-subtle)] bg-[var(--bg-page)]/95 backdrop-blur-md shadow-xs">
       <div class="flex items-center gap-3 min-w-0 flex-1">
         <button
           id="mobile-sidebar-toggle"
@@ -81,16 +81,16 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
           </svg>
         </button>
-        <div class="min-w-0 flex-1 flex flex-col justify-center">
-          <span class="sans-ui text-[10px] font-mono uppercase tracking-widest text-[var(--accent)] font-semibold truncate leading-tight">
-            {materia ? `${materia.code} • ${materia.name}` : 'Caderno de Estudos'}
-          </span>
-          <span id="mobile-current-section" class="font-serif text-xs sm:text-sm font-bold truncate text-[var(--text-primary)] leading-tight">
-            {title}
+        <div class="min-w-0 flex-1 flex items-center">
+          <span id="mobile-current-section" class="font-serif text-sm font-bold truncate text-[var(--text-primary)] leading-normal">
+            {toc && toc.length > 0 ? toc[0].title : title}
           </span>
         </div>
       </div>
     </header>
+
+    <!-- Espaçador para compensar o cabeçalho fixo no mobile -->
+    <div class="h-14 lg:hidden w-full shrink-0" aria-hidden="true"></div>
 
     <div class="flex w-full min-w-0">
       
