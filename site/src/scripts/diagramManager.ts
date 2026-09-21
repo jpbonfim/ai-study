@@ -170,12 +170,13 @@ function setupModalEvents(modal: HTMLElement): void {
 
     const svgW = parseFloat(modalState.svgElement.getAttribute('width') || '800') || 800;
     const svgH = parseFloat(modalState.svgElement.getAttribute('height') || '600') || 600;
-    const canvasRect = modalCanvas.getBoundingClientRect();
-    const padW = Math.max(200, canvasRect.width - 60);
-    const padH = Math.max(200, canvasRect.height - 60);
+    const canvasW = modalCanvas.clientWidth > 0 ? modalCanvas.clientWidth : window.innerWidth;
+    const canvasH = modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : (window.innerHeight - 80);
+    const padW = Math.max(200, canvasW * 0.90);
+    const padH = Math.max(200, canvasH * 0.85);
 
-    const fitScale = Math.min(1.2, padW / svgW, padH / svgH);
-    modalState.scale = Math.max(0.2, fitScale);
+    const fitScale = Math.min(padW / svgW, padH / svgH);
+    modalState.scale = Math.max(0.25, Math.min(4.5, fitScale));
     modalState.panX = 0;
     modalState.panY = 0;
     applyTransform(true);
@@ -286,7 +287,9 @@ function setupModalEvents(modal: HTMLElement): void {
  */
 export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   const modal = getOrCreateModal();
-  if (!modalContent) return;
+  // Mostra o modal e trava scroll da página ANTES de medir dimensões
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 
   modalContent.innerHTML = '';
   const clonedSvg = svgSource.cloneNode(true) as SVGElement;
@@ -314,15 +317,15 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   }
 
   // Dimensões da janela visível para ajuste inicial automático
-  const canvasW = modalCanvas ? modalCanvas.clientWidth : window.innerWidth;
-  const canvasH = modalCanvas ? modalCanvas.clientHeight : (window.innerHeight - 80);
+  const canvasW = (modalCanvas && modalCanvas.clientWidth > 0) ? modalCanvas.clientWidth : window.innerWidth;
+  const canvasH = (modalCanvas && modalCanvas.clientHeight > 0) ? modalCanvas.clientHeight : (window.innerHeight - 80);
 
-  const padW = Math.max(200, canvasW - 80);
-  const padH = Math.max(200, canvasH - 80);
+  const padW = Math.max(200, canvasW * 0.90);
+  const padH = Math.max(200, canvasH * 0.85);
 
-  // Escala que ajusta perfeitamente o diagrama à tela no carregamento inicial
-  const fitScale = Math.min(1.2, padW / w, padH / h);
-  modalState.scale = Math.max(0.2, fitScale);
+  // Escala que ajusta perfeitamente o diagrama para preencher a tela no carregamento inicial
+  const fitScale = Math.min(padW / w, padH / h);
+  modalState.scale = Math.max(0.25, Math.min(4.5, fitScale));
   modalState.panX = 0;
   modalState.panY = 0;
   modalState.isDragging = false;
@@ -331,10 +334,6 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   if (modalZoomLevelEl) {
     modalZoomLevelEl.textContent = `${Math.round(modalState.scale * 100)}%`;
   }
-
-  // Trava o scroll da página
-  document.body.style.overflow = 'hidden';
-  modal.classList.remove('hidden');
 }
 
 /**

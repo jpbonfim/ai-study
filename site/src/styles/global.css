@@ -865,34 +865,118 @@ h4[id] {
   margin: 1.5rem 0;
 }
 
-/* Tema de Código: Papel / Sépia */
-html[data-code-theme="paper"] .code-block-card,
-html[data-code-theme="match"].theme-paper .code-block-card {
-  --code-card-bg: #f4ebd9;
-  --code-card-header-bg: #ebe0cc;
-  --code-card-border: #d4c5b0;
-  --code-card-text: #2c251e;
-  --code-badge-color: #8b3e1f;
+/* ============================================================
+   TEMAS DE CÓDIGO (Shiki Multi-Theme):
+   Catppuccin Mocha, Tokyo Night, Dracula, Atom One Dark, Monokai
+   ============================================================ */
+
+/* 1. Catppuccin Mocha (Padrão) */
+html[data-code-theme="mocha"] .code-block-card,
+html:not([data-code-theme]) .code-block-card,
+.code-block-card[data-code-theme="mocha"] {
+  --code-card-bg: #1e1e2e;
+  --code-card-header-bg: #181825;
+  --code-card-border: #313244;
+  --code-card-text: #cdd6f4;
+  --code-badge-color: #cba6f7;
 }
 
-/* Tema de Código: OLED */
-html[data-code-theme="oled"] .code-block-card,
-html[data-code-theme="match"].theme-oled .code-block-card {
-  --code-card-bg: #000000;
-  --code-card-header-bg: #0d0d0d;
-  --code-card-border: #222222;
-  --code-card-text: #f0f0f0;
-  --code-badge-color: #e5b378;
+html[data-code-theme="mocha"] .shiki,
+html[data-code-theme="mocha"] .shiki span,
+html:not([data-code-theme]) .shiki,
+html:not([data-code-theme]) .shiki span,
+.code-block-card[data-code-theme="mocha"] .shiki,
+.code-block-card[data-code-theme="mocha"] .shiki span {
+  color: var(--shiki-mocha) !important;
 }
 
-/* Tema de Código: Escuro */
-html[data-code-theme="dark"] .code-block-card,
-html[data-code-theme="match"].theme-dark .code-block-card {
-  --code-card-bg: #1a1d24;
-  --code-card-header-bg: #14161b;
-  --code-card-border: #2c323d;
-  --code-card-text: #e1e4e8;
-  --code-badge-color: var(--accent);
+html[data-code-theme="mocha"] pre.astro-code,
+html:not([data-code-theme]) pre.astro-code {
+  background-color: var(--shiki-mocha-bg, #1e1e2e) !important;
+}
+
+/* 2. Tokyo Night */
+html[data-code-theme="tokyo"] .code-block-card,
+.code-block-card[data-code-theme="tokyo"] {
+  --code-card-bg: #1a1b26;
+  --code-card-header-bg: #16161e;
+  --code-card-border: #292e42;
+  --code-card-text: #c0caf5;
+  --code-badge-color: #7aa2f7;
+}
+
+html[data-code-theme="tokyo"] .shiki,
+html[data-code-theme="tokyo"] .shiki span,
+.code-block-card[data-code-theme="tokyo"] .shiki,
+.code-block-card[data-code-theme="tokyo"] .shiki span {
+  color: var(--shiki-tokyo) !important;
+}
+
+html[data-code-theme="tokyo"] pre.astro-code {
+  background-color: var(--shiki-tokyo-bg, #1a1b26) !important;
+}
+
+/* 3. Dracula */
+html[data-code-theme="dracula"] .code-block-card,
+.code-block-card[data-code-theme="dracula"] {
+  --code-card-bg: #282a36;
+  --code-card-header-bg: #21222c;
+  --code-card-border: #44475a;
+  --code-card-text: #f8f8f2;
+  --code-badge-color: #bd93f9;
+}
+
+html[data-code-theme="dracula"] .shiki,
+html[data-code-theme="dracula"] .shiki span,
+.code-block-card[data-code-theme="dracula"] .shiki,
+.code-block-card[data-code-theme="dracula"] .shiki span {
+  color: var(--shiki-dracula) !important;
+}
+
+html[data-code-theme="dracula"] pre.astro-code {
+  background-color: var(--shiki-dracula-bg, #282a36) !important;
+}
+
+/* 4. Atom One Dark */
+html[data-code-theme="onedark"] .code-block-card,
+.code-block-card[data-code-theme="onedark"] {
+  --code-card-bg: #282c34;
+  --code-card-header-bg: #21252b;
+  --code-card-border: #3b4048;
+  --code-card-text: #abb2bf;
+  --code-badge-color: #61afef;
+}
+
+html[data-code-theme="onedark"] .shiki,
+html[data-code-theme="onedark"] .shiki span,
+.code-block-card[data-code-theme="onedark"] .shiki,
+.code-block-card[data-code-theme="onedark"] .shiki span {
+  color: var(--shiki-onedark) !important;
+}
+
+html[data-code-theme="onedark"] pre.astro-code {
+  background-color: var(--shiki-onedark-bg, #282c34) !important;
+}
+
+/* 5. Monokai */
+html[data-code-theme="monokai"] .code-block-card,
+.code-block-card[data-code-theme="monokai"] {
+  --code-card-bg: #272822;
+  --code-card-header-bg: #1e1f1c;
+  --code-card-border: #3e3d32;
+  --code-card-text: #f8f8f2;
+  --code-badge-color: #a6e22e;
+}
+
+html[data-code-theme="monokai"] .shiki,
+html[data-code-theme="monokai"] .shiki span,
+.code-block-card[data-code-theme="monokai"] .shiki,
+.code-block-card[data-code-theme="monokai"] .shiki span {
+  color: var(--shiki-monokai) !important;
+}
+
+html[data-code-theme="monokai"] pre.astro-code {
+  background-color: var(--shiki-monokai-bg, #272822) !important;
 }
 
 .code-block-header {

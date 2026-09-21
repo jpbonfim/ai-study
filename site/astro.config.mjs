@@ -8,6 +8,16 @@ import rehypeKatex from 'rehype-katex';
 export default defineConfig({
   integrations: [mdx()],
   markdown: {
+    shikiConfig: {
+      themes: {
+        mocha: 'catppuccin-mocha',
+        tokyo: 'tokyo-night',
+        dracula: 'dracula',
+        onedark: 'one-dark-pro',
+        monokai: 'monokai',
+      },
+      defaultColor: false,
+    },
     processor: unified({
       remarkPlugins: [remarkMath],
       rehypePlugins: [rehypeKatex],

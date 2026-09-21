@@ -471,56 +471,69 @@ import { MATERIAS } from '../data/materias';
                 <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
                   Tema de Cores do Código
                 </span>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                   <button
                     type="button"
-                    data-code-theme-opt="dark"
+                    data-code-theme-opt="mocha"
                     class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
                   >
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="w-3 h-3 rounded-full bg-[#1e2227] border border-[#3d4450]"></span>
-                      <span class="font-bold text-xs">Escuro</span>
+                      <span class="w-3 h-3 rounded-full bg-[#cba6f7] border border-[#1e1e2e]"></span>
+                      <span class="font-bold text-xs">Mocha</span>
                     </div>
-                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">GitHub Dark</span>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Catppuccin</span>
                     <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
                   </button>
 
                   <button
                     type="button"
-                    data-code-theme-opt="paper"
+                    data-code-theme-opt="tokyo"
                     class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
                   >
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="w-3 h-3 rounded-full bg-[#f4ebd9] border border-[#c2b3a0]"></span>
-                      <span class="font-bold text-xs">Papel</span>
+                      <span class="w-3 h-3 rounded-full bg-[#7aa2f7] border border-[#1a1b26]"></span>
+                      <span class="font-bold text-xs">Tokyo Night</span>
                     </div>
-                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Sépia / Livro</span>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Tokyo Deep</span>
                     <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
                   </button>
 
                   <button
                     type="button"
-                    data-code-theme-opt="oled"
+                    data-code-theme-opt="dracula"
                     class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
                   >
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="w-3 h-3 rounded-full bg-[#000000] border border-[#444444]"></span>
-                      <span class="font-bold text-xs">OLED</span>
+                      <span class="w-3 h-3 rounded-full bg-[#bd93f9] border border-[#282a36]"></span>
+                      <span class="font-bold text-xs">Dracula</span>
                     </div>
-                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Preto Puro</span>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Vampire Contrast</span>
                     <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
                   </button>
 
                   <button
                     type="button"
-                    data-code-theme-opt="match"
+                    data-code-theme-opt="onedark"
                     class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
                   >
                     <div class="flex items-center gap-2 mb-1">
-                      <span class="w-3 h-3 rounded-full bg-gradient-to-r from-[#f4ebd9] to-[#1e2227] border border-[var(--border-subtle)]"></span>
-                      <span class="font-bold text-xs">Acompanhar</span>
+                      <span class="w-3 h-3 rounded-full bg-[#61afef] border border-[#282c34]"></span>
+                      <span class="font-bold text-xs">One Dark</span>
                     </div>
-                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Modo de Leitura</span>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Atom Editorial</span>
+                    <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-code-theme-opt="monokai"
+                    class="code-theme-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="w-3 h-3 rounded-full bg-[#a6e22e] border border-[#272822]"></span>
+                      <span class="font-bold text-xs">Monokai</span>
+                    </div>
+                    <span class="text-[11px] text-[var(--text-muted)] block leading-tight">Classic Vibrant</span>
                     <span class="code-theme-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
                   </button>
                 </div>
@@ -708,9 +721,9 @@ import { MATERIAS } from '../data/materias';
                           </div>
                           <span class="text-[10px] font-mono opacity-60">Prévia</span>
                         </div>
-                        <pre id="preview-sample-code"><code id="preview-sample-code-inner">def filtro_fir(x, b):
-    # Convolução temporal discreta
-    return [sum(b[k] * x[n-k] for k in range(len(b)) if n-k >= 0) for n in range(len(x))]</code></pre>
+                        <pre id="preview-sample-code" class="shiki"><code id="preview-sample-code-inner" class="shiki"><span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">def</span> <span style="--shiki-mocha:#89b4fa;--shiki-tokyo:#7aa2f7;--shiki-dracula:#50fa7b;--shiki-onedark:#61afef;--shiki-monokai:#a6e22e;">filtro_fir</span>(<span style="--shiki-mocha:#fab387;--shiki-tokyo:#e0af68;--shiki-dracula:#ffb86c;--shiki-onedark:#e5c07b;--shiki-monokai:#fd971f;">x</span>, <span style="--shiki-mocha:#fab387;--shiki-tokyo:#e0af68;--shiki-dracula:#ffb86c;--shiki-onedark:#e5c07b;--shiki-monokai:#fd971f;">b</span>):
+    <span style="--shiki-mocha:#6c7086;--shiki-tokyo:#565f89;--shiki-dracula:#6272a4;--shiki-onedark:#5c6370;--shiki-monokai:#75715e;font-style:italic;"># Convolução temporal discreta</span>
+    <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">return</span> [<span style="--shiki-mocha:#89dceb;--shiki-tokyo:#7dcfff;--shiki-dracula:#8be9fd;--shiki-onedark:#56b6c2;--shiki-monokai:#66d9ef;">sum</span>(b[k] * x[n-k] <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">for</span> k <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">in</span> <span style="--shiki-mocha:#89dceb;--shiki-tokyo:#7dcfff;--shiki-dracula:#8be9fd;--shiki-onedark:#56b6c2;--shiki-monokai:#66d9ef;">range</span>(<span style="--shiki-mocha:#89dceb;--shiki-tokyo:#7dcfff;--shiki-dracula:#8be9fd;--shiki-onedark:#56b6c2;--shiki-monokai:#66d9ef;">len</span>(b)) <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">if</span> n-k &gt;= 0) <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">for</span> n <span style="--shiki-mocha:#f38ba8;--shiki-tokyo:#bb9af7;--shiki-dracula:#ff79c6;--shiki-onedark:#c678dd;--shiki-monokai:#f92672;">in</span> <span style="--shiki-mocha:#89dceb;--shiki-tokyo:#7dcfff;--shiki-dracula:#8be9fd;--shiki-onedark:#56b6c2;--shiki-monokai:#66d9ef;">range</span>(<span style="--shiki-mocha:#89dceb;--shiki-tokyo:#7dcfff;--shiki-dracula:#8be9fd;--shiki-onedark:#56b6c2;--shiki-monokai:#66d9ef;">len</span>(x))]</code></pre>
                       </div>
                     </div>
                   </div>
@@ -782,10 +795,18 @@ import { MATERIAS } from '../data/materias';
         courier: 'Courier New'
       };
 
+      const codeThemeLabels = {
+        mocha: 'Catppuccin Mocha',
+        tokyo: 'Tokyo Night',
+        dracula: 'Dracula',
+        onedark: 'Atom One Dark',
+        monokai: 'Monokai'
+      };
+
       const defaultFontKey = 'garamond';
       const defaultSize = '18px';
       const defaultWidth = '768px';
-      const defaultCodeTheme = 'match';
+      const defaultCodeTheme = 'mocha';
       const defaultCodeFontKey = 'jetbrains';
       const defaultCodeSize = '13px';
 
@@ -1004,8 +1025,9 @@ import { MATERIAS } from '../data/materias';
 
         const activeCodeBadge = document.getElementById('active-code-badge');
         if (activeCodeBadge) {
+          const cThemeName = codeThemeLabels[savedState.codeTheme] || savedState.codeTheme;
           const cFontName = codeFontLabels[savedState.codeFontKey] || savedState.codeFontKey;
-          activeCodeBadge.textContent = `${cFontName} • ${savedState.codeSize} (Salvo)`;
+          activeCodeBadge.textContent = `${cThemeName} • ${cFontName} • ${savedState.codeSize} (Salvo)`;
         }
 
         // 7. Verifica se há alterações pendentes de salvamento
