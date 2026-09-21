@@ -50,10 +50,7 @@ try {
       />
     )}
 
-    <div class="sans-ui flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] text-[11px]">
-      <span class="text-[var(--text-muted)] italic">
-        {questao.data.correctOption ? `Gabarito oficial: (${questao.data.correctOption})` : 'Gabarito oficial comentado'}
-      </span>
+    <div class="sans-ui flex items-center justify-end pt-2 border-t border-[var(--border-subtle)] text-[11px]">
       <a
         href={`/${questao.data.materia || 'pds'}/questoes/${questao.id}`}
         class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 text-[11px] sm:text-xs"
