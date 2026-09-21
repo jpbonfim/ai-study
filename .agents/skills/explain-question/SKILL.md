@@ -165,12 +165,12 @@ python3 .agents/skills/explain-question/scripts/extract_question.py scaffold mat
 
 ---
 
-## 5. Relação com a Skill `exam-study-generator`
+## 5. Relação com a Skill `question-study-generator`
 
-* **`exam-study-generator`**: Foca na organização macro da disciplina, geração dos cadernos teóricos contínuos (`archive/<materia>/resumos/...`), estruturação do sumário e inserção de referências às questões através de `<QuestionCard id="..." />`.
+* **`question-study-generator`**: Foca na organização macro da disciplina, geração dos cadernos teóricos contínuos (`archive/<materia>/resumos/...`), estruturação do sumário, orquestração de subagentes para resolução paralela de provas e inserção de referências às questões através de `<QuestionCard id="..." />`.
 * **`explain-question`**: Foca no tratamento micro de cada questão: extração do PDF, tipagem (múltipla escolha ou dissertativa), elaboração da fundamentação teórica profunda e dedução analítica passo a passo.
 
-Quando a skill `exam-study-generator` estiver processando um teste ou prova, ela aciona e utiliza as diretrizes da skill `explain-question`.
+Quando a skill `question-study-generator` estiver processando um teste ou prova, ela aciona e utiliza as diretrizes da skill `explain-question`.
 
 ---
 

@@ -1,6 +1,6 @@
 # Cadernos de Estudo Acadêmico (PDS & Disciplinas de Engenharia)
 
-Sistema integrado para estudos universitários com visual clássico e minimalista de **livro didático / publicação acadêmica**, desenvolvido em **Astro**, **KaTeX**, **Tailwind CSS v4** e orquestrado pela Skill **`exam-study-generator`** no **Antigravity CLI**.
+Sistema integrado para estudos universitários com visual clássico e minimalista de **livro didático / publicação acadêmica**, desenvolvido em **Astro**, **KaTeX**, **Tailwind CSS v4** e orquestrado pela Skill **`question-study-generator`** no **Antigravity CLI**.
 
 ---
 
