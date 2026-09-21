@@ -211,7 +211,7 @@ def main():
     # Subcomando: render-pages
     p_render = subparsers.add_parser("render-pages", help="Renderiza páginas do PDF em imagens PNG")
     p_render.add_argument("pdf_path", help="Caminho para o arquivo PDF")
-    p_render.add_argument("--outdir", default="site/public/images/questoes", help="Diretório de saída")
+    p_render.add_argument("--outdir", default="archive/pds/questoes", help="Diretório de saída")
     p_render.add_argument("--dpi", type=int, default=150, help="Resolução DPI (padrão: 150)")
 
     # Subcomando: crop-figure

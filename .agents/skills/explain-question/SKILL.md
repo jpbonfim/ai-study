@@ -146,10 +146,10 @@ python3 .agents/skills/explain-question/scripts/extract_question.py inspect mate
 python3 .agents/skills/explain-question/scripts/extract_question.py inspect material/provas/p1-2023.pdf --type discursiva
 
 # 3. Renderizar páginas em PNG para recorte de figuras e diagramas esquemáticos
-python3 .agents/skills/explain-question/scripts/extract_question.py render-pages material/testes/teste-1-2024.pdf --outdir site/public/images/questoes
+python3 .agents/skills/explain-question/scripts/extract_question.py render-pages material/testes/teste-1-2024.pdf --outdir archive/pds/questoes
 
 # 4. Recortar figura preservando fórmulas superiores e contexto matemático
-python3 .agents/skills/explain-question/scripts/extract_question.py crop-figure material/testes/teste-1-2024.pdf --out site/public/images/questoes/sistema-amostragem-figura1.png --page 1 --top 770 --bottom 1540 --padding 25
+python3 .agents/skills/explain-question/scripts/extract_question.py crop-figure material/testes/teste-1-2024.pdf --out archive/pds/questoes/sistema-amostragem-figura1.png --page 1 --top 770 --bottom 1540 --padding 25
 
 # 5. Exportar estrutura completa das questões em JSON
 python3 .agents/skills/explain-question/scripts/extract_question.py dump-json material/testes/teste-1-2024.pdf -o questoes.json

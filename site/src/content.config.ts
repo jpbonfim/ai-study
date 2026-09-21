@@ -32,38 +32,39 @@ const questoes = defineCollection({
     base: '../archive',
     generateId: ({ entry }) => entry.replace(/^.*\/questoes\//, '').replace(/\.(md|mdx)$/, ''),
   }),
-  schema: z.object({
-    materia: z.string().default('pds'),
-    id: z.string(),
-    title: z.string(),
-    exam: z.string(),
-    year: z.number(),
-    topic: z.string(),
-    topicSlug: z.string(),
-    difficulty: z.enum(['Fácil', 'Médio', 'Difícil']).default('Médio'),
-    type: z.enum(['multipla_escolha', 'discursiva']).default('multipla_escolha'),
-    statement: z.string().optional(),
-    options: z.array(
-      z.object({
-        label: z.string(),
-        text: z.string(),
-      })
-    ).optional(),
-    correctOption: z.string().optional(),
-    expectedAnswer: z.string().optional(),
-    image: z.string().optional(),
-    images: z
-      .array(
-        z.union([
-          z.string(),
-          z.object({
-            src: z.string(),
-            caption: z.string().optional(),
-          }),
-        ])
-      )
-      .optional(),
-  }),
+  schema: ({ image }) =>
+    z.object({
+      materia: z.string().default('pds'),
+      id: z.string(),
+      title: z.string(),
+      exam: z.string(),
+      year: z.number(),
+      topic: z.string(),
+      topicSlug: z.string(),
+      difficulty: z.enum(['Fácil', 'Médio', 'Difícil']).default('Médio'),
+      type: z.enum(['multipla_escolha', 'discursiva']).default('multipla_escolha'),
+      statement: z.string().optional(),
+      options: z.array(
+        z.object({
+          label: z.string(),
+          text: z.string(),
+        })
+      ).optional(),
+      correctOption: z.string().optional(),
+      expectedAnswer: z.string().optional(),
+      image: image().optional(),
+      images: z
+        .array(
+          z.union([
+            image(),
+            z.object({
+              src: image(),
+              caption: z.string().optional(),
+            }),
+          ])
+        )
+        .optional(),
+    }),
 });
 
 export const collections = {

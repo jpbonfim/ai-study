@@ -54,16 +54,17 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
 
 // Tratamento unificado de imagens (suporte a imagem única ou lista de múltiplas imagens com legendas)
 const rawImages = questao.data.images || (questao.data.image ? [questao.data.image] : []);
-const formattedImages = rawImages.map((img, idx) => {
+const formattedImages = rawImages.map((img: any, idx: number) => {
   if (typeof img === 'string') {
     return {
       src: img,
-      caption: `Diagrama esquemático oficial da questão`,
+      caption: rawImages.length === 1 ? 'Diagrama esquemático oficial da questão' : `Figura ${idx + 1}`,
     };
   }
+  const src = typeof img.src === 'string' ? img.src : (img.src?.src || img);
   return {
-    src: img.src,
-    caption: img.caption || `Figura ${idx + 1}`,
+    src,
+    caption: img.caption || (rawImages.length === 1 ? 'Diagrama esquemático oficial da questão' : `Figura ${idx + 1}`),
   };
 });
 ---
