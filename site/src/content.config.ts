@@ -41,6 +41,7 @@ const questoes = defineCollection({
     topic: z.string(),
     topicSlug: z.string(),
     difficulty: z.enum(['Fácil', 'Médio', 'Difícil']).default('Médio'),
+    type: z.enum(['multipla_escolha', 'discursiva']).default('multipla_escolha'),
     statement: z.string().optional(),
     options: z.array(
       z.object({
@@ -48,7 +49,8 @@ const questoes = defineCollection({
         text: z.string(),
       })
     ).optional(),
-    correctOption: z.string(),
+    correctOption: z.string().optional(),
+    expectedAnswer: z.string().optional(),
     image: z.string().optional(),
   }),
 });

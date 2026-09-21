@@ -91,8 +91,15 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
             <span class="font-mono font-bold text-[var(--accent)]">
               {q.data.exam} ({q.data.year})
             </span>
-            <span>Tópico: {q.data.topic}</span>
-            <span>Dificuldade: {q.data.difficulty}</span>
+            <div class="flex items-center gap-2">
+              <span>Tópico: {q.data.topic}</span>
+              <span>•</span>
+              <span>{q.data.difficulty}</span>
+              <span>•</span>
+              <span class="rounded px-1.5 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[10px] uppercase tracking-wider font-semibold text-[var(--text-primary)]">
+                {q.data.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha'}
+              </span>
+            </div>
           </div>
 
           <h2 class="font-serif text-xl font-bold text-[var(--text-primary)]">
@@ -109,7 +116,7 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
 
           <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">
             <span class="text-[var(--text-muted)] font-mono">
-              Gabarito: ({q.data.correctOption})
+              {q.data.correctOption ? `Gabarito: (${q.data.correctOption})` : 'Questão Dissertativa'}
             </span>
             <a
               href={`/${materia.slug}/questoes/${q.id}`}

@@ -5,111 +5,186 @@ interface Option {
 }
 
 interface Props {
-  correctOption: string;
+  correctOption?: string;
   options?: Option[];
+  type?: 'multipla_escolha' | 'discursiva';
+  expectedAnswer?: string;
 }
 
-const { correctOption, options = [] } = Astro.props;
+const {
+  correctOption,
+  options = [],
+  type = options.length > 0 ? 'multipla_escolha' : 'discursiva',
+  expectedAnswer,
+} = Astro.props;
+
+const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
 ---
 
-<div class="question-container mt-8 space-y-6 not-prose">
+<div class="question-container mt-6 not-prose" data-question-type={type} data-correct={correctOption}>
   
   <!-- Alternativas de Múltipla Escolha -->
-  {options.length > 0 && (
-    <div class="space-y-2">
-      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">
-        Alternativas da Questão
+  {isMultipleChoice ? (
+    <div class="space-y-2 mb-6">
+      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3 flex items-center justify-between">
+        <span>Alternativas da Prova</span>
+        <span class="font-normal italic text-[11px]">Múltipla Escolha</span>
       </div>
       <div class="space-y-2 reader-text">
         {options.map((opt) => (
           <div
             data-option-label={opt.label}
-            class="option-item flex items-start gap-3 p-3.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] transition-colors"
+            class="option-item flex items-start gap-3 p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] transition-all duration-200"
           >
-            <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-1 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0">
+            <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0">
               ({opt.label})
             </span>
-            <div class="text-[var(--text-primary)] pt-0.5 leading-relaxed">
+            <div class="text-[var(--text-primary)] pt-0.5 leading-relaxed text-sm">
               {opt.text}
             </div>
           </div>
         ))}
       </div>
     </div>
+  ) : (
+    <div class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3 text-xs mb-6">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-[var(--accent)] uppercase tracking-wider">Questão Dissertativa Aberta</span>
+        <span class="text-[var(--text-muted)]">•</span>
+        <span class="text-[var(--text-secondary)]">Desenvolvimento formal e demonstração analítica requeridos</span>
+      </div>
+      <span class="text-[var(--text-muted)] italic font-serif">Resposta Aberta</span>
+    </div>
   )}
 
-  <!-- Botão Discreto de Toggle -->
-  <div class="pt-2">
-    <button
-      type="button"
-      id="toggle-resolution-btn"
-      class="sans-ui inline-flex items-center gap-2 px-4 py-2 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-      data-correct={correctOption}
-    >
-      <span id="btn-text">Exibir Gabarito e Solução Comentada</span>
-      <span id="chevron-icon" class="text-[var(--text-muted)] transition-transform duration-150">&darr;</span>
-    </button>
-  </div>
-
-  <!-- Bloco Revelável de Resolução -->
-  <div id="resolution-panel" class="hidden mt-6 pt-6 border-t border-[var(--border-subtle)] space-y-6">
-    
-    <!-- Indicação do Gabarito Oficial -->
-    <div class="p-4 rounded border border-[var(--border-strong)] bg-[var(--bg-subtle)]">
-      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
-        Gabarito Oficial
+  <!-- Gabarito Oficial (será inserido DENTRO da Seção de Resolução pelo script) -->
+  {correctOption && (
+    <div id="resolution-gabarito-box" class="mb-6 p-3.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] flex items-center justify-between gap-3 not-prose">
+      <div class="flex items-center gap-2.5">
+        <span class="sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--border-subtle)]">
+          Gabarito Oficial
+        </span>
+        <span class="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+          A alternativa correta é a <strong>({correctOption})</strong>.
+        </span>
       </div>
-      <p class="reader-text text-[var(--text-primary)]">
-        A resposta correta é a <strong>Alternativa ({correctOption})</strong>.
+    </div>
+  )}
+
+  {expectedAnswer && (
+    <div id="resolution-expected-box" class="mb-6 p-3.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] not-prose">
+      <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
+        Gabarito / Resposta Esperada
+      </div>
+      <p class="font-mono text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed">
+        {expectedAnswer}
       </p>
     </div>
+  )}
 
-    <!-- Texto Passo a Passo -->
-    <div class="space-y-4 reader-text leading-relaxed text-[var(--text-primary)]">
-      <div class="sans-ui text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] pb-2 border-b border-[var(--border-subtle)]">
-        Desenvolvimento Matemático Passo a Passo
-      </div>
-      <div class="resolution-content">
-        <slot />
-      </div>
-    </div>
-
+  <!-- Seções Expansíveis Independentes (<Theory /> e <Resolution />) -->
+  <div id="question-sections" class="space-y-4">
+    <slot />
   </div>
+
 </div>
 
 <script is:inline>
-  const toggleBtn = document.getElementById('toggle-resolution-btn');
-  const panel = document.getElementById('resolution-panel');
-  const btnText = document.getElementById('btn-text');
-  const chevron = document.getElementById('chevron-icon');
-  const correctOpt = toggleBtn?.getAttribute('data-correct');
+  (() => {
+    const container = document.querySelector('.question-container');
+    if (!container) return;
 
-  let isOpen = false;
+    const correctOpt = container.getAttribute('data-correct');
 
-  toggleBtn?.addEventListener('click', () => {
-    isOpen = !isOpen;
-    if (isOpen) {
-      panel?.classList.remove('hidden');
-      if (btnText) btnText.textContent = 'Ocultar Solução Comentada';
-      if (chevron) chevron.textContent = '↑';
+    const theoryCard = container.querySelector('.question-theory-card');
+    const resolutionCard = container.querySelector('.question-resolution-card');
 
-      // Destaca a alternativa correta suavemente
-      if (correctOpt) {
+    const theoryPanel = theoryCard?.querySelector('.theory-card-panel');
+    const theoryCardHeader = theoryCard?.querySelector('.theory-card-header');
+    const theoryCardStatus = theoryCard?.querySelector('.theory-card-status');
+    const theoryCardChevron = theoryCard?.querySelector('.theory-card-chevron');
+
+    const resolutionPanel = resolutionCard?.querySelector('.resolution-card-panel');
+    const resolutionCardHeader = resolutionCard?.querySelector('.resolution-card-header');
+    const resolutionCardStatus = resolutionCard?.querySelector('.resolution-card-status');
+    const resolutionCardChevron = resolutionCard?.querySelector('.resolution-card-chevron');
+
+    // Move o Gabarito Oficial para DENTRO da Seção de Resolução (no topo do painel de conteúdo)
+    const gabaritoBox = document.getElementById('resolution-gabarito-box');
+    const expectedBox = document.getElementById('resolution-expected-box');
+    if (resolutionPanel) {
+      if (expectedBox) resolutionPanel.prepend(expectedBox);
+      if (gabaritoBox) resolutionPanel.prepend(gabaritoBox);
+    }
+
+    // Suporte a questões legadas sem componentes Theory/Resolution
+    const sectionsContainer = document.getElementById('question-sections');
+    let fallbackPanel = null;
+    if (!resolutionCard && sectionsContainer && sectionsContainer.children.length > 0) {
+      sectionsContainer.classList.add('hidden');
+      fallbackPanel = sectionsContainer;
+    }
+
+    let isTheoryOpen = false;
+    let isResolutionOpen = false;
+
+    function toggleTheory() {
+      if (!theoryPanel) return;
+      isTheoryOpen = !isTheoryOpen;
+      if (isTheoryOpen) {
+        theoryPanel.classList.remove('hidden');
+        if (theoryCardStatus) theoryCardStatus.textContent = 'Ocultar Teoria';
+        if (theoryCardChevron) theoryCardChevron.textContent = '↑';
+        theoryCardHeader?.setAttribute('aria-expanded', 'true');
+      } else {
+        theoryPanel.classList.add('hidden');
+        if (theoryCardStatus) theoryCardStatus.textContent = 'Exibir Teoria';
+        if (theoryCardChevron) theoryCardChevron.textContent = '↓';
+        theoryCardHeader?.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    function toggleResolution() {
+      const panel = resolutionPanel || fallbackPanel;
+      if (!panel) return;
+      isResolutionOpen = !isResolutionOpen;
+      if (isResolutionOpen) {
+        panel.classList.remove('hidden');
+        if (resolutionCardStatus) resolutionCardStatus.textContent = 'Ocultar Resolução';
+        if (resolutionCardChevron) resolutionCardChevron.textContent = '↑';
+        resolutionCardHeader?.setAttribute('aria-expanded', 'true');
+
+        // Destaca a alternativa correta suavemente
+        if (correctOpt) {
+          document.querySelectorAll('.option-item').forEach((item) => {
+            const label = item.getAttribute('data-option-label');
+            if (label === correctOpt) {
+              item.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+              const badge = item.querySelector('.option-badge');
+              if (badge) {
+                badge.classList.add('border-[var(--accent)]', 'text-[var(--accent)]');
+              }
+            }
+          });
+        }
+      } else {
+        panel.classList.add('hidden');
+        if (resolutionCardStatus) resolutionCardStatus.textContent = 'Exibir Resolução';
+        if (resolutionCardChevron) resolutionCardChevron.textContent = '↓';
+        resolutionCardHeader?.setAttribute('aria-expanded', 'false');
+
+        // Remove o destaque da alternativa
         document.querySelectorAll('.option-item').forEach((item) => {
-          const label = item.getAttribute('data-option-label');
-          if (label === correctOpt) {
-            item.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+          item.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+          const badge = item.querySelector('.option-badge');
+          if (badge) {
+            badge.classList.remove('border-[var(--accent)]', 'text-[var(--accent)]');
           }
         });
       }
-    } else {
-      panel?.classList.add('hidden');
-      if (btnText) btnText.textContent = 'Exibir Gabarito e Solução Comentada';
-      if (chevron) chevron.textContent = '↓';
-
-      document.querySelectorAll('.option-item').forEach((item) => {
-        item.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
-      });
     }
-  });
+
+    theoryCardHeader?.addEventListener('click', toggleTheory);
+    resolutionCardHeader?.addEventListener('click', toggleResolution);
+  })();
 </script>

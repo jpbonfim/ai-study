@@ -2,6 +2,8 @@
 import { getCollection, render } from 'astro:content';
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
 import QuestionToggle from '../../../components/QuestionToggle.astro';
+import Theory from '../../../components/Theory.astro';
+import Resolution from '../../../components/Resolution.astro';
 import BlockDiagram from '../../../components/BlockDiagram.astro';
 import { MATERIAS, getMateria } from '../../../data/materias';
 
@@ -79,8 +81,11 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
       
       <!-- Cabeçalho do Exercício -->
       <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
-        <div class="sans-ui text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
-          {questao.data.exam} ({questao.data.year}) • {questao.data.topic}
+        <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
+          <span>{questao.data.exam} ({questao.data.year}) • {questao.data.topic}</span>
+          <span class="rounded px-2 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] font-sans font-medium">
+            {questao.data.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
+          </span>
         </div>
         <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
           {questao.data.title}
@@ -117,12 +122,20 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
         </div>
       )}
 
-      <!-- Alternativas e Resolução com Toggle Clássico -->
+      <!-- Alternativas e Resolução com Toggles Independentes -->
       <QuestionToggle
+        type={questao.data.type || (questao.data.options && questao.data.options.length > 0 ? 'multipla_escolha' : 'discursiva')}
         correctOption={questao.data.correctOption}
+        expectedAnswer={questao.data.expectedAnswer}
         options={questao.data.options}
       >
-        <Content components={{ BlockDiagram }} />
+        <Content components={{
+          BlockDiagram,
+          Theory,
+          Resolution,
+          QuestionTheory: Theory,
+          QuestionResolution: Resolution,
+        }} />
       </QuestionToggle>
 
     </article>

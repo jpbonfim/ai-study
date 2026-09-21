@@ -26,9 +26,14 @@ try {
           {questao.data.topic}
         </span>
       </div>
-      <span class="text-[var(--text-muted)] italic">
-        Dificuldade: {questao.data.difficulty}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="rounded px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] uppercase font-semibold text-[var(--text-muted)]">
+          {questao.data.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha'}
+        </span>
+        <span class="text-[var(--text-muted)] italic">
+          {questao.data.difficulty}
+        </span>
+      </div>
     </div>
 
     <h4 class="font-serif text-lg font-bold text-[var(--text-primary)] mb-2">
