@@ -9,7 +9,7 @@ Sistema integrado para estudos universitários com visual clássico e minimalist
 1. **Menu Lateral na Home e em Todas as Páginas**:
    - Menu lateral esquerdo fixo no desktop e com gaveta discreta no mobile.
    - Na **Home (`/`)**: Lista de disciplinas cadastradas (com atalhos diretos), atalho para configurações e estado das matérias.
-   - No **Caderno da Matéria (`/[materia]`)**: Sumário hierárquico com âncoras para rolagem suave para cada capítulo e subseção, além do índice de testes resolvidos.
+   - No **Caderno da Matéria (`/[materia]`)**: Sumário hierárquico com âncoras para rolagem suave para cada capítulo e subseção, além do índice de questões resolvidas.
 2. **Dois Botões Redondos Discretos de Ação**:
    - **Ícone Redondo de Modo de Leitura**: Sem texto, apenas o ícone usual. Ao clicar, abre o menu flutuante com as opções **Papel / Sépia (`theme-paper`)**, **Escuro Tradicional (`theme-dark`)** e **Preto OLED Puro (`theme-oled`)**.
    - **Ícone Redondo de Engrenagem**: Leva diretamente à **Página de Configurações (`/configuracoes`)**.
