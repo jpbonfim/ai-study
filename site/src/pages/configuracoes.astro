@@ -159,7 +159,7 @@ import { MATERIAS } from '../data/materias';
                 <svg class="w-4 h-4 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <span>Fechar & Voltar</span>
+                <span>Fechar</span>
               </button>
             </div>
             <p class="font-serif text-base text-[var(--text-secondary)] italic">
@@ -858,10 +858,28 @@ import { MATERIAS } from '../data/materias';
         });
       });
 
-      // Gestos Touch no Celular: Deslizar para a direita abre o menu lateral
+      // Gestos Touch no Celular com validação estrita anti-toque acidental
+      function isInsideScrollable(el) {
+        if (!el || !(el instanceof Element)) return false;
+        if (el.closest('.academic-table-wrapper, table, .katex-display, .katex, pre, code, [data-scrollable], .overflow-x-auto, .overflow-y-auto, [style*="overflow"]')) {
+          return true;
+        }
+        let curr = el;
+        while (curr && curr !== document.body && curr !== document.documentElement) {
+          const style = window.getComputedStyle(curr);
+          const ox = style.overflowX;
+          const oy = style.overflowY;
+          if (['auto', 'scroll'].includes(ox) && curr.scrollWidth > curr.clientWidth + 4) return true;
+          if (['auto', 'scroll'].includes(oy) && curr.scrollHeight > curr.clientHeight + 4) return true;
+          curr = curr.parentElement;
+        }
+        return false;
+      }
+
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
+      let touchStartInsideScrollable = false;
 
       window.addEventListener('touchstart', (e) => {
         if (window.innerWidth >= 1024) return;
@@ -869,6 +887,7 @@ import { MATERIAS } from '../data/materias';
         touchStartX = t.clientX;
         touchStartY = t.clientY;
         touchStartTime = Date.now();
+        touchStartInsideScrollable = isInsideScrollable(e.target);
       }, { passive: true });
 
       window.addEventListener('touchend', (e) => {
@@ -878,16 +897,15 @@ import { MATERIAS } from '../data/materias';
         const deltaY = t.clientY - touchStartY;
         const elapsed = Date.now() - touchStartTime;
 
-        if (Math.abs(deltaY) > 80 || elapsed > 650) return;
+        if (touchStartInsideScrollable) return;
+        if (Math.abs(deltaY) > 30 || Math.abs(deltaX) < Math.abs(deltaY) * 2.2 || elapsed > 450) return;
 
         const isClosed = sidebar?.classList.contains('-translate-x-full');
+        const isEdgeSwipe = touchStartX <= Math.min(28, window.innerWidth * 0.08);
 
-        // Deslizar para a direita (deltaX > 50) a partir da área esquerda da tela
-        if (isClosed && deltaX > 50 && touchStartX < window.innerWidth * 0.45) {
+        if (isClosed && deltaX > 45 && isEdgeSwipe) {
           openSidebar();
-        }
-        // Deslizar para a esquerda com o menu aberto fecha o menu lateral
-        else if (!isClosed && deltaX < -50) {
+        } else if (!isClosed && deltaX < -45) {
           closeSidebar();
         }
       }, { passive: true });

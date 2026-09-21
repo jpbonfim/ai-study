@@ -266,10 +266,38 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
         });
       });
 
-      // 1. Gestos Touch no Celular: Deslizar para a direita abre o menu lateral
+      // 1. Validação de Gestos Touch no Celular:
+      // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos
+      function isInsideScrollable(el) {
+        if (!el || !(el instanceof Element)) return false;
+
+        // Elementos acadêmicos conhecidos com scroll próprio (tabelas, fórmulas KaTeX, código)
+        if (el.closest('.academic-table-wrapper, table, .katex-display, .katex, pre, code, [data-scrollable], .overflow-x-auto, .overflow-y-auto, [style*="overflow"]')) {
+          return true;
+        }
+
+        // Verificação de qualquer container antecessor com overflow scroll ou auto
+        let curr = el;
+        while (curr && curr !== document.body && curr !== document.documentElement) {
+          const style = window.getComputedStyle(curr);
+          const ox = style.overflowX;
+          const oy = style.overflowY;
+
+          if (['auto', 'scroll'].includes(ox) && curr.scrollWidth > curr.clientWidth + 4) {
+            return true;
+          }
+          if (['auto', 'scroll'].includes(oy) && curr.scrollHeight > curr.clientHeight + 4) {
+            return true;
+          }
+          curr = curr.parentElement;
+        }
+        return false;
+      }
+
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
+      let touchStartInsideScrollable = false;
 
       window.addEventListener('touchstart', (e) => {
         if (window.innerWidth >= 1024) return;
@@ -277,6 +305,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
         touchStartX = t.clientX;
         touchStartY = t.clientY;
         touchStartTime = Date.now();
+        touchStartInsideScrollable = isInsideScrollable(e.target);
       }, { passive: true });
 
       window.addEventListener('touchend', (e) => {
@@ -286,17 +315,25 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
         const deltaY = t.clientY - touchStartY;
         const elapsed = Date.now() - touchStartTime;
 
-        // Filtra para gestos horizontais intencionais rápidos (não rolagem vertical)
-        if (Math.abs(deltaY) > 80 || elapsed > 650) return;
+        // Regra 1: Se o toque começou em tabela, fórmula KaTeX ou elemento rolável, nunca abre o menu
+        if (touchStartInsideScrollable) return;
+
+        // Regra 2: Bloqueia se for rolagem vertical ou gesto impreciso/lento
+        // O movimento deve ser predominantemente horizontal (> 2.2x vertical) com deltaY <= 30px
+        if (Math.abs(deltaY) > 30 || Math.abs(deltaX) < Math.abs(deltaY) * 2.2 || elapsed > 450) {
+          return;
+        }
 
         const isClosed = sidebar?.classList.contains('-translate-x-full');
 
-        // Deslizar para a direita (deltaX > 50) a partir da área esquerda da tela
-        if (isClosed && deltaX > 50 && touchStartX < window.innerWidth * 0.45) {
+        // Regra 3: Para ABRIR, exige "Edge Swipe" estrito iniciado na margem esquerda da tela (até 28px)
+        const isEdgeSwipe = touchStartX <= Math.min(28, window.innerWidth * 0.08);
+
+        if (isClosed && deltaX > 45 && isEdgeSwipe) {
           openSidebar();
         }
-        // Deslizar para a esquerda com o menu aberto fecha o menu lateral
-        else if (!isClosed && deltaX < -50) {
+        // Regra 4: Para FECHAR com o menu aberto, deslizar para a esquerda
+        else if (!isClosed && deltaX < -45) {
           closeSidebar();
         }
       }, { passive: true });
