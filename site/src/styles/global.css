@@ -641,3 +641,249 @@ h3[id],
 h4[id] {
   scroll-margin-top: 5rem;
 }
+
+/* ============================================================
+   DIAGRAMAS, FLUXOGRAMAS E VISUALIZADOR INTERATIVO
+   ============================================================ */
+
+.diagram-card {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.diagram-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background-color: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.diagram-eye-btn {
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.diagram-eye-btn:hover {
+  border-color: var(--accent);
+}
+
+/* Viewport com contenção ergonômica:
+   - Mostra todo o diagrama na tela quando possível
+   - Rolagem horizontal se a largura exceder o container (como tabelas)
+   - Limite vertical máximo (480px) SEM rolagem vertical dentro do bloco
+*/
+.diagram-viewport {
+  width: 100%;
+  max-width: 100%;
+  max-height: 480px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  background-color: var(--bg-surface);
+  box-sizing: border-box;
+}
+
+.diagram-viewport svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  min-width: min-content;
+}
+
+/* ============================================================
+   MODAL DE VISUALIZAÇÃO DE DIAGRAMAS (ZOOM, PAN & CLOSE)
+   ============================================================ */
+
+.diagram-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.diagram-modal.hidden {
+  display: none !important;
+}
+
+.diagram-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.diagram-modal-dialog {
+  position: relative;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.diagram-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.diagram-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.diagram-modal-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.modal-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.modal-control-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.modal-controls-divider {
+  width: 1px;
+  height: 1.25rem;
+  background-color: var(--border-strong);
+  margin: 0 0.25rem;
+}
+
+.modal-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.modal-close-btn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.diagram-modal-canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 17, 21, 0.65);
+}
+
+.diagram-modal-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.diagram-modal-content {
+  display: inline-block;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.diagram-modal-content svg {
+  display: block;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
+}
+
+/* ============================================================
+   BLOCOS DE CÓDIGO (.code-block-card)
+   ============================================================ */
+
+.code-block-card {
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background-color: var(--code-bg);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.85rem;
+  background-color: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.code-copy-btn {
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.code-copy-btn:hover {
+  border-color: var(--accent);
+}
+
+.code-copy-btn.is-copied {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.code-block-card pre {
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 1.25rem !important;
+}

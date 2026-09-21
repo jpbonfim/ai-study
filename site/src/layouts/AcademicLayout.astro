@@ -318,8 +318,8 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       function isInsideScrollable(el) {
         if (!el || !(el instanceof Element)) return false;
 
-        // Elementos acadêmicos conhecidos com scroll próprio (tabelas, fórmulas KaTeX, código)
-        if (el.closest('.academic-table-wrapper, table, .katex-display, .katex, pre, code, [data-scrollable], .overflow-x-auto, .overflow-y-auto, [style*="overflow"]')) {
+        // Elementos acadêmicos conhecidos com scroll próprio (tabelas, fórmulas KaTeX, código, diagramas)
+        if (el.closest('.academic-table-wrapper, table, .katex-display, .katex, pre, code, .diagram-viewport, .diagram-card, .diagram-modal, .code-block-card, [data-scrollable], .overflow-x-auto, .overflow-y-auto, [style*="overflow"]')) {
           return true;
         }
 
@@ -465,10 +465,25 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       }
     </script>
 
-    <!-- Algoritmo de Otimização Ergonômica de Tabelas Acadêmicas -->
+    <!-- Otimizadores Ergonômicos: Tabelas, Código e Diagramas/Fluxogramas -->
     <script>
       import { initTableOptimizer } from '../scripts/tableOptimizer';
+      import { initDiagrams } from '../scripts/diagramManager';
+      import { initCodeBlocks } from '../scripts/codeBlocks';
+
       initTableOptimizer();
+      initCodeBlocks();
+      initDiagrams();
+
+      // Atualiza blocos se houver mudança de tema dinâmico
+      const themeObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            initDiagrams();
+          }
+        }
+      });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     </script>
   </body>
 </html>
