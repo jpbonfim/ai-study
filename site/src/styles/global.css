@@ -176,16 +176,33 @@ table.academic-table td {
 /* ============================================================
    AJUSTE DE ESCALA PARA SUBSCRITOS E SOBRESCRITOS (KaTeX)
    ============================================================ */
-/* Subscritos e sobrescritos mais delicados, legíveis e proporcionais (padrão TeX é ~0.70em, ajustado para 0.63em) */
-.katex .msupsub .sizing.reset-size6.size3,
-.katex .msupsub .katex-sizing.reset-size6.size3 {
-  font-size: 0.63em !important;
+:root {
+  --katex-script-scale: 0.64;
+  --katex-min-font-size: 10.5px;
 }
 
-/* Subscritos e sobrescritos de 2º nível aninhados (ex: x_{n_k}) */
+/* Subscritos e sobrescritos padrão de 1º nível (ex: x_n, e^{j\omega}) */
+.katex .msupsub .sizing.reset-size6.size3,
+.katex .msupsub .katex-sizing.reset-size6.size3 {
+  font-size: max(calc(var(--katex-script-scale, 0.64) * 1em), var(--katex-min-font-size, 10.5px)) !important;
+}
+
+/* Em frações (\mfrac), evita que o subscrito/sobrescrito sofra redução dupla acumulada */
+.katex .mfrac .msupsub .sizing.reset-size6.size3,
+.katex .mfrac .msupsub .katex-sizing.reset-size6.size3 {
+  font-size: max(calc(var(--katex-script-scale, 0.64) * 1.15 * 1em), var(--katex-min-font-size, 10.5px)) !important;
+}
+
+/* Frações em si não devem ficar menores que o limite de legibilidade */
+.katex .mfrac .sizing.reset-size6.size3,
+.katex .mfrac .katex-sizing.reset-size6.size3 {
+  font-size: max(0.7em, var(--katex-min-font-size, 10.5px));
+}
+
+/* Subscritos e sobrescritos aninhados de 2º nível (ex: x_{n_k}) */
 .katex .msupsub .sizing.reset-size3.size1,
 .katex .msupsub .katex-sizing.reset-size3.size1 {
-  font-size: 0.44em !important;
+  font-size: max(calc(var(--katex-script-scale, 0.64) * 0.72 * 1em), calc(var(--katex-min-font-size, 10.5px) - 1px)) !important;
 }
 
 /* ============================================================

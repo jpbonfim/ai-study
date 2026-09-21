@@ -39,6 +39,19 @@ import { MATERIAS } from '../data/materias';
       if (font) root.style.setProperty('--reader-font-family', font);
       if (size) root.style.setProperty('--reader-font-size', size);
       if (width) root.style.setProperty('--reader-max-width', width);
+
+      // Preferências de código e matemática
+      const codeTheme = localStorage.getItem('study_code_theme') || 'mocha';
+      const codeFont = localStorage.getItem('study_code_font') || "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace";
+      const codeSize = localStorage.getItem('study_code_size') || '13px';
+      root.setAttribute('data-code-theme', codeTheme);
+      root.style.setProperty('--code-font-family', codeFont);
+      root.style.setProperty('--code-font-size', codeSize);
+
+      const mathScriptScale = localStorage.getItem('study_math_script_scale') || '0.64';
+      const mathMinSize = localStorage.getItem('study_math_min_size') || '10.5px';
+      root.style.setProperty('--katex-script-scale', mathScriptScale);
+      root.style.setProperty('--katex-min-font-size', mathMinSize);
     </script>
   </head>
   <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">

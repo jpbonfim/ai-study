@@ -77,6 +77,12 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       root.setAttribute('data-code-theme', codeTheme);
       root.style.setProperty('--code-font-family', codeFont);
       root.style.setProperty('--code-font-size', codeSize);
+
+      // Preferências de fórmulas matemáticas (LaTeX/KaTeX)
+      const mathScriptScale = localStorage.getItem('study_math_script_scale') || '0.64';
+      const mathMinSize = localStorage.getItem('study_math_min_size') || '10.5px';
+      root.style.setProperty('--katex-script-scale', mathScriptScale);
+      root.style.setProperty('--katex-min-font-size', mathMinSize);
     </script>
   </head>
   <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">

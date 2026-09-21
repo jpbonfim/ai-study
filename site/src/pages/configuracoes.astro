@@ -2,6 +2,15 @@
 import '../styles/global.css';
 import HeaderActions from '../components/HeaderActions.astro';
 import { MATERIAS } from '../data/materias';
+import katex from 'katex';
+
+// Fórmulas matemáticas de demonstração para a pré-visualização interativa
+const previewMathInline = katex.renderToString('\\omega_s > 2\\omega_M \\iff f_s > 2f_M', { throwOnError: false });
+const previewMathFraction = katex.renderToString('H(e^{j\\omega}) = \\frac{X_c(j\\Omega_s)}{1 - a_1 z^{-1}} + \\frac{x_n}{2}', { throwOnError: false });
+const previewMathDisplay = katex.renderToString(
+  'y[n] = \\sum_{k=0}^{M} b_k x_{n-k} + e^{j\\omega_0 n}',
+  { displayMode: true, throwOnError: false }
+);
 ---
 
 <!doctype html>
@@ -40,6 +49,20 @@ import { MATERIAS } from '../data/materias';
       if (font) root.style.setProperty('--reader-font-family', font);
       if (size) root.style.setProperty('--reader-font-size', size);
       if (width) root.style.setProperty('--reader-max-width', width);
+
+      // Preferências de código
+      const codeTheme = localStorage.getItem('study_code_theme') || 'mocha';
+      const codeFont = localStorage.getItem('study_code_font') || "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace";
+      const codeSize = localStorage.getItem('study_code_size') || '13px';
+      root.setAttribute('data-code-theme', codeTheme);
+      root.style.setProperty('--code-font-family', codeFont);
+      root.style.setProperty('--code-font-size', codeSize);
+
+      // Preferências de fórmulas matemáticas (LaTeX/KaTeX)
+      const mathScriptScale = localStorage.getItem('study_math_script_scale') || '0.64';
+      const mathMinSize = localStorage.getItem('study_math_min_size') || '10.5px';
+      root.style.setProperty('--katex-script-scale', mathScriptScale);
+      root.style.setProperty('--katex-min-font-size', mathMinSize);
     </script>
   </head>
   <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
@@ -678,7 +701,180 @@ import { MATERIAS } from '../data/materias';
               </div>
             </div>
 
-            <!-- 5. Demonstração Dinâmica da Pré-Visualização -->
+            <!-- 5. Fórmulas Matemáticas (LaTeX / KaTeX) -->
+            <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
+              <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+                <div>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">
+                    5. Fórmulas Matemáticas e Índices (LaTeX / KaTeX)
+                  </label>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Controle o tamanho relativo de subscritos, sobrescritos e estabeleça um limite mínimo de legibilidade para frações:
+                  </p>
+                </div>
+                <span id="active-math-badge" class="font-mono text-xs text-[var(--accent)] font-semibold bg-[var(--bg-subtle)] px-2.5 py-1 rounded border border-[var(--border-subtle)]">
+                  64% • Mín 10.5px (Salvo)
+                </span>
+              </div>
+
+              <!-- 5.1 Redução de Subscritos e Sobrescritos -->
+              <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                    Proporção de Subscritos e Sobrescritos (Escala TeX)
+                  </span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Padrão TeX: 70% • Otimizado: 64%</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    data-math-scale-opt="0.58"
+                    class="math-scale-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Muito Compacto</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">58% (0.58em)</span>
+                    <span class="math-scale-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-scale-opt="0.64"
+                    class="math-scale-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Compacto</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">64% (0.64em)</span>
+                    <span class="math-scale-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-scale-opt="0.70"
+                    class="math-scale-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Padrão TeX</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">70% (0.70em)</span>
+                    <span class="math-scale-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-scale-opt="0.78"
+                    class="math-scale-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Destacado</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">78% (0.78em)</span>
+                    <span class="math-scale-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+                </div>
+
+                <!-- Campo Numérico Manual para Proporção -->
+                <div class="pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <span class="text-[var(--text-secondary)] font-medium">
+                    Ou digite a porcentagem exata de escala:
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="number"
+                      id="custom-math-scale-input"
+                      min="40"
+                      max="95"
+                      step="1"
+                      value="64"
+                      class="w-24 px-3 py-1.5 rounded border border-[var(--border-strong)] bg-[var(--bg-page)] text-[var(--text-primary)] font-mono font-bold text-center focus:outline-none focus:border-[var(--accent)]"
+                    />
+                    <span class="font-mono text-[var(--text-muted)]">%</span>
+                    <button
+                      type="button"
+                      id="apply-custom-math-scale-btn"
+                      class="px-3 py-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] font-semibold transition-colors cursor-pointer"
+                    >
+                      Testar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5.2 Limite Mínimo da Fonte para Fórmulas -->
+              <div class="space-y-2.5 pt-4 border-t border-[var(--border-subtle)]">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
+                    Tamanho Mínimo da Fonte (Evita Ilegibilidade em Frações)
+                  </span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Garante leitura em qualquer escala</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    data-math-min-opt="0px"
+                    class="math-min-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Sem Limite</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">0px (Desativado)</span>
+                    <span class="math-min-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-min-opt="9px"
+                    class="math-min-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Compacto</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">9px</span>
+                    <span class="math-min-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-min-opt="10.5px"
+                    class="math-min-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Recomendado</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">10.5px</span>
+                    <span class="math-min-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    data-math-min-opt="12px"
+                    class="math-min-opt-btn relative p-2.5 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                  >
+                    <span class="font-bold block text-xs">Confortável</span>
+                    <span class="text-[11px] text-[var(--text-muted)] font-mono">12px</span>
+                    <span class="math-min-status-tag text-[9px] font-mono block mt-0.5 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                  </button>
+                </div>
+
+                <!-- Campo Numérico Manual para Limite Mínimo -->
+                <div class="pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <span class="text-[var(--text-secondary)] font-medium">
+                    Ou digite o limite mínimo em pixels (px):
+                  </span>
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="number"
+                      id="custom-math-min-input"
+                      min="0"
+                      max="20"
+                      step="0.5"
+                      value="10.5"
+                      class="w-24 px-3 py-1.5 rounded border border-[var(--border-strong)] bg-[var(--bg-page)] text-[var(--text-primary)] font-mono font-bold text-center focus:outline-none focus:border-[var(--accent)]"
+                    />
+                    <span class="font-mono text-[var(--text-muted)]">pixels (px)</span>
+                    <button
+                      type="button"
+                      id="apply-custom-math-min-btn"
+                      class="px-3 py-1.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] font-semibold transition-colors cursor-pointer"
+                    >
+                      Testar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Demonstração Dinâmica da Pré-Visualização -->
             <div class="space-y-2 pt-2">
               <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Pré-Visualização em Tempo Real</span>
@@ -705,9 +901,17 @@ import { MATERIAS } from '../data/materias';
                     <p class="text-[var(--text-primary)]">
                       Considere um sinal contínuo <em>x<sub>c</sub>(t)</em> de banda estritamente limitada, amostrado a uma taxa uniforme <em>T</em>. Para que a reconstrução seja matematicamente perfeita, a frequência de amostragem deve satisfazer a condição fundamental:
                     </p>
-                    <div class="p-3 my-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] font-mono text-center text-sm">
-                      &omega;<sub>s</sub> &gt; 2 &omega;<sub>M</sub> &nbsp;&iff;&nbsp; f<sub>s</sub> &gt; 2 f<sub>M</sub>
+                    
+                    <!-- Fórmulas KaTeX de Demonstração em Tempo Real -->
+                    <div class="space-y-2.5 my-3">
+                      <div class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-center text-sm overflow-x-auto" set:html={previewMathInline}></div>
+                      <div class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-center text-sm overflow-x-auto">
+                        <span class="text-xs font-mono text-[var(--text-muted)] block mb-1">Fração com subscritos no numerador/denominador (protegida contra redução excessiva):</span>
+                        <div set:html={previewMathFraction}></div>
+                      </div>
+                      <div class="overflow-x-auto text-center" set:html={previewMathDisplay}></div>
                     </div>
+
                     <p class="text-[var(--text-secondary)]">
                       Caso contrário, ocorre o rebatimento espectral (<em>aliasing</em>), sobrepondo irreversivelmente réplicas de altas frequências sobre a banda base.
                     </p>
@@ -878,6 +1082,8 @@ import { MATERIAS } from '../data/materias';
       const defaultCodeTheme = 'mocha';
       const defaultCodeFontKey = 'jetbrains';
       const defaultCodeSize = '13px';
+      const defaultMathScriptScale = '0.64';
+      const defaultMathMinSize = '10.5px';
 
       // 1. Estado Salvo Atualmente no Sistema
       let savedState = {
@@ -888,7 +1094,9 @@ import { MATERIAS } from '../data/materias';
         codeTheme: localStorage.getItem('study_code_theme') || defaultCodeTheme,
         codeFontKey: localStorage.getItem('study_code_font_key') || defaultCodeFontKey,
         codeFont: localStorage.getItem('study_code_font') || codeFontsMap[defaultCodeFontKey],
-        codeSize: localStorage.getItem('study_code_size') || defaultCodeSize
+        codeSize: localStorage.getItem('study_code_size') || defaultCodeSize,
+        mathScriptScale: localStorage.getItem('study_math_script_scale') || defaultMathScriptScale,
+        mathMinSize: localStorage.getItem('study_math_min_size') || defaultMathMinSize
       };
 
       // 2. Estado de Rascunho / Demonstração (Não salvo até clicar em Salvar)
@@ -910,9 +1118,11 @@ import { MATERIAS } from '../data/materias';
       savedState.fontSize = normalizePx(savedState.fontSize);
       savedState.maxWidth = normalizePx(savedState.maxWidth);
       savedState.codeSize = normalizePx(savedState.codeSize);
+      savedState.mathMinSize = normalizePx(savedState.mathMinSize);
       draftState.fontSize = normalizePx(draftState.fontSize);
       draftState.maxWidth = normalizePx(draftState.maxWidth);
       draftState.codeSize = normalizePx(draftState.codeSize);
+      draftState.mathMinSize = normalizePx(draftState.mathMinSize);
 
       // Elementos do DOM
       const previewWrapper = document.getElementById('preview-box-wrapper');
@@ -921,6 +1131,9 @@ import { MATERIAS } from '../data/materias';
       const customSizeInput = document.getElementById('custom-size-input');
       const customWidthInput = document.getElementById('custom-width-input');
       const customCodeSizeInput = document.getElementById('custom-code-size-input');
+      const customMathScaleInput = document.getElementById('custom-math-scale-input');
+      const customMathMinInput = document.getElementById('custom-math-min-input');
+      const activeMathBadge = document.getElementById('active-math-badge');
       const statusDot = document.getElementById('status-dot');
       const statusMessage = document.getElementById('status-message');
       const previewCodeCard = document.getElementById('preview-sample-code-card');
@@ -938,7 +1151,11 @@ import { MATERIAS } from '../data/materias';
           previewWrapper.style.maxWidth = draftState.maxWidth;
           previewWrapper.style.setProperty('--reader-font-family', draftState.fontFamily);
           previewWrapper.style.setProperty('--reader-font-size', draftState.fontSize);
+          previewWrapper.style.setProperty('--katex-script-scale', draftState.mathScriptScale);
+          previewWrapper.style.setProperty('--katex-min-font-size', draftState.mathMinSize);
         }
+        document.documentElement.style.setProperty('--katex-script-scale', draftState.mathScriptScale);
+        document.documentElement.style.setProperty('--katex-min-font-size', draftState.mathMinSize);
         if (previewMeta) {
           const fName = fontLabels[draftState.fontKey] || draftState.fontKey;
           previewMeta.textContent = `${fName} • ${draftState.fontSize} • ${draftState.maxWidth}`;
@@ -1142,14 +1359,65 @@ import { MATERIAS } from '../data/materias';
           activeCodeBadge.textContent = `${cThemeName} • ${cFontName} • ${savedState.codeSize} (Salvo)`;
         }
 
-        // 7. Verifica se há alterações pendentes de salvamento
+        // 7. Atualiza seleção de Proporção de Subscritos/Sobrescritos
+        document.querySelectorAll('.math-scale-opt-btn').forEach((btn) => {
+          const sc = btn.getAttribute('data-math-scale-opt');
+          const isDraft = Math.abs(parseFloat(sc) - parseFloat(draftState.mathScriptScale)) < 0.015;
+          const isSaved = Math.abs(parseFloat(sc) - parseFloat(savedState.mathScriptScale)) < 0.015;
+
+          const tag = btn.querySelector('.math-scale-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        if (customMathScaleInput && document.activeElement !== customMathScaleInput) {
+          customMathScaleInput.value = Math.round((parseFloat(draftState.mathScriptScale) || 0.64) * 100);
+        }
+
+        // 8. Atualiza seleção de Limite Mínimo da Fonte
+        document.querySelectorAll('.math-min-opt-btn').forEach((btn) => {
+          const m = btn.getAttribute('data-math-min-opt');
+          const isDraft = m === draftState.mathMinSize;
+          const isSaved = m === savedState.mathMinSize;
+
+          const tag = btn.querySelector('.math-min-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        if (customMathMinInput && document.activeElement !== customMathMinInput) {
+          customMathMinInput.value = parseFloat(draftState.mathMinSize) || 0;
+        }
+
+        if (activeMathBadge) {
+          const pct = Math.round((parseFloat(savedState.mathScriptScale) || 0.64) * 100);
+          activeMathBadge.textContent = `${pct}% • Mín ${savedState.mathMinSize} (Salvo)`;
+        }
+
+        // 9. Verifica se há alterações pendentes de salvamento
         const hasUnsavedChanges =
           draftState.fontKey !== savedState.fontKey ||
           draftState.fontSize !== savedState.fontSize ||
           draftState.maxWidth !== savedState.maxWidth ||
           draftState.codeTheme !== savedState.codeTheme ||
           draftState.codeFontKey !== savedState.codeFontKey ||
-          draftState.codeSize !== savedState.codeSize;
+          draftState.codeSize !== savedState.codeSize ||
+          draftState.mathScriptScale !== savedState.mathScriptScale ||
+          draftState.mathMinSize !== savedState.mathMinSize;
 
         if (statusDot) {
           statusDot.className = hasUnsavedChanges
@@ -1267,6 +1535,48 @@ import { MATERIAS } from '../data/materias';
       customCodeSizeInput?.addEventListener('input', handleCustomCodeSize);
       document.getElementById('apply-custom-code-size-btn')?.addEventListener('click', handleCustomCodeSize);
 
+      // Eventos de clique nas opções de Escala de Matemática
+      document.querySelectorAll('.math-scale-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const sc = btn.getAttribute('data-math-scale-opt');
+          if (sc) {
+            draftState.mathScriptScale = sc;
+            updateUI();
+          }
+        });
+      });
+
+      function handleCustomMathScale() {
+        const val = parseFloat(customMathScaleInput?.value);
+        if (!isNaN(val) && val >= 30 && val <= 100) {
+          draftState.mathScriptScale = (val / 100).toFixed(2);
+          updateUI();
+        }
+      }
+      customMathScaleInput?.addEventListener('input', handleCustomMathScale);
+      document.getElementById('apply-custom-math-scale-btn')?.addEventListener('click', handleCustomMathScale);
+
+      // Eventos de clique nas opções de Limite Mínimo de Matemática
+      document.querySelectorAll('.math-min-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const m = btn.getAttribute('data-math-min-opt');
+          if (m) {
+            draftState.mathMinSize = normalizePx(m);
+            updateUI();
+          }
+        });
+      });
+
+      function handleCustomMathMin() {
+        const val = parseFloat(customMathMinInput?.value);
+        if (!isNaN(val) && val >= 0 && val <= 30) {
+          draftState.mathMinSize = val + 'px';
+          updateUI();
+        }
+      }
+      customMathMinInput?.addEventListener('input', handleCustomMathMin);
+      document.getElementById('apply-custom-math-min-btn')?.addEventListener('click', handleCustomMathMin);
+
       // Função de Salvamento Global
       function saveChanges() {
         savedState = { ...draftState };
@@ -1282,6 +1592,9 @@ import { MATERIAS } from '../data/materias';
         localStorage.setItem('study_code_font', savedState.codeFont);
         localStorage.setItem('study_code_size', savedState.codeSize);
 
+        localStorage.setItem('study_math_script_scale', savedState.mathScriptScale);
+        localStorage.setItem('study_math_min_size', savedState.mathMinSize);
+
         // Aplica imediatamente ao documento
         const root = document.documentElement;
         root.style.setProperty('--reader-font-family', savedState.fontFamily);
@@ -1291,6 +1604,9 @@ import { MATERIAS } from '../data/materias';
         root.setAttribute('data-code-theme', savedState.codeTheme);
         root.style.setProperty('--code-font-family', savedState.codeFont);
         root.style.setProperty('--code-font-size', savedState.codeSize);
+
+        root.style.setProperty('--katex-script-scale', savedState.mathScriptScale);
+        root.style.setProperty('--katex-min-font-size', savedState.mathMinSize);
 
         updateUI();
 
@@ -1313,7 +1629,9 @@ import { MATERIAS } from '../data/materias';
           codeTheme: defaultCodeTheme,
           codeFontKey: defaultCodeFontKey,
           codeFont: codeFontsMap[defaultCodeFontKey],
-          codeSize: defaultCodeSize
+          codeSize: defaultCodeSize,
+          mathScriptScale: defaultMathScriptScale,
+          mathMinSize: defaultMathMinSize
         };
 
         saveChanges();
