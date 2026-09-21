@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
 
-export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
+export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateriaName?: string): string {
   const rootDir = process.cwd();
   // rootDir might be /home/joao/.../estudo-p1/site or /home/joao/.../estudo-p1
   const projectRoot = rootDir.endsWith('site') ? path.dirname(rootDir) : rootDir;
@@ -10,6 +10,18 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
   const archiveMateriaDir = path.join(projectRoot, 'archive', materiaSlug);
   const resumosDir = path.join(archiveMateriaDir, 'resumos');
   const questoesDir = path.join(archiveMateriaDir, 'questoes');
+
+  let materiaName = customMateriaName;
+  if (!materiaName) {
+    const materiaJsonPath = path.join(archiveMateriaDir, 'materia.json');
+    if (fs.existsSync(materiaJsonPath)) {
+      try {
+        const mat = JSON.parse(fs.readFileSync(materiaJsonPath, 'utf-8'));
+        materiaName = mat.name;
+      } catch (e) {}
+    }
+  }
+  materiaName = materiaName || 'Processamento Digital de Sinais';
 
   // Encode images to base64
   const encodedImages: Record<string, string> = {};
@@ -74,11 +86,11 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
   }
 
   const htmlTemplate = `<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="theme-paper">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDS - Resumos e Questões Offline</title>
+    <title>${materiaName} - Caderno de Estudos Offline</title>
     <!-- Marked -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- KaTeX -->
@@ -87,65 +99,170 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     
     <style>
-        :root {
-            --bg-page: #fdfcf9;
-            --bg-surface: #ffffff;
-            --bg-subtle: #f5f2eb;
-            --text-primary: #1c1917;
-            --text-secondary: #44403c;
-            --text-muted: #78716c;
-            --border-subtle: #e7e5e4;
-            --border-strong: #d6d3d1;
-            --accent: #8b3a2b;
-            --accent-subtle: #fbf0ed;
+        /* ============================================================
+           1. MODO PAPEL / SÉPIA CLÁSSICO (Padrão)
+           ============================================================ */
+        :root, html.theme-paper {
+            --bg-page: #fbf8f2;
+            --bg-surface: #f4eee3;
+            --bg-surface-hover: #ede4d5;
+            --bg-subtle: #f8f3ea;
+            --border-subtle: #e5dccf;
+            --border-strong: #cfc2af;
+            --text-primary: #24221f;
+            --text-secondary: #5e5850;
+            --text-muted: #877f74;
+            --accent: #8b3a2b; /* Terracota acadêmica */
+            --accent-subtle: #f6ebe7;
+            --card-shadow: rgba(40, 30, 20, 0.05);
+            color-scheme: light;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-page: #191716;
-                --bg-surface: #201d1b;
-                --bg-subtle: #292523;
-                --text-primary: #f5f2eb;
-                --text-secondary: #d6d3d1;
-                --text-muted: #a8a29e;
-                --border-subtle: #383330;
-                --border-strong: #4d4642;
-                --accent: #d97764;
-                --accent-subtle: #352320;
-            }
+        /* ============================================================
+           2. MODO ESCURO BIBLIOTECA
+           ============================================================ */
+        html.theme-dark {
+            --bg-page: #151619;
+            --bg-surface: #1e2025;
+            --bg-surface-hover: #262930;
+            --bg-subtle: #191b20;
+            --border-subtle: #2b2e37;
+            --border-strong: #3d424e;
+            --text-primary: #e6e3dc;
+            --text-secondary: #a39f97;
+            --text-muted: #74716a;
+            --accent: #d89b65; /* Âmbar */
+            --accent-subtle: #2a231b;
+            --card-shadow: rgba(0, 0, 0, 0.35);
+            color-scheme: dark;
+        }
+
+        /* ============================================================
+           3. MODO ESCURO OLED (Preto Absoluto #000000)
+           ============================================================ */
+        html.theme-oled {
+            --bg-page: #000000;
+            --bg-surface: #0a0a0a;
+            --bg-surface-hover: #141414;
+            --bg-subtle: #050505;
+            --border-subtle: #1c1c1c;
+            --border-strong: #2c2c2c;
+            --text-primary: #e6e6e6;
+            --text-secondary: #949494;
+            --text-muted: #666666;
+            --accent: #e5b378;
+            --accent-subtle: #1a150e;
+            --card-shadow: rgba(0, 0, 0, 0.8);
+            color-scheme: dark;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-page);
             color: var(--text-primary);
-            line-height: 1.65;
+            line-height: 1.68;
             max-width: 860px;
             margin: 0 auto;
-            padding: 20px 16px 60px;
+            padding: 24px 16px 80px;
             transition: background-color 0.2s, color 0.2s;
         }
 
         .header-bar {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             padding-bottom: 20px;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             border-bottom: 1px solid var(--border-strong);
         }
 
-        .header-title-row {
+        .header-top-row {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 14px;
         }
 
-        h1 {
-            font-size: 1.6rem;
+        .materia-badge {
+            font-size: 11px;
+            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .materia-title {
+            font-size: 1.65rem;
+            font-weight: 800;
             margin: 0;
             color: var(--text-primary);
+            line-height: 1.25;
+        }
+
+        /* Seletor Segmentado de Tema */
+        .theme-segmented-control {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+            box-shadow: 0 1px 2px var(--card-shadow);
+            flex-shrink: 0;
+        }
+
+        .theme-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .theme-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .theme-btn.active {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+            box-shadow: 0 1px 3px var(--card-shadow);
+        }
+
+        .theme-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .chapter-nav-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
         }
 
         select {
@@ -158,7 +275,8 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
             background-color: var(--bg-surface);
             color: var(--text-primary);
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px var(--card-shadow);
+            transition: border-color 0.2s;
         }
 
         select:focus {
@@ -194,7 +312,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
             padding: 20px;
             margin: 28px 0;
             background: var(--bg-surface);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 5px var(--card-shadow);
         }
 
         .question-badge-bar {
@@ -230,10 +348,10 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
             border: 1px solid var(--border-subtle);
         }
 
-        .theory summary { color: #8e44ad; }
-        .theory { border-left: 4px solid #8e44ad; }
-        .resolution summary { color: #27ae60; }
-        .resolution { border-left: 4px solid #27ae60; }
+        .theory summary { color: #9b59b6; }
+        .theory { border-left: 4px solid #9b59b6; }
+        .resolution summary { color: #2ecc71; }
+        .resolution { border-left: 4px solid #2ecc71; }
 
         .options {
             list-style: none;
@@ -274,43 +392,96 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
         }
 
         .banco-header {
-            padding: 16px;
-            background: var(--bg-subtle);
+            padding: 18px;
+            background: var(--bg-surface);
             border-radius: 8px;
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-strong);
             margin-bottom: 24px;
+            box-shadow: 0 1px 3px var(--card-shadow);
         }
 
         .banco-search {
             width: 100%;
-            padding: 10px 14px;
-            margin-top: 10px;
+            padding: 12px 14px;
+            margin-top: 12px;
             font-size: 14px;
             border-radius: 6px;
             border: 1px solid var(--border-strong);
-            background: var(--bg-surface);
+            background: var(--bg-subtle);
             color: var(--text-primary);
             box-sizing: border-box;
+        }
+
+        .banco-search:focus {
+            outline: 2px solid var(--accent);
+            background: var(--bg-surface);
         }
     </style>
 </head>
 <body>
-    <div class="header-bar">
-        <div class="header-title-row">
-            <h1>Caderno de Estudos Offline</h1>
-            <span style="font-size: 12px; color: var(--text-muted); font-family: monospace;">STANDALONE</span>
+    <header class="header-bar">
+        <div class="header-top-row">
+            <div>
+                <span class="materia-badge">Caderno de Estudos Offline</span>
+                <h1 class="materia-title">${materiaName}</h1>
+            </div>
+
+            <!-- Seletor de Tema (Papel, Escuro, OLED) -->
+            <div class="theme-segmented-control" role="radiogroup" aria-label="Modo de Leitura">
+                <button type="button" class="theme-btn" data-theme="paper" onclick="setTheme('paper')" title="Tema Papel / Sépia">
+                    <span class="theme-dot" style="background:#e8decb; border:1px solid #b8ab96;"></span>
+                    <span>Papel</span>
+                </button>
+                <button type="button" class="theme-btn" data-theme="dark" onclick="setTheme('dark')" title="Tema Escuro">
+                    <span class="theme-dot" style="background:#2a2d36; border:1px solid #484e5c;"></span>
+                    <span>Escuro</span>
+                </button>
+                <button type="button" class="theme-btn" data-theme="oled" onclick="setTheme('oled')" title="Tema Preto OLED">
+                    <span class="theme-dot" style="background:#000000; border:1px solid #555555;"></span>
+                    <span>OLED</span>
+                </button>
+            </div>
         </div>
-        <label for="chapter-select" style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--text-muted);">
-            Selecione o Capítulo ou o Banco de Questões:
-        </label>
-        <select id="chapter-select"></select>
-    </div>
+
+        <div class="chapter-nav-row">
+            <label for="chapter-select" class="nav-label">
+                Navegação por Capítulos e Banco de Questões:
+            </label>
+            <select id="chapter-select"></select>
+        </div>
+    </header>
 
     <div id="content"></div>
 
     <script>
         const DB = JSON_DATA_HERE;
         const IMAGES = BASE64_IMAGES_HERE;
+
+        function setTheme(theme) {
+            const root = document.documentElement;
+            root.classList.remove('theme-paper', 'theme-dark', 'theme-oled');
+            root.classList.add('theme-' + theme);
+            try {
+                localStorage.setItem('study_theme', theme);
+            } catch(e) {}
+            
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                if (btn.getAttribute('data-theme') === theme) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // Inicializa tema imediatamente
+        (function() {
+            let saved = 'paper';
+            try {
+                saved = localStorage.getItem('study_theme') || 'paper';
+            } catch(e) {}
+            setTheme(saved);
+        })();
         
         function renderMath() {
             renderMathInElement(document.body, {
@@ -416,11 +587,11 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds'): string {
             if (val === 'banco-questoes') {
                 const questionIds = Object.keys(DB.questoes);
                 let html = '<div class="banco-header">';
-                html += '<h2 style="margin: 0 0 8px 0;">Banco de Questões Completo</h2>';
+                html += '<h2 style="margin: 0 0 6px 0;">Banco de Questões Completo</h2>';
                 html += '<p style="margin: 0; font-size: 14px; color: var(--text-secondary);">';
-                html += 'Total de <strong>' + questionIds.length + ' questões</strong> de testes oficiais resolvidas e comentadas.';
+                html += 'Total de <strong>' + questionIds.length + ' questões oficiais</strong> extraídas dos testes, todas com resolução detalhada e fundamentação teórica.';
                 html += '</p>';
-                html += '<input type="text" id="banco-search-input" class="banco-search" placeholder="Filtrar questões por enunciado, prova ou tema..." oninput="filterBanco(this.value)" />';
+                html += '<input type="text" id="banco-search-input" class="banco-search" placeholder="Filtrar questões por enunciado, prova, ano ou tema..." oninput="filterBanco(this.value)" />';
                 html += '</div>';
                 
                 html += '<div id="banco-questoes-list">';
