@@ -21,6 +21,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.tmp
+scratch/
+questoes*.json
+crop_*.py
+gen_*.py
 
 # ============================================================
 # Python e Cache de Scripts

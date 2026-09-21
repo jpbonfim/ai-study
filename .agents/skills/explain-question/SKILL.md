@@ -190,3 +190,15 @@ Ao redigir o conteúdo para uma questão:
    - Apresente todas as passagens matemáticas intermediárias (sem saltos abruptos).
    - Se for múltipla escolha: analise por que a alternativa correta é verdadeira e, quando oportuno, por que as distratoras mais atraentes são falsas. Conclua com: `Portanto, a alternativa correta é a **(X)**.`
    - Se for dissertativa: estruture em itens `#### Item (a)`, `#### Item (b)`, destacando a resposta final de forma clara e inequívoca.
+
+---
+
+## 7. Higiene do Workspace e Limpeza Obrigatória de Rascunhos
+
+Para evitar a poluição do repositório Git e da pasta raiz:
+* **Proibição de scripts descartáveis na raiz:** Nunca crie scripts Python ad-hoc (ex: `crop_fig.py`, `test_parse.py`) ou dumps soltos (`questoes.json`) na raiz (`.`).
+* **Utilize o script oficial:** Toda extração de páginas, recorte de figuras e dump JSON deve ser feita usando diretamente os subcomandos do utilitário oficial:
+  ```bash
+  python3 .agents/skills/explain-question/scripts/extract_question.py [subcomando] ...
+  ```
+* **Limpeza imediata de rascunhos:** Se o subagente gerar qualquer arquivo temporário durante o trabalho, ele é **estritamente obrigado** a remover esses arquivos com `rm` antes de finalizar sua execução e reportar os resultados ao agente pai.

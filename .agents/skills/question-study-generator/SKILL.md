@@ -58,12 +58,12 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 1 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     },
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 2 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     }
   ]
 }
@@ -76,7 +76,10 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
    * Recortar figuras preservando contexto superior e fórmulas matemáticas.
    * Utilizar `<Theory>` para teoria prévia pedagógica e `<Resolution>` para o desenvolvimento algébrico.
    * Usar delimitadores KaTeX `$...$` no `statement`, nas opções (`options[].text`) e no gabarito (`correctOption` ou `expectedAnswer`).
-3. **Consolidação pelo Orquestrador Principal:**
+3. **Higiene e Limpeza Obrigatória de Workspace:**
+   * É terminantemente proibido deixar scripts temporários (`crop_*.py`, etc.), dumps `.json` ou rascunhos de imagens na raiz do projeto.
+   * O orquestrador deve instruir explicitamente os subagentes no prompt a utilizarem o utilitário oficial `.agents/skills/explain-question/scripts/extract_question.py` e a deletarem qualquer script temporário antes de finalizar.
+4. **Consolidação pelo Orquestrador Principal:**
    * Assim que os subagentes retornarem, o agente principal colhe os tópicos cobrados e os IDs gerados.
    * Em seguida, redige ou aprimora o caderno teórico contínuo (`archive/<materia>/resumos/<slug>.mdx`), garantindo que a teoria cubra integralmente todos os pontos demandados pelas questões recém-resolvidas.
    * Adiciona os IDs em `relatedQuestions` no frontmatter e insere os cartões `<QuestionCard id="..." />` nos pontos estratégicos do caderno.
