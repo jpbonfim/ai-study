@@ -142,11 +142,24 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
                 <span class="sans-ui text-[11px] font-mono uppercase tracking-widest text-[var(--accent)] block font-semibold">
                   {materia.code} • {materia.institution}
                 </span>
-                <h2 class="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug mt-1">
-                  <a href={`/${materia.slug}`} class="hover:text-[var(--accent)] transition-colors">
-                    {materia.name}
+                <div class="flex items-center justify-between gap-2 mt-1">
+                  <h2 class="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug">
+                    <a href={`/${materia.slug}`} class="hover:text-[var(--accent)] transition-colors">
+                      {materia.name}
+                    </a>
+                  </h2>
+                  <a
+                    href={`/downloads/${materia.slug}.html`}
+                    download={`${materia.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`}
+                    class="sans-ui inline-flex items-center justify-center p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all shrink-0 cursor-pointer shadow-xs group"
+                    title={`Baixar todo o conteúdo de ${materia.name} em HTML offline standalone`}
+                    aria-label={`Baixar ${materia.name} offline`}
+                  >
+                    <svg class="w-4 h-4 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                   </a>
-                </h2>
+                </div>
               </div>
             )}
           </div>

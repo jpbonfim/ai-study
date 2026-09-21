@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
 import { MATERIAS, getMateria } from '../../../data/materias';
 import { renderMath } from '../../../utils/katex';
+import QuestionCard from '../../../components/QuestionCard.astro';
 
 export async function getStaticPaths() {
   return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
@@ -81,54 +82,15 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
     </div>
 
     <!-- Lista Acadêmica de Questões -->
-    <div id="questions-list" class="space-y-6">
+    <div id="questions-list" class="space-y-4">
       {allQuestoes.map((q) => (
-        <article
-          class="question-entry p-6 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors space-y-3"
+        <div
+          class="question-entry"
           data-topic={q.data.topic}
           data-text={`${q.data.title} ${q.data.statement || ''}`.toLowerCase()}
         >
-          <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
-            <span class="font-mono font-bold text-[var(--accent)]">
-              {q.data.exam} ({q.data.year})
-            </span>
-            <div class="flex items-center gap-2">
-              <span>Tópico: {q.data.topic}</span>
-              <span>•</span>
-              <span>{q.data.difficulty}</span>
-              <span>•</span>
-              <span class="rounded px-1.5 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[10px] uppercase tracking-wider font-semibold text-[var(--text-primary)]">
-                {q.data.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha'}
-              </span>
-            </div>
-          </div>
-
-          <h2 class="font-serif text-xl font-bold text-[var(--text-primary)]">
-            <a href={`/${materia.slug}/questoes/${q.id}`} class="hover:text-[var(--accent)] transition-colors">
-              {q.data.title}
-            </a>
-          </h2>
-
-          {q.data.statement && (
-            <div
-              class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 leading-relaxed"
-              set:html={renderMath(q.data.statement)}
-            />
-          )}
-
-          <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">
-            <span class="text-[var(--text-muted)] font-mono">
-              {q.data.correctOption ? `Gabarito: (${q.data.correctOption})` : 'Questão Dissertativa'}
-            </span>
-            <a
-              href={`/${materia.slug}/questoes/${q.id}`}
-              class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-            >
-              <span>Ver Solução Completa</span>
-              <span>&rarr;</span>
-            </a>
-          </div>
-        </article>
+          <QuestionCard id={q.id} />
+        </div>
       ))}
     </div>
 
