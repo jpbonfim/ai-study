@@ -151,7 +151,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
                 {toc.map((chap) => (
                   <div class="space-y-0.5">
                     <a
-                      href={`#${chap.id}`}
+                      href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
                       data-toc-id={chap.id}
                       data-toc-title={chap.title}
                       class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
@@ -162,7 +162,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
                       <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                         {chap.subsections.map((sub) => (
                           <a
-                            href={`#${sub.id}`}
+                            href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
                             data-toc-id={sub.id}
                             data-toc-title={sub.title}
                             data-parent-id={chap.id}
@@ -275,17 +275,31 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
       });
 
       // Rolagem Adaptativa Inteligente para Âncoras do Documento e Sumário:
-      // Se a seção estiver muito longe (> 950px ou 1.2 telas), salta instantaneamente
-      // evitando a rolagem longa e nauseante por milhares de pixels de fórmulas e texto.
-      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      // Se estiver na página principal, faz a rolagem adaptativa instantânea ou suave.
+      // Se estiver em uma questão, permite que o navegador navegue diretamente para a seção correspondente no caderno de resumos.
+      document.querySelectorAll('.toc-item, a[href*="#"]').forEach((anchor) => {
         anchor.addEventListener('click', (e) => {
           const href = anchor.getAttribute('href');
-          if (!href || href === '#' || href.length < 2) return;
+          if (!href || href === '#') return;
 
-          const targetId = href.slice(1);
+          const hashIdx = href.indexOf('#');
+          if (hashIdx === -1) return;
+
+          const targetId = href.slice(hashIdx + 1);
+          if (!targetId) return;
+
           const targetEl = document.getElementById(targetId);
-          if (!targetEl) return;
+          // Se o elemento alvo NÃO existe na página atual (ex: estamos na página de uma questão e clicamos no capítulo de teoria):
+          // NÃO chamamos preventDefault() para que o navegador navegue para o caderno de resumos com o hash!
+          if (!targetEl) {
+            const isMobile = window.innerWidth < 1024;
+            if (isMobile) {
+              closeSidebar();
+            }
+            return;
+          }
 
+          // Se o elemento existe na página atual:
           e.preventDefault();
 
           const isMobile = window.innerWidth < 1024;
@@ -316,10 +330,24 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
 
           // Atualiza o hash na URL
           if (history.pushState) {
-            history.pushState(null, '', href);
+            history.pushState(null, '', `#${targetId}`);
           }
         });
       });
+
+      // Se a página carregar com âncora na URL (ex: navegou de uma questão direto para uma seção da teoria):
+      if (window.location.hash) {
+        const initialHashId = window.location.hash.slice(1);
+        const initialHashEl = document.getElementById(initialHashId);
+        if (initialHashEl) {
+          setTimeout(() => {
+            const isMobile = window.innerWidth < 1024;
+            const headerOffset = isMobile ? 70 : 35;
+            const targetPos = Math.max(0, initialHashEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+            window.scrollTo({ top: targetPos, behavior: 'auto' });
+          }, 80);
+        }
+      }
 
       // 1. Validação de Gestos Touch no Celular:
       // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos
