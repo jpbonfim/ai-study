@@ -44,10 +44,32 @@ import { MATERIAS } from '../data/materias';
   </head>
   <body class="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-200 overflow-x-hidden">
     
+    <!-- CABEÇALHO MOBILE SEMPRE VISÍVEL (SEM BOTÕES DUPLICADOS) -->
+    <header class="lg:hidden sticky top-0 z-30 flex items-center px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-page)]/95 backdrop-blur-md shadow-xs w-full min-w-0">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          id="mobile-sidebar-toggle"
+          type="button"
+          aria-label="Abrir Menu de Navegação"
+          class="sans-ui p-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 cursor-pointer shadow-xs"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
+        <span class="font-serif text-sm font-bold truncate text-[var(--text-primary)]">
+          Configurações de Leitura
+        </span>
+      </div>
+    </header>
+
     <div class="flex w-full min-w-0">
       
       <!-- Menu Lateral Esquerdo -->
-      <aside class="fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between overflow-y-auto p-6 space-y-6">
+      <aside
+        id="settings-sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-80 max-w-[85vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col justify-between overflow-y-auto p-6 space-y-6"
+      >
         <div class="space-y-6">
           <div class="space-y-3 pb-5 border-b border-[var(--border-subtle)]">
             <div class="flex items-center justify-between gap-2">
@@ -95,6 +117,12 @@ import { MATERIAS } from '../data/materias';
           Preferências persistidas localmente
         </div>
       </aside>
+
+      <!-- Overlay para Mobile quando o Menu estiver aberto -->
+      <div
+        id="settings-sidebar-backdrop"
+        class="fixed inset-0 z-30 bg-black/50 lg:hidden hidden"
+      ></div>
 
       <!-- Conteúdo Principal -->
       <main class="flex-1 lg:pl-80 w-full min-w-0">
@@ -773,6 +801,66 @@ import { MATERIAS } from '../data/materias';
 
       // Inicializa a interface
       updateUI();
+
+      // Drawer Mobile nas Configurações
+      const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
+      const sidebar = document.getElementById('settings-sidebar');
+      const backdrop = document.getElementById('settings-sidebar-backdrop');
+
+      function openSidebar() {
+        sidebar?.classList.remove('-translate-x-full');
+        backdrop?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+      }
+
+      function closeSidebar() {
+        sidebar?.classList.add('-translate-x-full');
+        backdrop?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+      }
+
+      sidebarToggle?.addEventListener('click', openSidebar);
+      backdrop?.addEventListener('click', closeSidebar);
+
+      sidebar?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 1024) closeSidebar();
+        });
+      });
+
+      // Gestos Touch no Celular: Deslizar para a direita abre o menu lateral
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      window.addEventListener('touchstart', (e) => {
+        if (window.innerWidth >= 1024) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchStartTime = Date.now();
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (window.innerWidth >= 1024) return;
+        const t = e.changedTouches[0];
+        const deltaX = t.clientX - touchStartX;
+        const deltaY = t.clientY - touchStartY;
+        const elapsed = Date.now() - touchStartTime;
+
+        if (Math.abs(deltaY) > 80 || elapsed > 650) return;
+
+        const isClosed = sidebar?.classList.contains('-translate-x-full');
+
+        // Deslizar para a direita (deltaX > 50) a partir da área esquerda da tela
+        if (isClosed && deltaX > 50 && touchStartX < window.innerWidth * 0.45) {
+          openSidebar();
+        }
+        // Deslizar para a esquerda com o menu aberto fecha o menu lateral
+        else if (!isClosed && deltaX < -50) {
+          closeSidebar();
+        }
+      }, { passive: true });
     </script>
 
     <!-- Algoritmo de Otimização Ergonômica de Tabelas Acadêmicas -->
