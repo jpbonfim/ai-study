@@ -290,8 +290,8 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
           const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
           const distance = Math.abs(targetPos - currentScroll);
 
-          // Limite adaptativo de distância: > 950px ou 1.2 telas é considerado muito longe
-          const isFar = distance > Math.max(950, window.innerHeight * 1.2);
+          // Limite adaptativo de distância: mais de 2 telas inteiras de distância é considerado muito longe
+          const isFar = distance > (window.innerHeight * 2);
 
           if (isFar) {
             // Salto instantâneo sem rolagem excessiva
