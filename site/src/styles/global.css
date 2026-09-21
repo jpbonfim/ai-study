@@ -1006,6 +1006,62 @@ html[data-code-theme="monokai"] pre.astro-code {
   background-color: var(--shiki-monokai-bg, #272822) !important;
 }
 
+/* Regras com especificidade de ID para a prévia interativa nas configurações */
+#preview-sample-code-card[data-code-theme="mocha"] {
+  --code-card-bg: #1e1e2e !important;
+  --code-card-header-bg: #181825 !important;
+  --code-card-border: #313244 !important;
+  --code-card-text: #cdd6f4 !important;
+  --code-badge-color: #cba6f7 !important;
+}
+#preview-sample-code-card[data-code-theme="mocha"] span {
+  color: var(--shiki-mocha, inherit) !important;
+}
+
+#preview-sample-code-card[data-code-theme="tokyo"] {
+  --code-card-bg: #1a1b26 !important;
+  --code-card-header-bg: #16161e !important;
+  --code-card-border: #292e42 !important;
+  --code-card-text: #c0caf5 !important;
+  --code-badge-color: #7aa2f7 !important;
+}
+#preview-sample-code-card[data-code-theme="tokyo"] span {
+  color: var(--shiki-tokyo, inherit) !important;
+}
+
+#preview-sample-code-card[data-code-theme="dracula"] {
+  --code-card-bg: #282a36 !important;
+  --code-card-header-bg: #21222c !important;
+  --code-card-border: #44475a !important;
+  --code-card-text: #f8f8f2 !important;
+  --code-badge-color: #bd93f9 !important;
+}
+#preview-sample-code-card[data-code-theme="dracula"] span {
+  color: var(--shiki-dracula, inherit) !important;
+}
+
+#preview-sample-code-card[data-code-theme="onedark"] {
+  --code-card-bg: #282c34 !important;
+  --code-card-header-bg: #21252b !important;
+  --code-card-border: #3b4048 !important;
+  --code-card-text: #abb2bf !important;
+  --code-badge-color: #61afef !important;
+}
+#preview-sample-code-card[data-code-theme="onedark"] span {
+  color: var(--shiki-onedark, inherit) !important;
+}
+
+#preview-sample-code-card[data-code-theme="monokai"] {
+  --code-card-bg: #272822 !important;
+  --code-card-header-bg: #1e1f1c !important;
+  --code-card-border: #3e3d32 !important;
+  --code-card-text: #f8f8f2 !important;
+  --code-badge-color: #a6e22e !important;
+}
+#preview-sample-code-card[data-code-theme="monokai"] span {
+  color: var(--shiki-monokai, inherit) !important;
+}
+
 .code-block-header {
   display: flex;
   align-items: center;

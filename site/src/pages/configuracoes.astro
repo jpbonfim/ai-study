@@ -829,6 +829,49 @@ import { MATERIAS } from '../data/materias';
         monokai: 'Monokai'
       };
 
+      const themeColors = {
+        mocha: {
+          name: 'Catppuccin Mocha',
+          bg: '#1e1e2e',
+          headerBg: '#181825',
+          border: '#313244',
+          text: '#cdd6f4',
+          badge: '#cba6f7',
+        },
+        tokyo: {
+          name: 'Tokyo Night',
+          bg: '#1a1b26',
+          headerBg: '#16161e',
+          border: '#292e42',
+          text: '#c0caf5',
+          badge: '#7aa2f7',
+        },
+        dracula: {
+          name: 'Dracula',
+          bg: '#282a36',
+          headerBg: '#21222c',
+          border: '#44475a',
+          text: '#f8f8f2',
+          badge: '#bd93f9',
+        },
+        onedark: {
+          name: 'Atom One Dark',
+          bg: '#282c34',
+          headerBg: '#21252b',
+          border: '#3b4048',
+          text: '#abb2bf',
+          badge: '#61afef',
+        },
+        monokai: {
+          name: 'Monokai',
+          bg: '#272822',
+          headerBg: '#1e1f1c',
+          border: '#3e3d32',
+          text: '#f8f8f2',
+          badge: '#a6e22e',
+        }
+      };
+
       const defaultFontKey = 'garamond';
       const defaultSize = '18px';
       const defaultWidth = '768px';
@@ -910,9 +953,44 @@ import { MATERIAS } from '../data/materias';
           previewCodeInner.style.fontFamily = draftState.codeFont;
           previewCodeInner.style.fontSize = draftState.codeSize;
         }
+
+        const activeTheme = draftState.codeTheme || 'mocha';
+        const tc = themeColors[activeTheme] || themeColors.mocha;
+
+        // Atualiza atributo no elemento raiz html para acionar as classes globais do tema
+        document.documentElement.setAttribute('data-code-theme', activeTheme);
+
         if (previewCodeCard) {
-          previewCodeCard.setAttribute('data-code-theme', draftState.codeTheme);
+          previewCodeCard.setAttribute('data-code-theme', activeTheme);
+          previewCodeCard.style.setProperty('--code-card-bg', tc.bg);
+          previewCodeCard.style.setProperty('--code-card-header-bg', tc.headerBg);
+          previewCodeCard.style.setProperty('--code-card-border', tc.border);
+          previewCodeCard.style.setProperty('--code-card-text', tc.text);
+          previewCodeCard.style.setProperty('--code-badge-color', tc.badge);
+          previewCodeCard.style.backgroundColor = tc.bg;
+          previewCodeCard.style.borderColor = tc.border;
+
+          const headerEl = previewCodeCard.querySelector('.code-block-header');
+          if (headerEl) {
+            headerEl.style.backgroundColor = tc.headerBg;
+            headerEl.style.borderBottomColor = tc.border;
+          }
+          const badgeEl = previewCodeCard.querySelector('.code-block-lang');
+          if (badgeEl) {
+            badgeEl.style.color = tc.badge;
+          }
         }
+
+        if (previewCodeInner) {
+          const varName = `--shiki-${activeTheme}`;
+          previewCodeInner.querySelectorAll('span').forEach((sp) => {
+            const tokenColor = sp.style.getPropertyValue(varName);
+            if (tokenColor) {
+              sp.style.color = tokenColor;
+            }
+          });
+        }
+
         if (typeof window !== 'undefined' && typeof window.__reoptimizeAcademicTables === 'function') {
           window.__reoptimizeAcademicTables();
         }
