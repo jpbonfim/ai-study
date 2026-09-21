@@ -90,16 +90,18 @@ topic: "Amostragem e Aliasing"
 topicSlug: "cap-2-amostragem"
 difficulty: "Médio"
 type: "multipla_escolha"
-statement: "Enunciado fiel da questão..."
-image: "/images/questoes/diagrama.png" # opcional se houver figura
+statement: "No sistema da Figura 1, suponha que $x_c(t) = 2\\cos(30\\pi t)$..."
+image: "/images/questoes/diagrama.png" # opcional se houver figura (ou images: [{ src, caption }])
 options:
   - label: "A"
-    text: "..."
+    text: "$2\\cos(30\\pi t)$"
   - label: "B"
-    text: "..."
+    text: "$2\\cos(40\\pi t)$"
 correctOption: "B"
 ---
 ```
+> **Exibição de Imagens e Zoom:** As imagens das questões são inseridas limpas e sem caixas ou botões redundantes. Ao clicar diretamente sobre qualquer imagem, o estudante entra no modo de visualização com zoom interativo, arraste (*pan*), roda do mouse e reset.
+
 
 ---
 
@@ -146,12 +148,20 @@ python3 .agents/skills/explain-question/scripts/extract_question.py inspect mate
 # 3. Renderizar páginas em PNG para recorte de figuras e diagramas esquemáticos
 python3 .agents/skills/explain-question/scripts/extract_question.py render-pages material/testes/teste-1-2024.pdf --outdir site/public/images/questoes
 
-# 4. Exportar estrutura completa das questões em JSON
+# 4. Recortar figura preservando fórmulas superiores e contexto matemático
+python3 .agents/skills/explain-question/scripts/extract_question.py crop-figure material/testes/teste-1-2024.pdf --out site/public/images/questoes/sistema-amostragem-figura1.png --page 1 --top 770 --bottom 1540 --padding 25
+
+# 5. Exportar estrutura completa das questões em JSON
 python3 .agents/skills/explain-question/scripts/extract_question.py dump-json material/testes/teste-1-2024.pdf -o questoes.json
 
-# 5. Gerar esqueletos .mdx prontos em archive/<materia>/questoes/
+# 6. Gerar esqueletos .mdx prontos em archive/<materia>/questoes/
 python3 .agents/skills/explain-question/scripts/extract_question.py scaffold material/testes/teste-1-2024.pdf --materia pds
 ```
+
+### Regras Críticas para Extração e Recorte de Figuras
+* **Preservação de Fórmulas e Contexto Superior:** Em provas de engenharia e física, diagramas frequentemente possuem equações definidoras posicionadas imediatamente acima da figura (por exemplo, a equação do trem de impulsos $p(t) = \sum_{n=-\infty}^{+\infty} \delta(t - nT)$ e definições de variáveis). **O recorte nunca deve começar rente à primeira linha de desenho**, devendo sempre englobar toda a fórmula matemática associada, seus limites de somatório ($+\infty$, $-\infty$), frações e o texto introdutório.
+* **Margem de Segurança (Padding):** Utilize sempre uma margem vertical de ao menos 25 pixels (`--padding 25`) para assegurar que sobrescritos, acentos matemáticos ($\hat{x}$, $\bar{x}$, $\dot{x}$) e símbolos não sofram corte horizontal.
+* **Legenda Completa:** Inclua sempre a legenda na base ("Figura X: ...") para manter a rastreabilidade visual do exercício.
 
 ---
 

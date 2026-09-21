@@ -18,6 +18,8 @@ const {
   expectedAnswer,
 } = Astro.props;
 
+import { renderMath } from '../utils/katex';
+
 const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
 ---
 
@@ -39,9 +41,10 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
             <span class="option-badge sans-ui font-mono font-bold text-xs px-2 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-primary)] shrink-0">
               ({opt.label})
             </span>
-            <div class="text-[var(--text-primary)] pt-0.5 leading-relaxed text-sm">
-              {opt.text}
-            </div>
+            <div
+              class="text-[var(--text-primary)] pt-0.5 leading-relaxed text-sm"
+              set:html={renderMath(opt.text)}
+            />
           </div>
         ))}
       </div>
@@ -65,7 +68,7 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
           Gabarito Oficial
         </span>
         <span class="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
-          A alternativa correta é a <strong>({correctOption})</strong>.
+          A alternativa correta é a <strong>(<span set:html={renderMath(correctOption)} />)</strong>.
         </span>
       </div>
     </div>
@@ -76,9 +79,10 @@ const isMultipleChoice = type === 'multipla_escolha' && options.length > 0;
       <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--accent)] mb-1">
         Gabarito / Resposta Esperada
       </div>
-      <p class="font-mono text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed">
-        {expectedAnswer}
-      </p>
+      <div
+        class="text-xs sm:text-sm text-[var(--text-primary)] m-0 leading-relaxed font-mono"
+        set:html={renderMath(expectedAnswer)}
+      />
     </div>
   )}
 

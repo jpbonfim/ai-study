@@ -873,8 +873,17 @@ h4[id] {
   will-change: transform;
 }
 
-.diagram-modal-content svg {
+.diagram-modal-content svg,
+.diagram-modal-content img {
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.zoomable-question-image {
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* ============================================================

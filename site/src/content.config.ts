@@ -52,6 +52,17 @@ const questoes = defineCollection({
     correctOption: z.string().optional(),
     expectedAnswer: z.string().optional(),
     image: z.string().optional(),
+    images: z
+      .array(
+        z.union([
+          z.string(),
+          z.object({
+            src: z.string(),
+            caption: z.string().optional(),
+          }),
+        ])
+      )
+      .optional(),
   }),
 });
 

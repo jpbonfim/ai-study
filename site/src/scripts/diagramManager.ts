@@ -22,6 +22,9 @@ interface ModalState {
   initialPinchDist: number;
   initialScale: number;
   svgElement: SVGElement | null;
+  imageElement: HTMLImageElement | null;
+  targetWidth: number;
+  targetHeight: number;
 }
 
 const modalState: ModalState = {
@@ -34,6 +37,9 @@ const modalState: ModalState = {
   initialPinchDist: 0,
   initialScale: 1,
   svgElement: null,
+  imageElement: null,
+  targetWidth: 800,
+  targetHeight: 600,
 };
 
 let modalRoot: HTMLElement | null = null;
@@ -50,79 +56,77 @@ function getOrCreateModal(): HTMLElement {
     return modalRoot;
   }
 
-  const existing = document.getElementById('diagram-zoom-modal');
-  if (existing) {
-    modalRoot = existing;
-    return existing;
+  let modal = document.getElementById('diagram-zoom-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'diagram-zoom-modal';
+    modal.className = 'diagram-modal hidden';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Visualizador com Zoom e Navegação');
+
+    modal.innerHTML = `
+      <div class="diagram-modal-backdrop"></div>
+      <div class="diagram-modal-dialog">
+        <!-- Barra Superior de Ferramentas -->
+        <div class="diagram-modal-header">
+          <div class="diagram-modal-title">
+            <svg class="w-5 h-5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            <span class="modal-title-text font-serif font-bold text-sm text-[var(--text-primary)] truncate">
+              Visualizador
+            </span>
+            <span class="text-xs text-[var(--text-muted)] hidden md:inline ml-2">
+              • Arraste para mover • Role ou dê pinça para zoom
+            </span>
+          </div>
+
+          <!-- Controles de Navegação e Zoom -->
+          <div class="diagram-modal-controls">
+            <button type="button" class="modal-control-btn modal-zoom-out" title="Diminuir Zoom (-)" aria-label="Diminuir Zoom">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+              </svg>
+            </button>
+
+            <span class="modal-zoom-display font-mono text-xs font-semibold text-[var(--text-secondary)] select-none">
+              100%
+            </span>
+
+            <button type="button" class="modal-control-btn modal-zoom-in" title="Aumentar Zoom (+)" aria-label="Aumentar Zoom">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+
+            <button type="button" class="modal-control-btn modal-zoom-reset" title="Ajustar e Centralizar" aria-label="Ajustar e Centralizar">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+
+            <div class="modal-controls-divider"></div>
+
+            <!-- Botão X para Fechar -->
+            <button type="button" class="modal-close-btn" title="Fechar visualização (Esc)" aria-label="Fechar visualização">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Área de Exibição com Pan & Zoom -->
+        <div class="diagram-modal-canvas" id="diagram-canvas">
+          <div class="diagram-modal-content" id="diagram-content"></div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setupModalEvents(modal);
   }
-
-  const modal = document.createElement('div');
-  modal.id = 'diagram-zoom-modal';
-  modal.className = 'diagram-modal hidden';
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('aria-label', 'Visualizador de Diagrama com Zoom e Navegação');
-
-  modal.innerHTML = `
-    <div class="diagram-modal-backdrop"></div>
-    <div class="diagram-modal-dialog">
-      <!-- Barra Superior de Ferramentas -->
-      <div class="diagram-modal-header">
-        <div class="diagram-modal-title">
-          <svg class="w-5 h-5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-          </svg>
-          <span class="modal-title-text font-serif font-bold text-sm text-[var(--text-primary)] truncate">
-            Visualizador de Diagrama
-          </span>
-          <span class="text-xs text-[var(--text-muted)] hidden md:inline ml-2">
-            • Arraste para mover • Role ou dê pinça para zoom
-          </span>
-        </div>
-
-        <!-- Controles de Navegação e Zoom -->
-        <div class="diagram-modal-controls">
-          <button type="button" class="modal-control-btn modal-zoom-out" title="Diminuir Zoom (-)" aria-label="Diminuir Zoom">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-            </svg>
-          </button>
-
-          <span class="modal-zoom-display font-mono text-xs font-semibold text-[var(--text-secondary)] select-none">
-            100%
-          </span>
-
-          <button type="button" class="modal-control-btn modal-zoom-in" title="Aumentar Zoom (+)" aria-label="Aumentar Zoom">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-
-          <button type="button" class="modal-control-btn modal-zoom-reset" title="Ajustar e Centralizar" aria-label="Ajustar e Centralizar">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-          </button>
-
-          <div class="modal-controls-divider"></div>
-
-          <!-- Botão X para Fechar -->
-          <button type="button" class="modal-close-btn" title="Fechar visualização (Esc)" aria-label="Fechar visualização">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Área de Exibição com Pan & Zoom -->
-      <div class="diagram-modal-canvas" id="diagram-canvas">
-        <div class="diagram-modal-content" id="diagram-content"></div>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
 
   modalRoot = modal;
   modalCanvas = modal.querySelector('#diagram-canvas');
@@ -130,7 +134,6 @@ function getOrCreateModal(): HTMLElement {
   modalZoomLevelEl = modal.querySelector('.modal-zoom-display');
   modalTitleEl = modal.querySelector('.modal-title-text');
 
-  setupModalEvents(modal);
   return modal;
 }
 
@@ -160,7 +163,7 @@ function setupModalEvents(modal: HTMLElement): void {
   }
 
   function resetView(): void {
-    if (!modalState.svgElement || !modalCanvas) {
+    if (!modalContent || !modalCanvas) {
       modalState.scale = 1;
       modalState.panX = 0;
       modalState.panY = 0;
@@ -168,15 +171,29 @@ function setupModalEvents(modal: HTMLElement): void {
       return;
     }
 
-    const svgW = parseFloat(modalState.svgElement.getAttribute('width') || '800') || 800;
-    const svgH = parseFloat(modalState.svgElement.getAttribute('height') || '600') || 600;
+    let w = modalState.targetWidth;
+    let h = modalState.targetHeight;
+
+    if (!w || !h) {
+      if (modalState.svgElement) {
+        w = parseFloat(modalState.svgElement.getAttribute('width') || '800') || 800;
+        h = parseFloat(modalState.svgElement.getAttribute('height') || '600') || 600;
+      } else if (modalState.imageElement) {
+        w = modalState.imageElement.naturalWidth || 800;
+        h = modalState.imageElement.naturalHeight || 600;
+      } else {
+        w = 800;
+        h = 600;
+      }
+    }
+
     const canvasW = modalCanvas.clientWidth > 0 ? modalCanvas.clientWidth : window.innerWidth;
     const canvasH = modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : (window.innerHeight - 80);
     const padW = Math.max(200, canvasW * 0.90);
     const padH = Math.max(200, canvasH * 0.85);
 
-    const fitScale = Math.min(padW / svgW, padH / svgH);
-    modalState.scale = Math.max(0.25, Math.min(4.5, fitScale));
+    const fitScale = Math.min(padW / w, padH / h);
+    modalState.scale = Math.max(0.15, Math.min(4.5, fitScale));
     modalState.panX = 0;
     modalState.panY = 0;
     applyTransform(true);
@@ -222,6 +239,9 @@ function setupModalEvents(modal: HTMLElement): void {
 
     applyTransform(false);
   }, { passive: false });
+
+  // Evita drag padrão do navegador em imagens
+  canvas?.addEventListener('dragstart', (e) => e.preventDefault());
 
   // Pan / Navegação com Mouse
   canvas?.addEventListener('mousedown', (e: MouseEvent) => {
@@ -339,6 +359,9 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
 
   modalContent.appendChild(clonedSvg);
   modalState.svgElement = clonedSvg;
+  modalState.imageElement = null;
+  modalState.targetWidth = w;
+  modalState.targetHeight = h;
 
   if (modalTitleEl) {
     modalTitleEl.textContent = title || 'Visualizador de Diagrama';
@@ -353,7 +376,7 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
 
   // Escala que ajusta perfeitamente o diagrama para preencher a tela no carregamento inicial
   const fitScale = Math.min(padW / w, padH / h);
-  modalState.scale = Math.max(0.25, Math.min(4.5, fitScale));
+  modalState.scale = Math.max(0.15, Math.min(4.5, fitScale));
   modalState.panX = 0;
   modalState.panY = 0;
   modalState.isDragging = false;
@@ -361,6 +384,71 @@ export function openDiagramModal(svgSource: SVGElement, title?: string): void {
   modalContent.style.transform = `translate3d(0, 0, 0) scale(${modalState.scale})`;
   if (modalZoomLevelEl) {
     modalZoomLevelEl.textContent = `${Math.round(modalState.scale * 100)}%`;
+  }
+}
+
+/**
+ * Abre o modal de visualização para uma imagem (PNG/JPG/SVG) com suporte a zoom, pan e ajuste responsivo
+ */
+export function openImageModal(imgSrc: string, title?: string): void {
+  const modal = getOrCreateModal();
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  const content = modalContent || modal.querySelector('#diagram-content') as HTMLElement;
+  if (!content) return;
+  modalContent = content;
+  content.innerHTML = '';
+
+  const img = document.createElement('img');
+  img.src = imgSrc;
+  img.alt = title || 'Imagem';
+  img.style.display = 'block';
+  img.style.maxWidth = 'none';
+  img.style.maxHeight = 'none';
+  img.style.userSelect = 'none';
+  (img.style as any).webkitUserDrag = 'none';
+
+  modalContent.appendChild(img);
+  modalState.svgElement = null;
+  modalState.imageElement = img;
+
+  if (modalTitleEl) {
+    modalTitleEl.textContent = title || 'Visualizador de Imagem';
+  }
+
+  const applyInitialFit = (width: number, height: number) => {
+    modalState.targetWidth = width;
+    modalState.targetHeight = height;
+
+    const canvasW = (modalCanvas && modalCanvas.clientWidth > 0) ? modalCanvas.clientWidth : window.innerWidth;
+    const canvasH = (modalCanvas && modalCanvas.clientHeight > 0) ? modalCanvas.clientHeight : (window.innerHeight - 80);
+
+    const padW = Math.max(200, canvasW * 0.90);
+    const padH = Math.max(200, canvasH * 0.85);
+
+    const fitScale = Math.min(padW / width, padH / height);
+    modalState.scale = Math.max(0.15, Math.min(4.5, fitScale));
+    modalState.panX = 0;
+    modalState.panY = 0;
+    modalState.isDragging = false;
+
+    if (modalContent) {
+      modalContent.style.transition = 'none';
+      modalContent.style.transform = `translate3d(0, 0, 0) scale(${modalState.scale})`;
+    }
+    if (modalZoomLevelEl) {
+      modalZoomLevelEl.textContent = `${Math.round(modalState.scale * 100)}%`;
+    }
+  };
+
+  if (img.complete && img.naturalWidth > 0) {
+    applyInitialFit(img.naturalWidth, img.naturalHeight);
+  } else {
+    applyInitialFit(800, 600);
+    img.onload = () => {
+      applyInitialFit(img.naturalWidth, img.naturalHeight);
+    };
   }
 }
 
@@ -480,7 +568,10 @@ export async function initDiagrams(): Promise<void> {
     card.setAttribute('data-diagram-processed', 'true');
   });
 
-  // 3. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
+  // 3. Inicializa imagens com zoom interativo (executa SEMPRE)
+  setupZoomableImages();
+
+  // 4. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
   const mermaidCodeBlocks = Array.from(
     document.querySelectorAll<HTMLElement>('.academic-prose pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"]')
   );
@@ -578,6 +669,35 @@ export async function initDiagrams(): Promise<void> {
       el.setAttribute('data-diagram-processed', 'true');
     }
   }
+}
+
+/**
+ * Configura o comportamento de clique para abrir o modal em todas as imagens ampliáveis
+ */
+export function setupZoomableImages(): void {
+  if (typeof window === 'undefined') return;
+
+  // Delegação global: garante que qualquer imagem com atributo ou classe de zoom abra o visualizador interativo
+  if (!(window as any).__hasImageZoomDelegation) {
+    (window as any).__hasImageZoomDelegation = true;
+    document.addEventListener('click', (e) => {
+      const target = (e.target as HTMLElement)?.closest('img[data-zoomable-image], .zoomable-question-image');
+      if (target) {
+        e.preventDefault();
+        e.stopPropagation();
+        const src = (target as HTMLImageElement).src || target.getAttribute('src');
+        const title = target.getAttribute('data-image-title') || target.getAttribute('alt') || 'Visualização da Imagem';
+        if (src) {
+          openImageModal(src, title);
+        }
+      }
+    });
+  }
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).openImageModal = openImageModal;
+  (window as any).openDiagramModal = openDiagramModal;
 }
 
 /**

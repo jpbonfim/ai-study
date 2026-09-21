@@ -2,7 +2,8 @@
 """
 extract_question.py
 Utilitário para extração estruturada de questões (múltipla escolha e dissertativas abertas)
-de provas e testes em PDF. Usado pela Skill explain-question do Antigravity CLI.
+e recorte de figuras com margem de segurança para fórmulas matemáticas em provas e testes.
+Usado pela Skill explain-question do Antigravity CLI.
 """
 
 import argparse
@@ -11,6 +12,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 def run_cmd(cmd, cwd=None):
@@ -34,6 +36,63 @@ def render_pdf_pages(pdf_path: str, output_dir: str, dpi: int = 150) -> list[str
     
     generated = sorted(list(Path(output_dir).glob(f"{base_name}-page-*.png")))
     return [str(p) for p in generated]
+
+def crop_figure(source_path: str, out_path: str, page: int = 1, top: int = None, bottom: int = None, left: int = None, right: int = None, padding: int = 25):
+    """
+    Recorta figuras e diagramas garantindo que fórmulas acima e legendas abaixo
+    não sejam cortadas através de margem de segurança (padding).
+    """
+    from PIL import Image
+    import numpy as np
+
+    if source_path.lower().endswith(".pdf"):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rendered = render_pdf_pages(source_path, tmpdir, dpi=150)
+            if page < 1 or page > len(rendered):
+                raise ValueError(f"Página {page} fora do intervalo disponível (1 a {len(rendered)})")
+            img_path = rendered[page - 1]
+            im = Image.open(img_path)
+            return _crop_and_save(im, out_path, top, bottom, left, right, padding)
+    else:
+        im = Image.open(source_path)
+        return _crop_and_save(im, out_path, top, bottom, left, right, padding)
+
+def _crop_and_save(im, out_path, top, bottom, left, right, padding):
+    import numpy as np
+    width, height = im.size
+    gray = np.array(im.convert("L"))
+    
+    # Se top/bottom não especificados, detecta limites verticais de pixels escuros
+    if top is None:
+        non_white_rows = np.where(np.any(gray < 240, axis=1))[0]
+        y1 = max(0, int(non_white_rows[0]) - padding) if len(non_white_rows) else 0
+    else:
+        y1 = max(0, top - padding)
+        
+    if bottom is None:
+        non_white_rows = np.where(np.any(gray < 240, axis=1))[0]
+        y2 = min(height, int(non_white_rows[-1]) + padding) if len(non_white_rows) else height
+    else:
+        y2 = min(height, bottom + padding)
+        
+    sub = gray[y1:y2, :]
+    non_white_cols = np.where(np.any(sub < 240, axis=0))[0]
+    
+    if left is None:
+        x1 = max(0, int(non_white_cols[0]) - padding) if len(non_white_cols) else 0
+    else:
+        x1 = max(0, left - padding)
+        
+    if right is None:
+        x2 = min(width, int(non_white_cols[-1]) + padding) if len(non_white_cols) else width
+    else:
+        x2 = min(width, right + padding)
+        
+    cropped = im.crop((x1, y1, x2, y2))
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    cropped.save(out_path)
+    print(f"[CROP SUCESSO] Imagem salva em {out_path} ({cropped.size[0]}x{cropped.size[1]}px, bbox=({x1}, {y1}, {x2}, {y2}))")
+    return out_path
 
 def parse_exam_metadata(text: str, filename: str) -> dict:
     """Extrai cabeçalho da prova (disciplina, teste/exame, ano)."""
@@ -77,7 +136,6 @@ def parse_questions(text: str, force_type: str = "auto") -> list[dict]:
     """
     questions = []
     
-    # Encontra o início das questões (ex: 1. (2,5), Questão 1, 1., etc.)
     q_pattern = re.compile(
         r'^\s*(?:Questão\s+)?([1-9]\d?)\.\s*(?:\((\d+[,.]\d+)\s*(?:pontos|pts)?\))?\s*(.*)$',
         re.MULTILINE | re.IGNORECASE
@@ -95,7 +153,6 @@ def parse_questions(text: str, force_type: str = "auto") -> list[dict]:
         
         q_block = text[start_idx:end_idx].strip()
         
-        # Padrão de alternativas de múltipla escolha: (a), (b), (c), (d), (e)
         opt_pattern = re.compile(r'^\s*\(([a-eA-E])\)\s*(.*)$', re.MULTILINE)
         opt_matches = list(opt_pattern.finditer(q_block))
         
@@ -156,6 +213,17 @@ def main():
     p_render.add_argument("pdf_path", help="Caminho para o arquivo PDF")
     p_render.add_argument("--outdir", default="site/public/images/questoes", help="Diretório de saída")
     p_render.add_argument("--dpi", type=int, default=150, help="Resolução DPI (padrão: 150)")
+
+    # Subcomando: crop-figure
+    p_crop = subparsers.add_parser("crop-figure", help="Recorta figura de página PNG ou PDF com margem de segurança para fórmulas e legendas")
+    p_crop.add_argument("source", help="Arquivo de origem (PNG da página ou PDF)")
+    p_crop.add_argument("--out", "-o", required=True, help="Arquivo de destino PNG")
+    p_crop.add_argument("--page", type=int, default=1, help="Número da página (se PDF, 1-indexed)")
+    p_crop.add_argument("--top", type=int, help="Coordenada Y inicial aproximada (topo da fórmula/diagrama)")
+    p_crop.add_argument("--bottom", type=int, help="Coordenada Y final aproximada (base da legenda)")
+    p_crop.add_argument("--left", type=int, help="Coordenada X inicial (esquerda, opcional)")
+    p_crop.add_argument("--right", type=int, help="Coordenada X final (direita, opcional)")
+    p_crop.add_argument("--padding", type=int, default=25, help="Margem de respiro em pixels para não cortar símbolos matemáticos (padrão: 25px)")
     
     # Subcomando: scaffold
     p_scaffold = subparsers.add_parser("scaffold", help="Gera esqueletos .mdx na pasta archive/<materia>/questoes")
@@ -201,6 +269,18 @@ def main():
         print(f"{len(imgs)} páginas renderizadas:")
         for img in imgs:
             print(f"  {img}")
+
+    elif args.command == "crop-figure":
+        crop_figure(
+            args.source,
+            args.out,
+            page=args.page,
+            top=args.top,
+            bottom=args.bottom,
+            left=args.left,
+            right=args.right,
+            padding=args.padding
+        )
             
     elif args.command == "scaffold":
         text = extract_pdf_text(args.pdf_path)

@@ -5,6 +5,7 @@ import QuestionToggle from '../../../components/QuestionToggle.astro';
 import Theory from '../../../components/Theory.astro';
 import Resolution from '../../../components/Resolution.astro';
 import BlockDiagram from '../../../components/BlockDiagram.astro';
+import { renderMath } from '../../../utils/katex';
 import { MATERIAS, getMateria } from '../../../data/materias';
 
 export async function getStaticPaths() {
@@ -50,6 +51,21 @@ const questionsLinks = allQuestoes.map((q) => ({
 const currentIndex = allQuestoes.findIndex((q) => q.id === questao.id);
 const prevQ = currentIndex > 0 ? allQuestoes[currentIndex - 1] : null;
 const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex + 1] : null;
+
+// Tratamento unificado de imagens (suporte a imagem única ou lista de múltiplas imagens com legendas)
+const rawImages = questao.data.images || (questao.data.image ? [questao.data.image] : []);
+const formattedImages = rawImages.map((img, idx) => {
+  if (typeof img === 'string') {
+    return {
+      src: img,
+      caption: `Diagrama esquemático oficial da questão`,
+    };
+  }
+  return {
+    src: img.src,
+    caption: img.caption || `Figura ${idx + 1}`,
+  };
+});
 ---
 
 <AcademicLayout
@@ -101,24 +117,34 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
           <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
             Enunciado da Questão
           </div>
-          <p class="font-serif text-lg text-[var(--text-primary)] leading-relaxed">
-            {questao.data.statement}
-          </p>
+          <div
+            class="font-serif text-lg text-[var(--text-primary)] leading-relaxed"
+            set:html={renderMath(questao.data.statement)}
+          />
         </div>
       )}
 
-      <!-- Imagem de Diagrama se houver -->
-      {questao.data.image && (
-        <div class="my-6 p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-center">
-          <img
-            src={questao.data.image}
-            alt={`Diagrama referente a ${questao.data.title}`}
-            class="max-h-96 mx-auto object-contain"
-            loading="lazy"
-          />
-          <span class="sans-ui block text-xs text-[var(--text-muted)] italic mt-2">
-            Diagrama esquemático oficial da questão
-          </span>
+      <!-- Imagens / Diagramas -->
+      {formattedImages.length > 0 && (
+        <div class={`my-8 grid gap-6 items-start ${formattedImages.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
+          {formattedImages.map((img, idx) => (
+            <figure class="flex flex-col items-center justify-center text-center">
+              <img
+                src={img.src}
+                alt={img.caption || `Figura ${idx + 1}`}
+                data-zoomable-image="true"
+                data-image-title={img.caption || `Figura ${idx + 1}`}
+                class="zoomable-question-image max-h-84 w-auto object-contain cursor-zoom-in rounded transition-transform duration-200 hover:scale-[1.01]"
+                loading="lazy"
+                title="Clique para visualizar com zoom e navegação"
+              />
+              {img.caption && (
+                <figcaption class="sans-ui text-xs text-[var(--text-muted)] italic mt-2.5 max-w-md">
+                  {img.caption}
+                </figcaption>
+              )}
+            </figure>
+          ))}
         </div>
       )}
 
@@ -169,3 +195,26 @@ const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex +
 
   </div>
 </AcademicLayout>
+
+<script>
+  import { openImageModal } from '../../../scripts/diagramManager';
+
+  function setupQuestionImages() {
+    document.querySelectorAll<HTMLImageElement>('img[data-zoomable-image]').forEach((img) => {
+      if (img.dataset.zoomBound === 'true') return;
+      img.dataset.zoomBound = 'true';
+      img.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const src = img.src || img.getAttribute('src');
+        const title = img.getAttribute('data-image-title') || img.alt || 'Imagem da Questão';
+        if (src) {
+          openImageModal(src, title);
+        }
+      });
+    });
+  }
+
+  setupQuestionImages();
+  document.addEventListener('astro:page-load', setupQuestionImages);
+</script>

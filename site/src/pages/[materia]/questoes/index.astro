@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
 import { MATERIAS, getMateria } from '../../../data/materias';
+import { renderMath } from '../../../utils/katex';
 
 export async function getStaticPaths() {
   return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
@@ -109,9 +110,10 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
           </h2>
 
           {q.data.statement && (
-            <p class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
-              {q.data.statement}
-            </p>
+            <div
+              class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 leading-relaxed"
+              set:html={renderMath(q.data.statement)}
+            />
           )}
 
           <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">

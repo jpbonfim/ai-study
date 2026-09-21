@@ -1,5 +1,6 @@
 ---
 import { getEntry } from 'astro:content';
+import { renderMath } from '../utils/katex';
 
 interface Props {
   id: string;
@@ -41,9 +42,10 @@ try {
     </h4>
 
     {questao.data.statement && (
-      <p class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 mb-4 leading-relaxed">
-        {questao.data.statement}
-      </p>
+      <div
+        class="font-serif text-base text-[var(--text-secondary)] line-clamp-3 mb-4 leading-relaxed"
+        set:html={renderMath(questao.data.statement)}
+      />
     )}
 
     <div class="sans-ui flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] text-xs">
