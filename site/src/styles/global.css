@@ -344,29 +344,48 @@ table.academic-table tbody tr:hover {
 /* ============================================================
    INDICAÇÃO VISUAL DA SEÇÃO ATIVA NO MENU LATERAL (SUMÁRIO)
    ============================================================ */
+
+/* 1. Capítulo Principal */
 .toc-chapter-link {
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  border: none !important;
 }
 
 .toc-chapter-link.is-active {
   color: var(--accent) !important;
   background-color: var(--bg-subtle) !important;
-  border-left: 3px solid var(--accent);
-  padding-left: 0.65rem !important;
 }
 
 .toc-chapter-link.is-parent-active {
   color: var(--accent) !important;
 }
 
+/* 2. Subseções (Garantia de número de linhas estritamente constante e sem efeito de caixa) */
 .toc-sub-link {
-  transition: all 0.15s ease;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  border: none !important;
 }
 
 .toc-sub-link.is-active {
   color: var(--accent) !important;
-  font-weight: 600 !important;
-  background-color: var(--accent-subtle) !important;
-  border-left: 2px solid var(--accent);
-  padding-left: 0.65rem !important;
+  background-color: var(--bg-subtle) !important;
+  /* Preserva estritamente as métricas da fonte e padding para NUNCA aumentar texto nem quebrar linhas */
+  font-weight: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: inherit !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Troca a cor apenas da parte da barra cinza adjacente à subseção ativa */
+.toc-sub-link.is-active::before {
+  content: '';
+  position: absolute;
+  left: calc(-0.75rem - 2px);
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--accent);
+  z-index: 10;
 }

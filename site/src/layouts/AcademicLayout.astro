@@ -146,7 +146,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
                       href={`#${chap.id}`}
                       data-toc-id={chap.id}
                       data-toc-title={chap.title}
-                      class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-all py-1.5 px-2.5 rounded-md"
+                      class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
                     >
                       {chap.title}
                     </a>
@@ -158,7 +158,7 @@ const { title, materia, toc = [], questions = [], activeSectionId } = Astro.prop
                             data-toc-id={sub.id}
                             data-toc-title={sub.title}
                             data-parent-id={chap.id}
-                            class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--accent)] py-1 px-2 rounded transition-all leading-snug"
+                            class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
                           >
                             {sub.title}
                           </a>
