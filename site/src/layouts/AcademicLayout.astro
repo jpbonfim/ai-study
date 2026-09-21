@@ -58,6 +58,10 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
         root.classList.add('theme-paper');
       }
 
+      if (localStorage.getItem('study_sidebar_collapsed') === 'true') {
+        root.classList.add('sidebar-collapsed');
+      }
+
       // Evita animação indesejada de scroll ao navegar para âncoras/seções
       if (window.location.hash) {
         root.style.scrollBehavior = 'auto';
@@ -245,8 +249,21 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
         class="fixed inset-0 z-30 bg-black/50 lg:hidden hidden"
       ></div>
 
+      <!-- Botão Flutuante no Canto Superior Esquerdo para Reabrir Menu Lateral no Desktop (Fixo) -->
+      <button
+        id="desktop-sidebar-open-btn"
+        type="button"
+        class="desktop-sidebar-open-btn hidden fixed top-4 left-4 z-40 p-2.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)]/95 backdrop-blur-md hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] shadow-md transition-all cursor-pointer items-center justify-center group"
+        aria-label="Abrir menu lateral"
+        title="Abrir menu lateral"
+      >
+        <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
       <!-- ÁREA DE LEITURA PRINCIPAL (Largura configurável e contenção de layout) -->
-      <main class:list={["flex-1 lg:pl-80 w-full min-w-0", wide ? "" : "overflow-x-clip"]}>
+      <main id="main-content-area" class:list={["flex-1 lg:pl-80 w-full min-w-0 transition-[padding] duration-200", wide ? "" : "overflow-x-clip"]}>
         <div class:list={[
           "mx-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-14 w-full min-w-0",
           wide ? "max-w-7xl 2xl:max-w-[94rem]" : "reader-column"
@@ -274,12 +291,24 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
       </script>
     )}
 
-    <!-- Script de Interação Mobile: Deslize para abrir (Swipe Right), Drawer e Scrollspy da Seção Atual -->
+    <!-- Script de Interação: Fechar/Abrir Menu Lateral (Desktop e Mobile), Drawer e Scrollspy -->
     <script is:inline>
       const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
       const sidebar = document.getElementById('academic-sidebar');
       const backdrop = document.getElementById('sidebar-backdrop');
       const mobileSectionEl = document.getElementById('mobile-current-section');
+      const desktopOpenBtn = document.getElementById('desktop-sidebar-open-btn');
+      const closeBtns = document.querySelectorAll('.sidebar-close-btn');
+
+      function collapseDesktopSidebar() {
+        document.documentElement.classList.add('sidebar-collapsed');
+        localStorage.setItem('study_sidebar_collapsed', 'true');
+      }
+
+      function expandDesktopSidebar() {
+        document.documentElement.classList.remove('sidebar-collapsed');
+        localStorage.setItem('study_sidebar_collapsed', 'false');
+      }
 
       function openSidebar() {
         sidebar?.classList.remove('-translate-x-full');
@@ -293,8 +322,29 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
         document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
       }
 
-      sidebarToggle?.addEventListener('click', openSidebar);
-      backdrop?.addEventListener('click', closeSidebar);
+      function handleCloseSidebar() {
+        if (window.innerWidth >= 1024) {
+          collapseDesktopSidebar();
+        } else {
+          closeSidebar();
+        }
+      }
+
+      closeBtns.forEach((btn) => {
+        btn.onclick = handleCloseSidebar;
+      });
+
+      if (desktopOpenBtn) {
+        desktopOpenBtn.onclick = expandDesktopSidebar;
+      }
+
+      if (sidebarToggle) {
+        sidebarToggle.onclick = openSidebar;
+      }
+
+      if (backdrop) {
+        backdrop.onclick = closeSidebar;
+      }
 
       sidebar?.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', () => {
@@ -555,5 +605,19 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
       });
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     </script>
+
+    <style is:global>
+      @media (min-width: 1024px) {
+        html.sidebar-collapsed #academic-sidebar {
+          transform: translateX(-100%) !important;
+        }
+        html.sidebar-collapsed #main-content-area {
+          padding-left: 0 !important;
+        }
+        html.sidebar-collapsed #desktop-sidebar-open-btn {
+          display: flex !important;
+        }
+      }
+    </style>
   </body>
 </html>

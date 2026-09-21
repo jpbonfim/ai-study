@@ -1201,3 +1201,22 @@ html[data-code-theme="monokai"] pre.astro-code {
 .diagram-modal-content svg .edgePath .path {
   stroke-width: 1.5px !important;
 }
+
+/* ============================================================
+   MENU LATERAL COLAPSÁVEL NO DESKTOP
+   ============================================================ */
+@media (min-width: 1024px) {
+  html.sidebar-collapsed #academic-sidebar,
+  html.sidebar-collapsed #home-sidebar,
+  html.sidebar-collapsed #config-sidebar,
+  html.sidebar-collapsed #settings-sidebar {
+    transform: translateX(-100%) !important;
+  }
+  html.sidebar-collapsed #main-content-area {
+    padding-left: 0 !important;
+  }
+  html.sidebar-collapsed #desktop-sidebar-open-btn,
+  html.sidebar-collapsed .desktop-sidebar-open-btn {
+    display: flex !important;
+  }
+}
