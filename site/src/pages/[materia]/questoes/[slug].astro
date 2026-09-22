@@ -1,12 +1,12 @@
 ---
 export const prerender = false;
 
-import AcademicLayout from '../../../layouts/AcademicLayout.astro';
+import AcademicLayout, { type TagOption } from '../../../layouts/AcademicLayout.astro';
 import QuestionToggle from '../../../components/QuestionToggle.astro';
 import Theory from '../../../components/Theory.astro';
 import Resolution from '../../../components/Resolution.astro';
 import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
-import { loadUserChapters, loadUserQuestions, type QuestionItem } from '../../../lib/mdx-runtime';
+import { loadUserChapters, loadUserQuestions, type ChapterItem, type QuestionItem } from '../../../lib/mdx-runtime';
 import { hasPermissionToSubject } from '../../../lib/permissions';
 
 const user = Astro.locals.user!;
@@ -40,56 +40,190 @@ if (!materia) {
   return Astro.redirect('/?error=materia_nao_encontrada');
 }
 
-const allChapters = loadUserChapters(primaryOwnerId, materiaSlug);
-const allQuestoes = loadUserQuestions(primaryOwnerId, materiaSlug);
+// Carrega capítulos e questões do dono principal
+const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
+const primaryQuestoes = loadUserQuestions(primaryOwnerId, materiaSlug);
 
-const questao: QuestionItem | undefined = allQuestoes.find((q) => q.id === slug);
+// Busca outras fontes acessíveis com o mesmo código acadêmico
+const canonicalCode = (materia.code || '').trim().toUpperCase();
+
+interface OtherSource {
+  ownerUserId: number;
+  ownerDisplayName: string;
+  ownerUsername: string;
+  materiaSlug: string;
+  chapters: ChapterItem[];
+  questions: QuestionItem[];
+}
+
+const otherSources: OtherSource[] = [];
+
+if (canonicalCode) {
+  if (user.id !== primaryOwnerId) {
+    const ownMatch = own.find((m) => (m.code || '').trim().toUpperCase() === canonicalCode);
+    if (ownMatch) {
+      otherSources.push({
+        ownerUserId: user.id,
+        ownerDisplayName: user.displayName,
+        ownerUsername: user.username,
+        materiaSlug: ownMatch.slug,
+        chapters: loadUserChapters(user.id, ownMatch.slug),
+        questions: loadUserQuestions(user.id, ownMatch.slug),
+      });
+    }
+  }
+
+  for (const s of shared) {
+    if (s.ownerUserId && s.ownerUserId !== primaryOwnerId && (s.code || '').trim().toUpperCase() === canonicalCode) {
+      otherSources.push({
+        ownerUserId: s.ownerUserId,
+        ownerDisplayName: s.ownerDisplayName || s.ownerUsername || `Usuário ${s.ownerUserId}`,
+        ownerUsername: s.ownerUsername || '',
+        materiaSlug: s.slug,
+        chapters: loadUserChapters(s.ownerUserId, s.slug),
+        questions: loadUserQuestions(s.ownerUserId, s.slug),
+      });
+    }
+  }
+}
+
+const hasOtherUsersTags = otherSources.length > 0;
+
+// Localiza a questão: primeiro tenta no dono principal, depois nas outras fontes
+let questao: QuestionItem | undefined = primaryQuestoes.find((q) => q.id === slug);
+let questionIsFromOther = false;
+let questionOwnerDisplayName = '';
+
+if (!questao) {
+  for (const src of otherSources) {
+    const found = src.questions.find((q) => q.id === slug);
+    if (found) {
+      questao = found;
+      questionIsFromOther = true;
+      questionOwnerDisplayName = src.ownerDisplayName;
+      break;
+    }
+  }
+}
+
 if (!questao) {
   return Astro.redirect(`/${materiaSlug}/questoes?error=questao_nao_encontrada`);
 }
 
 // Coleta todas as tags únicas
-const rawTags = [
+const ownRawTags = [
   ...new Set([
-    ...allChapters.flatMap((r) => r.tags || []),
-    ...allQuestoes.flatMap((q) => q.tags || []),
+    ...primaryChapters.flatMap((c) => c.tags || []),
+    ...primaryQuestoes.flatMap((q) => q.tags || []),
   ]),
 ];
-const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
 
-const availableTags = tagList.map((tagId) => ({
+const availableTags: TagOption[] = ownRawTags.map((tagId) => ({
   id: tagId,
   label: formatTag(tagId),
-  chaptersCount: allChapters.filter((r) => (r.tags || []).includes(tagId)).length,
-  questionsCount: allQuestoes.filter((q) => (q.tags || []).includes(tagId)).length,
+  chaptersCount: primaryChapters.filter((c) => (c.tags || []).includes(tagId)).length,
+  questionsCount: primaryQuestoes.filter((q) => (q.tags || []).includes(tagId)).length,
+  isFromOtherUser: false,
 }));
 
-const primaryTag = questao.tags?.[0] || 'teste-1';
+for (const src of otherSources) {
+  const srcTags = [
+    ...new Set([
+      ...src.chapters.flatMap((c) => c.tags || []),
+      ...src.questions.flatMap((q) => q.tags || []),
+    ]),
+  ];
 
-const toc = allChapters.map((resumo) => {
+  for (const t of srcTags) {
+    const uniqueKey = `user_${src.ownerUserId}::${t}`;
+    availableTags.push({
+      id: uniqueKey,
+      label: formatTag(t),
+      chaptersCount: src.chapters.filter((c) => (c.tags || []).includes(t)).length,
+      questionsCount: src.questions.filter((q) => (q.tags || []).includes(t)).length,
+      isFromOtherUser: true,
+      ownerUserId: src.ownerUserId,
+      ownerDisplayName: src.ownerDisplayName,
+      ownerUsername: src.ownerUsername,
+    });
+  }
+}
+
+const primaryRawTag = questao.tags?.[0] || 'teste-1';
+const activeTagKey = questionIsFromOther ? `user_${questao.ownerUserId}::${primaryRawTag}` : primaryRawTag;
+
+// Capítulos e Sumário
+const chaptersToRender = [
+  ...primaryChapters.map((c) => ({
+    ...c,
+    isFromOther: false,
+    matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+  })),
+  ...otherSources.flatMap((src) =>
+    src.chapters.map((c) => ({
+      ...c,
+      isFromOther: true,
+      ownerDisplayName: src.ownerDisplayName,
+      matchTags: (c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
+    }))
+  ),
+];
+
+const toc = chaptersToRender.map((resumo) => {
   const isMateria = resumo.type === 'materia';
-  const chapId = isMateria ? `cap-materia-${resumo.chapter}` : `cap-${resumo.chapter}`;
+  const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
+  const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
   return {
     id: chapId,
-    title: `Capítulo ${resumo.chapter}: ${resumo.topic}`,
+    title: `Capítulo ${resumo.chapter}: ${resumo.topic}${resumo.isFromOther ? ` (${resumo.ownerDisplayName})` : ''}`,
     subsections: resumo.sections || [],
-    tags: resumo.tags,
+    tags: resumo.matchTags,
     type: (resumo.type || 'questoes') as 'materia' | 'questoes',
+    isFromOther: resumo.isFromOther,
   };
 });
 
-const questionsLinks = allQuestoes.map((q) => ({
+// Todas as questões renderizáveis
+interface RenderableQuestion extends QuestionItem {
+  isFromOther: boolean;
+  ownerDisplayName?: string;
+  matchTags: string[];
+}
+
+const allQuestionsToRender: RenderableQuestion[] = [
+  ...primaryQuestoes.map((q) => ({
+    ...q,
+    isFromOther: false,
+    matchTags: [...(q.tags || []), ...((q.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+  })),
+  ...otherSources.flatMap((src) =>
+    src.questions.map((q) => ({
+      ...q,
+      isFromOther: true,
+      ownerDisplayName: src.ownerDisplayName,
+      matchTags: (q.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
+    }))
+  ),
+];
+
+const questionsLinks = allQuestionsToRender.map((q) => ({
   id: q.id,
   title: q.title,
   exam: q.exam,
   year: q.year,
-  tags: q.tags,
+  tags: q.matchTags,
+  ownerUserId: q.ownerUserId,
+  ownerDisplayName: q.ownerDisplayName,
 }));
 
-// Navegação anterior e próxima
-const currentIndex = allQuestoes.findIndex((q) => q.id === questao.id);
-const prevQ = currentIndex > 0 ? allQuestoes[currentIndex - 1] : null;
-const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex + 1] : null;
+// Navegação anterior e próxima dentro do escopo relevante (do mesmo dono da questão)
+const scopeQuestoes = questionIsFromOther
+  ? (otherSources.find(s => s.ownerUserId === questao!.ownerUserId)?.questions || [questao])
+  : primaryQuestoes;
+
+const currentIndex = scopeQuestoes.findIndex((q) => q.id === questao.id);
+const prevQ = currentIndex > 0 ? scopeQuestoes[currentIndex - 1] : null;
+const nextQ = currentIndex < scopeQuestoes.length - 1 ? scopeQuestoes[currentIndex + 1] : null;
 
 const formattedImages = questao.images || [];
 ---
@@ -98,7 +232,8 @@ const formattedImages = questao.images || [];
   title={`${questao.title} | ${materia.name}`}
   materia={materia}
   availableTags={availableTags}
-  activeTag={primaryTag}
+  hasOtherUsersTags={hasOtherUsersTags}
+  activeTag={activeTagKey}
   currentQuestionId={questao.id}
   toc={toc}
   questions={questionsLinks}
@@ -109,17 +244,24 @@ const formattedImages = questao.images || [];
     <!-- Navegação Superior Estilo Artigo -->
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
       <div class="flex items-center gap-2">
-        <a href={`/${materia.slug}/questoes?tag=${primaryTag}`} class="hover:text-[var(--accent)] transition-colors">
-          &larr; Banco de Testes
+        <a href={`/${materia.slug}/questoes?tag=${encodeURIComponent(activeTagKey)}`} class="hover:text-[var(--accent)] transition-colors">
+          &larr; Banco de Questões
         </a>
         <span>•</span>
-        <a href={`/${materia.slug}?tag=${primaryTag}#${questao.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}?tag=${encodeURIComponent(activeTagKey)}#${questao.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
           Ir para a Teoria do Capítulo &rarr;
         </a>
       </div>
-      <span class="font-mono font-bold text-[var(--accent)]">
-        {questao.exam} • {questao.year}
-      </span>
+      <div class="flex items-center gap-2 font-mono">
+        {questionIsFromOther && (
+          <span class="px-2 py-0.5 rounded text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+            De: {questionOwnerDisplayName}
+          </span>
+        )}
+        <span class="font-bold text-[var(--accent)]">
+          {questao.exam} • {questao.year}
+        </span>
+      </div>
     </div>
 
     <!-- Enunciado e Resolução em Duas Colunas -->
@@ -209,7 +351,7 @@ const formattedImages = questao.images || [];
     <nav class="flex items-center justify-between pt-6 border-t border-[var(--border-subtle)] sans-ui text-xs">
       {prevQ ? (
         <a
-          href={`/${materia.slug}/questoes/${prevQ.id}`}
+          href={`/${materia.slug}/questoes/${prevQ.id}${questionIsFromOther && prevQ.ownerUserId ? `?owner=${prevQ.ownerUserId}` : ''}`}
           class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
           <span>&larr;</span>
@@ -219,7 +361,7 @@ const formattedImages = questao.images || [];
 
       {nextQ ? (
         <a
-          href={`/${materia.slug}/questoes/${nextQ.id}`}
+          href={`/${materia.slug}/questoes/${nextQ.id}${questionIsFromOther && nextQ.ownerUserId ? `?owner=${nextQ.ownerUserId}` : ''}`}
           class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--accent)] font-semibold transition-colors"
         >
           <span class="font-mono">Próxima: {nextQ.title}</span>

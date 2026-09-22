@@ -1,9 +1,9 @@
 ---
 export const prerender = false;
 
-import AcademicLayout from '../../../layouts/AcademicLayout.astro';
+import AcademicLayout, { type TagOption } from '../../../layouts/AcademicLayout.astro';
 import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
-import { loadUserChapters, loadUserQuestions } from '../../../lib/mdx-runtime';
+import { loadUserChapters, loadUserQuestions, type ChapterItem, type QuestionItem } from '../../../lib/mdx-runtime';
 import QuestionCard from '../../../components/QuestionCard.astro';
 import { hasPermissionToSubject } from '../../../lib/permissions';
 
@@ -38,52 +38,167 @@ if (!materia) {
   return Astro.redirect('/?error=materia_nao_encontrada');
 }
 
+// Carrega capítulos e questões do dono principal
 const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
 const primaryQuestions = loadUserQuestions(primaryOwnerId, materiaSlug);
 
-// Coleta todas as tags únicas
-const rawTags = [
+// Busca outras fontes acessíveis com o mesmo código acadêmico
+const canonicalCode = (materia.code || '').trim().toUpperCase();
+
+interface OtherSource {
+  ownerUserId: number;
+  ownerDisplayName: string;
+  ownerUsername: string;
+  materiaSlug: string;
+  chapters: ChapterItem[];
+  questions: QuestionItem[];
+}
+
+const otherSources: OtherSource[] = [];
+
+if (canonicalCode) {
+  if (user.id !== primaryOwnerId) {
+    const ownMatch = own.find((m) => (m.code || '').trim().toUpperCase() === canonicalCode);
+    if (ownMatch) {
+      otherSources.push({
+        ownerUserId: user.id,
+        ownerDisplayName: user.displayName,
+        ownerUsername: user.username,
+        materiaSlug: ownMatch.slug,
+        chapters: loadUserChapters(user.id, ownMatch.slug),
+        questions: loadUserQuestions(user.id, ownMatch.slug),
+      });
+    }
+  }
+
+  for (const s of shared) {
+    if (s.ownerUserId && s.ownerUserId !== primaryOwnerId && (s.code || '').trim().toUpperCase() === canonicalCode) {
+      otherSources.push({
+        ownerUserId: s.ownerUserId,
+        ownerDisplayName: s.ownerDisplayName || s.ownerUsername || `Usuário ${s.ownerUserId}`,
+        ownerUsername: s.ownerUsername || '',
+        materiaSlug: s.slug,
+        chapters: loadUserChapters(s.ownerUserId, s.slug),
+        questions: loadUserQuestions(s.ownerUserId, s.slug),
+      });
+    }
+  }
+}
+
+const hasOtherUsersTags = otherSources.length > 0;
+
+// Coleta todas as tags únicas do usuário principal
+const ownRawTags = [
   ...new Set([
-    ...primaryChapters.flatMap((r) => r.tags || []),
+    ...primaryChapters.flatMap((c) => c.tags || []),
     ...primaryQuestions.flatMap((q) => q.tags || []),
   ]),
 ];
-const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
 
-const availableTags = tagList.map((tagId) => ({
+const availableTags: TagOption[] = ownRawTags.map((tagId) => ({
   id: tagId,
   label: formatTag(tagId),
-  chaptersCount: primaryChapters.filter((r) => (r.tags || []).includes(tagId)).length,
+  chaptersCount: primaryChapters.filter((c) => (c.tags || []).includes(tagId)).length,
   questionsCount: primaryQuestions.filter((q) => (q.tags || []).includes(tagId)).length,
+  isFromOtherUser: false,
 }));
 
-const toc = primaryChapters.map((resumo) => {
+// Adiciona tags de outras fontes (com ID unívoco para não colidir)
+for (const src of otherSources) {
+  const srcTags = [
+    ...new Set([
+      ...src.chapters.flatMap((c) => c.tags || []),
+      ...src.questions.flatMap((q) => q.tags || []),
+    ]),
+  ];
+
+  for (const t of srcTags) {
+    const uniqueKey = `user_${src.ownerUserId}::${t}`;
+    availableTags.push({
+      id: uniqueKey,
+      label: formatTag(t),
+      chaptersCount: src.chapters.filter((c) => (c.tags || []).includes(t)).length,
+      questionsCount: src.questions.filter((q) => (q.tags || []).includes(t)).length,
+      isFromOtherUser: true,
+      ownerUserId: src.ownerUserId,
+      ownerDisplayName: src.ownerDisplayName,
+      ownerUsername: src.ownerUsername,
+    });
+  }
+}
+
+// Capítulos e Sumário
+const chaptersToRender = [
+  ...primaryChapters.map((c) => ({
+    ...c,
+    isFromOther: false,
+    matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+  })),
+  ...otherSources.flatMap((src) =>
+    src.chapters.map((c) => ({
+      ...c,
+      isFromOther: true,
+      ownerDisplayName: src.ownerDisplayName,
+      matchTags: (c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
+    }))
+  ),
+];
+
+const toc = chaptersToRender.map((resumo) => {
   const isMateria = resumo.type === 'materia';
-  const chapId = isMateria ? `cap-materia-${resumo.chapter}` : `cap-${resumo.chapter}`;
+  const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
+  const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
   return {
     id: chapId,
-    title: `Capítulo ${resumo.chapter}: ${resumo.topic}`,
+    title: `Capítulo ${resumo.chapter}: ${resumo.topic}${resumo.isFromOther ? ` (${resumo.ownerDisplayName})` : ''}`,
     subsections: resumo.sections || [],
-    tags: resumo.tags,
+    tags: resumo.matchTags,
     type: (resumo.type || 'questoes') as 'materia' | 'questoes',
+    isFromOther: resumo.isFromOther,
   };
 });
 
-const questionsLinks = primaryQuestions.map((q) => ({
+// Todas as questões renderizáveis
+interface RenderableQuestion extends QuestionItem {
+  isFromOther: boolean;
+  ownerDisplayName?: string;
+  matchTags: string[];
+}
+
+const allQuestionsToRender: RenderableQuestion[] = [
+  ...primaryQuestions.map((q) => ({
+    ...q,
+    isFromOther: false,
+    matchTags: [...(q.tags || []), ...((q.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+  })),
+  ...otherSources.flatMap((src) =>
+    src.questions.map((q) => ({
+      ...q,
+      isFromOther: true,
+      ownerDisplayName: src.ownerDisplayName,
+      matchTags: (q.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
+    }))
+  ),
+];
+
+const questionsLinks = allQuestionsToRender.map((q) => ({
   id: q.id,
   title: q.title,
   exam: q.exam,
   year: q.year,
-  tags: q.tags,
+  tags: q.matchTags,
+  ownerUserId: q.ownerUserId,
+  ownerDisplayName: q.ownerDisplayName,
 }));
 
-const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
+const topics = [...new Set(allQuestionsToRender.map((q) => q.topic))].sort();
 ---
 
 <AcademicLayout
   title={`Banco de Questões | ${materia.name}`}
   materia={materia}
   availableTags={availableTags}
+  hasOtherUsersTags={hasOtherUsersTags}
   toc={toc}
   questions={questionsLinks}
 >
@@ -130,7 +245,9 @@ const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
             >
               <option value="">Todas as Avaliações / Tags</option>
               {availableTags.map((t) => (
-                <option value={t.id}>{t.label}</option>
+                <option value={t.id} class={t.isFromOtherUser ? 'other-user-filter-tag' : ''}>
+                  {t.label}{t.isFromOtherUser ? ` (${t.ownerDisplayName || t.ownerUsername})` : ''}
+                </option>
               ))}
             </select>
           </div>
@@ -152,7 +269,7 @@ const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
 
       <!-- Rodapé do Filtro com Contagem e Ação de Limpeza -->
       <div id="results-count" class="text-[var(--text-muted)] text-[11px] flex items-center justify-between pt-1 border-t border-[var(--border-subtle)]">
-        <span>{primaryQuestions.length} questões disponíveis no caderno.</span>
+        <span>{allQuestionsToRender.length} questões disponíveis no caderno.</span>
         <button
           type="button"
           id="clear-filters-btn"
@@ -165,13 +282,21 @@ const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
 
     <!-- Lista Acadêmica de Questões -->
     <div id="questions-list" class="space-y-4">
-      {primaryQuestions.map((q) => (
+      {allQuestionsToRender.map((q) => (
         <div
           class="question-entry"
           data-topic={q.topic}
-          data-tags={(q.tags || []).join(',')}
-          data-text={`${q.title} ${q.statement || ''}`.toLowerCase()}
+          data-tags={q.matchTags.join(',')}
+          data-text={`${q.title} ${q.statement || ''} ${q.ownerDisplayName || ''}`.toLowerCase()}
+          data-is-other={q.isFromOther ? 'true' : 'false'}
         >
+          {q.isFromOther && (
+            <div class="mb-1.5 flex items-center gap-1.5 sans-ui text-xs">
+              <span class="px-2 py-0.5 rounded font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+                Compartilhada por: {q.ownerDisplayName}
+              </span>
+            </div>
+          )}
           <QuestionCard item={q} />
         </div>
       ))}
@@ -188,20 +313,48 @@ const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
   const count = document.getElementById('results-count')?.querySelector('span');
   const clearBtn = document.getElementById('clear-filters-btn');
 
+  function isShowingOtherTags() {
+    try {
+      return localStorage.getItem('study_show_other_tags') === 'true';
+    } catch(e) {
+      return false;
+    }
+  }
+
+  function updateFilterTagOptions() {
+    const showOther = isShowingOtherTags();
+    document.querySelectorAll('.other-user-filter-tag').forEach((opt) => {
+      if (showOther) {
+        opt.removeAttribute('disabled');
+        opt.classList.remove('hidden');
+      } else {
+        opt.classList.add('hidden');
+      }
+    });
+  }
+
   function filter() {
     const sVal = (search?.value || '').toLowerCase().trim();
     const tVal = topic?.value || '';
     const tagVal = tagFilter?.value || '';
+    const showOther = isShowingOtherTags();
 
     let visible = 0;
     entries.forEach((el) => {
       const elTopic = el.getAttribute('data-topic') || '';
       const elTags = (el.getAttribute('data-tags') || '').split(',').map(s => s.trim());
       const elText = el.getAttribute('data-text') || '';
+      const isOther = el.getAttribute('data-is-other') === 'true';
 
       const matchSearch = !sVal || elText.includes(sVal);
       const matchTopic = !tVal || elTopic === tVal;
-      const matchTag = !tagVal || elTags.includes(tagVal);
+
+      let matchTag = false;
+      if (tagVal) {
+        matchTag = elTags.includes(tagVal);
+      } else {
+        matchTag = !isOther || showOther;
+      }
 
       if (matchSearch && matchTopic && matchTag) {
         el.classList.remove('hidden');
@@ -225,20 +378,45 @@ const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
   }
 
   search?.addEventListener('input', filter);
-  tagFilter?.addEventListener('change', filter);
   topic?.addEventListener('change', filter);
 
-  clearBtn?.addEventListener('click', () => {
-    if (search) search.value = '';
-    if (tagFilter) tagFilter.value = '';
-    if (topic) topic.value = '';
+  tagFilter?.addEventListener('change', () => {
+    const selected = tagFilter.value || null;
+    if (typeof window.selectStudyTag === 'function') {
+      window.selectStudyTag(selected);
+    }
     filter();
   });
 
+  clearBtn?.addEventListener('click', () => {
+    if (search) search.value = '';
+    if (topic) topic.value = '';
+    if (tagFilter) tagFilter.value = '';
+    if (typeof window.selectStudyTag === 'function') {
+      window.selectStudyTag(null);
+    }
+    filter();
+  });
+
+  window.addEventListener('study-tag-changed', (e) => {
+    const newTag = e.detail?.tag || '';
+    if (tagFilter && tagFilter.value !== newTag) {
+      tagFilter.value = newTag;
+    }
+    filter();
+  });
+
+  window.addEventListener('study-other-tags-toggled', () => {
+    updateFilterTagOptions();
+    filter();
+  });
+
+  // Inicialização
+  updateFilterTagOptions();
   const urlParams = new URLSearchParams(window.location.search);
-  const initialTag = urlParams.get('tag');
+  const initialTag = urlParams.get('tag') || (typeof window.getCurrentStudyTag === 'function' ? window.getCurrentStudyTag() : null);
   if (initialTag && tagFilter) {
     tagFilter.value = initialTag;
-    filter();
   }
+  filter();
 </script>

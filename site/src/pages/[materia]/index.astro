@@ -149,7 +149,7 @@ const chaptersToRender: RenderableChapter[] = [
       ...c,
       isFromOther: true,
       ownerDisplayName: src.ownerDisplayName,
-      matchTags: [...((c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`)), ...(c.tags || [])],
+      matchTags: (c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
     }))
   ),
 ];
@@ -172,6 +172,8 @@ const questionsLinks: RenderableQuestionLink[] = [
     exam: q.exam,
     year: q.year,
     tags: [...(q.tags || []), ...((q.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+    ownerUserId: primaryOwnerId,
+    ownerDisplayName: undefined,
   })),
   ...otherSources.flatMap((src) =>
     src.questions.map((q) => ({
@@ -179,7 +181,7 @@ const questionsLinks: RenderableQuestionLink[] = [
       title: q.title,
       exam: q.exam,
       year: q.year,
-      tags: [...((q.tags || []).map((t) => `user_${src.ownerUserId}::${t}`)), ...(q.tags || [])],
+      tags: (q.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
       ownerUserId: src.ownerUserId,
       ownerDisplayName: src.ownerDisplayName,
     }))
@@ -197,6 +199,7 @@ const toc = chaptersToRender.map((resumo) => {
     subsections: resumo.sections || [],
     tags: resumo.matchTags,
     type: (resumo.type || 'questoes') as 'materia' | 'questoes',
+    isFromOther: resumo.isFromOther,
   };
 });
 
@@ -443,7 +446,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       let visibleCaps = 0;
       document.querySelectorAll('.chapter-section').forEach(sec => {
         const tags = (sec.getAttribute('data-chapter-tags') || '').split(',').map(s => s.trim());
-        if (tags.includes(tag) || tags.includes(formatTagName(tag))) {
+        if (tags.includes(tag)) {
           sec.classList.remove('hidden');
           visibleCaps++;
         } else {

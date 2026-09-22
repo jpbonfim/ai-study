@@ -9,6 +9,7 @@ interface TocItem {
   subsections?: { id: string; title: string }[];
   tags?: string[];
   type?: 'materia' | 'questoes';
+  isFromOther?: boolean;
 }
 
 interface QuestionLink {
@@ -17,6 +18,8 @@ interface QuestionLink {
   exam: string;
   year: number;
   tags?: string[];
+  ownerUserId?: number;
+  ownerDisplayName?: string;
 }
 
 export interface TagOption {
@@ -386,6 +389,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             class="space-y-0.5 sidebar-chapter-item"
                             data-chapter-tags={(chap.tags || []).join(',')}
                             data-chapter-type="materia"
+                            data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
                               href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
@@ -441,6 +445,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             class="space-y-0.5 sidebar-chapter-item"
                             data-chapter-tags={(chap.tags || []).join(',')}
                             data-chapter-type="questoes"
+                            data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
                               href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
@@ -478,6 +483,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                         class="space-y-0.5 sidebar-chapter-item"
                         data-chapter-tags={(chap.tags || []).join(',')}
                         data-chapter-type={chap.type || 'questoes'}
+                        data-is-other={chap.isFromOther ? 'true' : 'false'}
                       >
                         <a
                           href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
@@ -530,24 +536,33 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               </div>
 
               <div class="space-y-1.5" id="sidebar-questions-list">
-                {questions.map((q, idx) => (
-                  <a
-                    href={`/${materia.slug}/questoes/${q.id}`}
-                    data-question-id={q.id}
-                    data-question-order={idx}
-                    data-question-tags={(q.tags || []).join(',')}
-                    class:list={[
-                      "sidebar-question-item sans-ui block text-xs p-2 rounded-md border transition-all",
-                      currentQuestionId === q.id
-                        ? "bg-[var(--accent-subtle)] border-[var(--accent)]/40 text-[var(--accent)] font-semibold"
-                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border-transparent hover:border-[var(--border-subtle)]"
-                    ]}
-                  >
-                    <div class="font-medium truncate">
-                      {q.exam} ({q.year}) — {q.title}
-                    </div>
-                  </a>
-                ))}
+                {questions.map((q, idx) => {
+                  const isOther = !!(q.ownerUserId && materia.ownerUserId && q.ownerUserId !== materia.ownerUserId);
+                  return (
+                    <a
+                      href={`/${materia.slug}/questoes/${q.id}${isOther ? `?owner=${q.ownerUserId}` : ''}`}
+                      data-question-id={q.id}
+                      data-question-order={idx}
+                      data-question-tags={(q.tags || []).join(',')}
+                      data-is-other={isOther ? 'true' : 'false'}
+                      class:list={[
+                        "sidebar-question-item sans-ui block text-xs p-2 rounded-md border transition-all",
+                        currentQuestionId === q.id
+                          ? "bg-[var(--accent-subtle)] border-[var(--accent)]/40 text-[var(--accent)] font-semibold"
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border-transparent hover:border-[var(--border-subtle)]"
+                      ]}
+                    >
+                      <div class="font-medium truncate">
+                        {q.exam} ({q.year}) — {q.title}
+                      </div>
+                      {isOther && q.ownerDisplayName && (
+                        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono truncate mt-0.5">
+                          De: {q.ownerDisplayName}
+                        </div>
+                      )}
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -743,6 +758,14 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             }
           }
 
+          function isShowingOtherTags() {
+            try {
+              return localStorage.getItem('study_show_other_tags') === 'true';
+            } catch(e) {
+              return false;
+            }
+          }
+
           function updateSidebarUI(tag) {
             const tagSelect = document.getElementById('sidebar-tag-select');
             const activeHint = document.getElementById('sidebar-active-tag-hint');
@@ -800,13 +823,21 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             // Filtra e organiza as questões do menu lateral
             const allQuestionItems = Array.from(document.querySelectorAll('.sidebar-question-item'));
             const recentIds = getRecentQuestions();
+            const showOther = isShowingOtherTags();
 
             const matchingItems = [];
             const nonMatchingItems = [];
 
             allQuestionItems.forEach((item) => {
               const itemTags = (item.getAttribute('data-question-tags') || '').split(',').map(s => s.trim());
-              const matches = !tag || itemTags.includes(tag);
+              const isOther = item.getAttribute('data-is-other') === 'true';
+              let matches = false;
+              if (tag) {
+                matches = itemTags.includes(tag);
+              } else {
+                matches = !isOther || showOther;
+              }
+
               if (matches) {
                 matchingItems.push(item);
               } else {
@@ -1014,6 +1045,12 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                   el.classList.add('hidden');
                 }
               });
+
+              // Reavalia contagens e itens visíveis na sidebar
+              updateSidebarUI(currentActiveTag);
+
+              // Notifica páginas que queiram sincronizar seus filtros locais
+              window.dispatchEvent(new CustomEvent('study-other-tags-toggled', { detail: { active } }));
             }
 
             if (otherToggleBtn) {
