@@ -413,11 +413,22 @@ const {
       <script is:inline define:vars={{ curMat: { slug: materia.slug, name: materia.name, code: materia.code, institution: materia.institution, period: materia.period, chaptersCount: materia.chaptersCount, questionsCount: materia.questionsCount } }}>
         try {
           if (typeof localStorage !== 'undefined') {
+            const now = new Date().toISOString();
             const data = {
               ...curMat,
-              visitedAt: new Date().toISOString()
+              visitedAt: now
             };
             localStorage.setItem('last_visited_subject', JSON.stringify(data));
+
+            // Histórico ordenado de matérias acessadas recentemente
+            let recentList = [];
+            try {
+              recentList = JSON.parse(localStorage.getItem('study_recent_materias') || '[]');
+            } catch(e) {}
+            if (!Array.isArray(recentList)) recentList = [];
+            recentList = recentList.filter(item => item && item.slug !== curMat.slug);
+            recentList.unshift({ slug: curMat.slug, visitedAt: now });
+            localStorage.setItem('study_recent_materias', JSON.stringify(recentList.slice(0, 30)));
           }
         } catch (e) {
           console.error(e);

@@ -113,32 +113,74 @@ import { MATERIAS } from '../data/materias';
           <div class="space-y-3">
             <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center justify-between">
               <span>Disciplinas</span>
-              <span class="font-normal font-mono">{MATERIAS.length} cadastradas</span>
+              <span class="font-normal font-mono text-[11px]" id="sidebar-materias-count">{MATERIAS.length} cadastradas</span>
             </div>
 
-            <nav class="space-y-1 sans-ui text-sm">
-              {MATERIAS.map((m) => (
+            <!-- Barra de Busca de Disciplinas (Design Acadêmico Integrado) -->
+            <div class="relative group">
+              <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="search"
+                id="sidebar-materia-search"
+                placeholder="Buscar disciplina..."
+                class="sans-ui w-full pl-8 pr-7 py-1.5 text-xs sm:text-[13px] rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none transition-all duration-200 shadow-2xs"
+                aria-label="Buscar disciplina no catálogo"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                id="sidebar-materia-search-clear"
+                class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded cursor-pointer transition-colors"
+                aria-label="Limpar busca"
+                title="Limpar busca"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Estado Vazio da Busca -->
+            <div
+              id="sidebar-materias-empty"
+              class="hidden p-3 rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-xs text-[var(--text-muted)] text-center italic"
+            >
+              Nenhuma disciplina encontrada.
+            </div>
+
+            <!-- Navegação com Disciplinas (Ordenadas por Acesso Recente no Cliente) -->
+            <nav class="space-y-1.5 sans-ui text-sm" id="sidebar-materias-nav">
+              {MATERIAS.map((m, idx) => (
                 <a
                   href={m.status === 'active' ? `/${m.slug}` : '#'}
-                  class={`block p-3 rounded-lg border transition-all ${
+                  data-materia-slug={m.slug}
+                  data-default-order={idx}
+                  data-search-text={`${m.name} ${m.code} ${m.institution} ${m.description} ${(m.topics || []).join(' ')}`}
+                  class={`sidebar-materia-item block p-3 rounded-lg border transition-all duration-150 ${
                     m.status === 'active'
-                      ? 'border-[var(--border-subtle)] bg-[var(--bg-page)] hover:border-[var(--accent)] hover:bg-[var(--bg-subtle)] group'
-                      : 'border-transparent text-[var(--text-muted)] opacity-65 cursor-not-allowed'
+                      ? 'border-[var(--border-subtle)] bg-[var(--bg-page)] hover:border-[var(--accent)] hover:bg-[var(--bg-surface-hover)] group shadow-2xs cursor-pointer'
+                      : 'border-dashed border-[var(--border-subtle)] bg-transparent text-[var(--text-muted)] opacity-65 cursor-not-allowed'
                   }`}
                 >
                   <div class="flex items-center justify-between text-xs mb-1">
                     <span class="font-mono font-bold text-[var(--accent)]">{m.code}</span>
-                    {m.status === 'active' ? (
-                      <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase">Ativa</span>
-                    ) : (
+                    {m.status !== 'active' ? (
                       <span class="text-[10px] text-[var(--text-muted)] italic">Em breve</span>
+                    ) : (
+                      <span class="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
+                        {m.period || m.institution}
+                      </span>
                     )}
                   </div>
                   <div class="font-serif font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors leading-snug">
                     {m.name}
                   </div>
                   {m.status === 'active' && (
-                    <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
+                    <div class="text-[11px] text-[var(--text-muted)] mt-1.5 flex items-center justify-between">
                       <span>{m.chaptersCount} capítulos</span>
                       <span>{m.questionsCount} testes</span>
                     </div>
@@ -332,6 +374,155 @@ import { MATERIAS } from '../data/materias';
 
     <!-- Script de Gestão da Seção Recente e Toggle Mobile na Home -->
     <script is:inline>
+      // Função para registrar acesso recente à matéria
+      function recordMateriaAccess(slug) {
+        try {
+          const now = new Date().toISOString();
+          let recentList = [];
+          try {
+            recentList = JSON.parse(localStorage.getItem('study_recent_materias') || '[]');
+          } catch (e) {}
+          if (!Array.isArray(recentList)) recentList = [];
+          recentList = recentList.filter((item) => item && item.slug !== slug);
+          recentList.unshift({ slug, visitedAt: now });
+          localStorage.setItem('study_recent_materias', JSON.stringify(recentList.slice(0, 30)));
+        } catch (e) {}
+      }
+
+      // Ordenação por Acesso Recente e Busca no Menu Lateral
+      function setupSidebarMaterias() {
+        const nav = document.getElementById('sidebar-materias-nav');
+        const searchInput = document.getElementById('sidebar-materia-search');
+        const clearBtn = document.getElementById('sidebar-materia-search-clear');
+        const emptyEl = document.getElementById('sidebar-materias-empty');
+        const countEl = document.getElementById('sidebar-materias-count');
+        const items = Array.from(document.querySelectorAll('.sidebar-materia-item'));
+
+        if (!nav || items.length === 0) return;
+
+        // 1. Ordenação por Acesso Recente
+        try {
+          let recentList = [];
+          try {
+            recentList = JSON.parse(localStorage.getItem('study_recent_materias') || '[]');
+          } catch (e) {}
+
+          const lastVisited = localStorage.getItem('last_visited_subject');
+          if (lastVisited) {
+            try {
+              const parsed = JSON.parse(lastVisited);
+              if (parsed && parsed.slug && !recentList.some((r) => r.slug === parsed.slug)) {
+                recentList.unshift({ slug: parsed.slug, visitedAt: parsed.visitedAt || new Date().toISOString() });
+              }
+            } catch (e) {}
+          }
+
+          if (recentList.length > 0) {
+            const priorityMap = {};
+            recentList.forEach((r, idx) => {
+              if (r && r.slug) {
+                priorityMap[r.slug] = 100000 - idx;
+              }
+            });
+
+            items.sort((a, b) => {
+              const slugA = a.getAttribute('data-materia-slug') || '';
+              const slugB = b.getAttribute('data-materia-slug') || '';
+              const scoreA = priorityMap[slugA] || 0;
+              const scoreB = priorityMap[slugB] || 0;
+
+              if (scoreA !== scoreB) {
+                return scoreB - scoreA;
+              }
+
+              const orderA = parseInt(a.getAttribute('data-default-order') || '0', 10);
+              const orderB = parseInt(b.getAttribute('data-default-order') || '0', 10);
+              return orderA - orderB;
+            });
+
+            items.forEach((item) => nav.appendChild(item));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        // Salva acesso recente ao clicar em qualquer disciplina
+        items.forEach((item) => {
+          item.addEventListener('click', () => {
+            const slug = item.getAttribute('data-materia-slug');
+            if (slug) recordMateriaAccess(slug);
+          });
+        });
+
+        // 2. Busca e Filtro de Disciplinas
+        function normalizeText(str) {
+          return (str || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+        }
+
+        function handleSearch(term) {
+          const q = normalizeText(term);
+          let visibleCount = 0;
+
+          if (clearBtn) {
+            if (term && term.length > 0) {
+              clearBtn.classList.remove('hidden');
+            } else {
+              clearBtn.classList.add('hidden');
+            }
+          }
+
+          items.forEach((item) => {
+            const text = normalizeText(item.getAttribute('data-search-text') || '');
+            if (!q || text.includes(q)) {
+              item.classList.remove('hidden');
+              visibleCount++;
+            } else {
+              item.classList.add('hidden');
+            }
+          });
+
+          if (countEl) {
+            countEl.textContent = q
+              ? `${visibleCount} encontrada${visibleCount === 1 ? '' : 's'}`
+              : `${items.length} cadastradas`;
+          }
+
+          if (emptyEl) {
+            if (visibleCount === 0) {
+              emptyEl.classList.remove('hidden');
+            } else {
+              emptyEl.classList.add('hidden');
+            }
+          }
+        }
+
+        searchInput?.addEventListener('input', (e) => {
+          handleSearch(e.target.value);
+        });
+
+        clearBtn?.addEventListener('click', () => {
+          if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+            handleSearch('');
+          }
+        });
+
+        searchInput?.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            searchInput.value = '';
+            handleSearch('');
+            searchInput.blur();
+          }
+        });
+      }
+
+      setupSidebarMaterias();
+
       try {
         const last = localStorage.getItem('last_visited_subject');
         if (last) {
