@@ -105,31 +105,44 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
 ## 3. Ecossistema Integrado de Skills
 
 ```
-                        ┌─────────────────────────────────────┐
-                        │     question-study-generator        │
-                        │    (Orquestrador Macro / Teoria)    │
-                        └──────────────────┬──────────────────┘
-                                           │
-                 ┌─────────────────────────┴─────────────────────────┐
-                 ▼                                                   ▼
-┌─────────────────────────────────┐                 ┌─────────────────────────────────┐
-│        explain-question         │                 │    block-diagram-generator      │
-│  (Resolução Micro de Questões   │                 │   (Diagramas Vetoriais KaTeX    │
-│  Paralelizável via Subagentes)  │                 │    para Controle, SLITs e PDS)  │
-└─────────────────────────────────┘                 └─────────────────────────────────┘
+                  ┌─────────────────────────────────────────────────┐
+                  │                 CADERNOS TEÓRICOS               │
+                  └───────────────┬─────────────────┬───────────────┘
+                                  │                 │
+                                  ▼                 ▼
+          ┌──────────────────────────────┐   ┌──────────────────────────────┐
+          │   question-study-generator   │   │   summary-study-generator    │
+          │  ("Estudo guiado por         │   │  ("Resumo da matéria" via    │
+          │   questões" via provas)      │   │   slides/notas + figuras)    │
+          └──────────────┬───────────────┘   └──────────────┬───────────────┘
+                         │                                  │
+                         ▼                                  │
+          ┌──────────────────────────────┐                  │
+          │       explain-question       │                  │
+          │ (Resolução Micro de Questões │                  │
+          │  Paralelizável Subagentes)   │                  │
+          └──────────────┬───────────────┘                  │
+                         │                                  │
+                         ▼                                  ▼
+          ┌─────────────────────────────────────────────────────────┐
+          │                block-diagram-generator                  │
+          │       (Diagramas Vetoriais KaTeX / SLITs / PDS)         │
+          └─────────────────────────────────────────────────────────┘
 ```
 
 1. **`question-study-generator` (Esta skill):**
-   * Estrutura macro da disciplina (`archive/<materia>/materia.json`).
-   * Cadernos teóricos em fluxo contínuo (`archive/<materia>/resumos/...`).
-   * Aplicação rigorosa da **Diretriz de Ouro de Redação Teórica**.
-   * Coordenação de subagentes para extração e resolução massiva de provas.
-2. **`explain-question`:**
-   * Execução pontual de cada exercício.
-   * Toggles independentes de teoria e resolução com `.academic-prose`.
-   * Imagens limpas com clique direto para visualizador interativo (zoom, pan, roda do mouse).
-3. **`block-diagram-generator`:**
-   * Geração e inserção de blocos vetoriais `<BlockDiagram />` integrados ao tema do site para sistemas em cascata, malha fechada, amostragem e processamento contínuo/discreto.
+   * Cadernos teóricos focados no conteúdo cobrado por exames (`archive/<materia>/resumos/...`).
+   * Frontmatter com `type: "questoes"` (ou omitido), agrupado no menu lateral sob a aba **"Estudo guiado por questões"**.
+   * Vincula questões de provas via `relatedQuestions` e insere `<QuestionCard />`.
+   * Coordena subagentes para resolução massiva de provas.
+2. **`summary-study-generator`:**
+   * Resumos conceituais gerados diretamente a partir de materiais didáticos (slides, apostilas, livros).
+   * Frontmatter com `type: "materia"`, agrupado no menu lateral sob a aba **"Resumo da matéria"**.
+   * Não vincula questões; extrai apenas figuras e diagramas visualmente relevantes via script oficial.
+3. **`explain-question`:**
+   * Execução e resolução detalhada de questões com `<Theory>` e `<Resolution>`.
+4. **`block-diagram-generator`:**
+   * Diagramas vetoriais `<BlockDiagram />` integrados ao tema do site.
 
 ---
 

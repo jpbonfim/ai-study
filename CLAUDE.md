@@ -26,16 +26,25 @@ Specialized agent workflows and instructions are located in `.agents/skills/`. W
 1. **Theoretical Study Notebooks (`question-study-generator`)**:
    - Location: `.agents/skills/question-study-generator/SKILL.md`
    - Output destination: `archive/<subject>/resumos/<slug>.mdx`
-   - Rule: Always ensure an evaluation tag is specified (e.g., `teste-1`, `p1`). If the user did not provide one, ask for it before generating files. Follow the Golden Writing Guideline (self-contained, practical results without proofs, logical order, no filler introductions).
+   - Section: Classified under the "Estudo guiado por questões" collapsible tab in the sidebar.
+   - Rule: Always ensure an evaluation tag is specified (e.g., `teste-1`, `p1`). If the user did not provide one, ask for it before generating files. Follow the Golden Writing Guideline (self-contained, practical results without proofs, logical order, no filler introductions). Links question IDs with `<QuestionCard />`.
 
-2. **Exam Question Extraction and Resolution (`explain-question`)**:
+2. **Course Material Summaries (`summary-study-generator`)**:
+   - Location: `.agents/skills/summary-study-generator/SKILL.md`
+   - CLI utility: `python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py`
+   - Output destination: `archive/<subject>/resumos/<slug>.mdx` with `type: "materia"` in the frontmatter.
+   - Section: Classified under the "Resumo da matéria" collapsible tab in the sidebar.
+   - Focus: Purely theoretical lecture summaries derived from lecture slides, textbooks, and notes; does NOT link questions.
+   - Diagram extraction: Extract only strictly relevant visual diagrams and graphs to `site/public/images/resumos/<subject>/`.
+
+3. **Exam Question Extraction and Resolution (`explain-question`)**:
    - Location: `.agents/skills/explain-question/SKILL.md`
    - CLI utility: `python3 .agents/skills/explain-question/scripts/extract_question.py`
    - Output destination: `archive/<subject>/questoes/<slug>.mdx`
    - Format: Must use `<Theory>` for pedagogical background (no spoilers) and `<Resolution>` for step-by-step algebra and answer keys.
    - Figure cropping: Use `crop-figure` command with `--padding 25` and preserve upper mathematical definitions and equations.
 
-3. **Vector Block Diagrams (`block-diagram-generator`)**:
+4. **Vector Block Diagrams (`block-diagram-generator`)**:
    - Location: `.agents/skills/block-diagram-generator/SKILL.md`
    - Component: `<BlockDiagram />` in MDX with presets (`feedback`, `feedback-disturbance`, `cascade`, `parallel`, `direct-form-1`, `direct-form-2`, `fir`, `state-space`, `custom`).
 

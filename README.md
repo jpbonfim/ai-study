@@ -166,7 +166,7 @@ Theoretical chapters embed compact preview cards for exercises directly relevant
 The project includes specialized skills under `.agents/skills/` designed for the Antigravity agentic assistant.
 
 ### 6.1 `question-study-generator`
-Orchestrates high-level syllabus structuring, continuous theoretical notebooks, and concurrent exam resolution across subagents.
+Orchestrates high-level syllabus structuring, continuous theoretical notebooks, and concurrent exam resolution across subagents. Chapters appear under the "Estudo guiado por questões" collapsible tab in the sidebar.
 
 #### Operational Workflow:
 1. Tag Requirement: When instructed to generate study notebooks or solve an exam, the agent must check if an evaluation tag was specified (e.g., `teste-1`, `p1`). If not provided, it must prompt the user before creating files.
@@ -178,7 +178,30 @@ Orchestrates high-level syllabus structuring, continuous theoretical notebooks, 
 3. Subagent Orchestration: Distributes PDF exams across concurrent subagents using `invoke_subagent`. Each subagent extracts questions and generates solutions using `explain-question`.
 4. Synthesis: Upon subagent completion, the orchestrator compiles all covered topics, drafts the theoretical chapters (`archive/<materia>/resumos/*.mdx`), links `relatedQuestions`, and embeds `<QuestionCard />` components.
 
-### 6.2 `explain-question`
+### 6.2 `summary-study-generator`
+Generates comprehensive theoretical summaries directly from course materials (lecture slides, lecture notes, textbook chapters, and syllabi) without linking question cards. Summaries appear under the "Resumo da matéria" collapsible tab in the sidebar.
+
+#### Operational Workflow:
+1. Tag Requirement: Verifies the evaluation tag (`teste-1`, `p1`, etc.) or asks the user before generating files.
+2. The Golden Writing Guideline: Follows the same strict 6-pillar standard (self-contained, direct and rigorous, no proofs, logical order, no introductions, comprehensive and detailed coverage).
+3. Selective Diagram Extraction: Uses the dedicated utility `.agents/skills/summary-study-generator/scripts/extract_material_images.py` to inspect and extract only strictly necessary schematics, block diagrams, frequency response curves, and sensor layouts. Does not extract plain-text slides or decorative art.
+4. Output Schema: Saves chapters to `archive/<materia>/resumos/<slug>.mdx` with frontmatter `type: "materia"`.
+
+#### Official Utility Script:
+```bash
+# 1. Inspect course material PDF (page count, embedded raster images, outline)
+python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py inspect material/slides/aula-amostragem.pdf
+
+# 2. Crop high-resolution (200 DPI) schematic from specific page
+python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop material/slides/aula-amostragem.pdf \
+  --page 8 --output site/public/images/resumos/pds/esquema-amostragem.png --padding 20
+
+# 3. Render complete slide as full-width figure
+python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py render-page material/slides/aula-amostragem.pdf \
+  --page 14 --output site/public/images/resumos/pds/espectro-zoh.png
+```
+
+### 6.3 `explain-question`
 Handles per-problem extraction from exam PDFs, figure cropping, and dual-section (`<Theory>` and `<Resolution>`) pedagogical authoring.
 
 #### Official Utility Script:
@@ -253,7 +276,7 @@ expectedAnswer: "H(z) = (1 + (1/3)z^-1)/(1 - (1/2)z^-1); ROC: |z| > 1/2"
 ---
 ```
 
-### 6.3 `block-diagram-generator`
+### 6.4 `block-diagram-generator`
 Generates clean vector SVG block diagrams with KaTeX labels for signals and systems, feedback control, and digital filter structures.
 
 #### Available Presets:
@@ -293,13 +316,14 @@ To use the skills seamlessly in Claude Code, the following components and config
 1. **Root Instructions File (`CLAUDE.md`)**:
    Claude Code reads `CLAUDE.md` automatically at the start of every session. A `CLAUDE.md` file in the repository root provides Claude Code with:
    - Primary build and development commands (`npm run dev`, `npm run build`).
-   - Pointers to the three skills in `.agents/skills/` (`question-study-generator`, `explain-question`, `block-diagram-generator`).
+   - Pointers to the skills in `.agents/skills/` (`question-study-generator`, `summary-study-generator`, `explain-question`, `block-diagram-generator`).
    - Strict workspace hygiene rules (prohibition of root temporary scripts, mandatory cleanup, and prompt process termination).
 
 2. **Custom Slash Commands (`.claude/commands/`)**:
-   Claude Code supports custom slash commands defined as markdown files in `.claude/commands/`. The repository includes three pre-configured commands:
+   Claude Code supports custom slash commands defined as markdown files in `.claude/commands/`. The repository includes pre-configured commands:
    - `/explain-question <pdf-path>`: Prompts Claude Code to inspect the PDF, crop diagrams, apply `<Theory>` and `<Resolution>` sections, and scaffold resolved questions.
-   - `/study-generator <tag>`: Instructs Claude Code to verify the evaluation tag, follow the Golden Writing Guideline, and generate a continuous chapter in `archive/<materia>/resumos/`.
+   - `/study-generator <tag>`: Instructs Claude Code to verify the evaluation tag, follow the Golden Writing Guideline, and generate a continuous chapter in `archive/<materia>/resumos/` linked to exam questions.
+   - `/summary-study-generator <tag>`: Generates complete lecture theoretical summaries directly from course materials (slides/textbooks) with selective diagram cropping, classified under "Resumo da matéria".
    - `/block-diagram <preset>`: Guides Claude Code to configure and output a `<BlockDiagram />` vector component with KaTeX mathematics.
 
 3. **Execution Model Differences (Subagents vs Sequential Processing)**:

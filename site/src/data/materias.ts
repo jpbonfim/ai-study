@@ -14,6 +14,20 @@ export interface Subject {
   topics: string[];
 }
 
+function countMdxFiles(dir: string): number {
+  if (!fs.existsSync(dir)) return 0;
+  let count = 0;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      count += countMdxFiles(path.join(dir, entry.name));
+    } else if (/\.(md|mdx)$/i.test(entry.name)) {
+      count++;
+    }
+  }
+  return count;
+}
+
 /**
  * Carrega dinamicamente todas as matérias cadastradas na pasta 'archive/'
  * Calcula automaticamente o número de capítulos e questões existentes.
@@ -46,13 +60,8 @@ function loadMateriasFromArchive(): Subject[] {
         const resumosDir = path.join(archiveDir, matSlug, 'resumos');
         const questoesDir = path.join(archiveDir, matSlug, 'questoes');
 
-        const chaptersCount = fs.existsSync(resumosDir)
-          ? fs.readdirSync(resumosDir).filter((f) => /\.(md|mdx)$/i.test(f)).length
-          : 0;
-
-        const questionsCount = fs.existsSync(questoesDir)
-          ? fs.readdirSync(questoesDir).filter((f) => /\.(md|mdx)$/i.test(f)).length
-          : 0;
+        const chaptersCount = countMdxFiles(resumosDir);
+        const questionsCount = countMdxFiles(questoesDir);
 
         materias.push({
           slug: data.slug || matSlug,

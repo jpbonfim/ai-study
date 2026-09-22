@@ -59,29 +59,40 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
     return { frontmatter: {}, body: content };
   }
 
+  function getFilesRecursively(dir: string): string[] {
+    if (!fs.existsSync(dir)) return [];
+    let results: string[] = [];
+    const list = fs.readdirSync(dir, { withFileTypes: true });
+    for (const item of list) {
+      const fullPath = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        results = results.concat(getFilesRecursively(fullPath));
+      } else if (item.name.endsWith('.md') || item.name.endsWith('.mdx')) {
+        results.push(fullPath);
+      }
+    }
+    return results;
+  }
+
   const db: { resumos: any[]; questoes: Record<string, any> } = {
     resumos: [],
     questoes: {},
   };
 
   if (fs.existsSync(resumosDir)) {
-    const files = fs.readdirSync(resumosDir);
-    for (const f of files) {
-      if (f.endsWith('.md') || f.endsWith('.mdx')) {
-        const { frontmatter, body } = parseMdx(path.join(resumosDir, f));
-        db.resumos.push({ frontmatter, body });
-      }
+    const files = getFilesRecursively(resumosDir);
+    for (const fullPath of files) {
+      const { frontmatter, body } = parseMdx(fullPath);
+      db.resumos.push({ frontmatter, body });
     }
   }
 
   if (fs.existsSync(questoesDir)) {
-    const files = fs.readdirSync(questoesDir);
-    for (const f of files) {
-      if (f.endsWith('.md') || f.endsWith('.mdx')) {
-        const { frontmatter, body } = parseMdx(path.join(questoesDir, f));
-        const qId = frontmatter.id || f.replace(/\.(md|mdx)$/, '');
-        db.questoes[qId] = { frontmatter, body };
-      }
+    const files = getFilesRecursively(questoesDir);
+    for (const fullPath of files) {
+      const { frontmatter, body } = parseMdx(fullPath);
+      const qId = frontmatter.id || path.basename(fullPath).replace(/\.(md|mdx)$/, '');
+      db.questoes[qId] = { frontmatter, body };
     }
   }
 

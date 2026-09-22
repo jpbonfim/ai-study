@@ -16,7 +16,16 @@ const { materia } = Astro.props;
 
 // Busca todos os resumos e questões pertencentes a esta matéria
 const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
-const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+const sortedResumos = allResumos.sort((a, b) => {
+  const typeA = a.data.type === 'materia' ? 0 : 1;
+  const typeB = b.data.type === 'materia' ? 0 : 1;
+  if (typeA !== typeB) return typeA - typeB;
+  return a.data.order - b.data.order;
+});
+
+const hasMateria = sortedResumos.some((r) => r.data.type === 'materia');
+const hasQuestoes = sortedResumos.some((r) => r.data.type !== 'materia');
+const hasBothTypes = hasMateria && hasQuestoes;
 
 const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
 
@@ -42,12 +51,17 @@ const availableTags = tagList.map((tagId) => {
 });
 
 // Constrói a estrutura do Sumário (TOC) para o menu lateral com tags
-const toc = sortedResumos.map((resumo) => ({
-  id: `cap-${resumo.data.chapter}`,
-  title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
-  subsections: resumo.data.sections || [],
-  tags: resumo.data.tags,
-}));
+const toc = sortedResumos.map((resumo) => {
+  const isMateria = resumo.data.type === 'materia';
+  const chapId = isMateria ? `cap-materia-${resumo.data.chapter}` : `cap-${resumo.data.chapter}`;
+  return {
+    id: chapId,
+    title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
+    subsections: resumo.data.sections || [],
+    tags: resumo.data.tags,
+    type: (resumo.data.type || 'questoes') as 'materia' | 'questoes',
+  };
+});
 
 // Lista de questões para atalho no menu lateral com tags
 const questionsLinks = allQuestoes.map((q) => ({
@@ -183,38 +197,68 @@ const renderedChapters = await Promise.all(
 
     <!-- Fluxo Contínuo de Leitura dos Capítulos -->
     <div class="space-y-20 w-full min-w-0" id="chapters-container">
-      {renderedChapters.map(({ resumo, Content }, idx) => (
-        <section
-          id={`cap-${resumo.data.chapter}`}
-          data-chapter-tags={(resumo.data.tags || []).join(',')}
-          class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
-        >
-          <!-- Título do Capítulo -->
-          <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
-            <div class="sans-ui text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
-              Capítulo {resumo.data.chapter}
-            </div>
-            <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-              {resumo.data.title}
-            </h2>
-            <p class="font-serif text-base text-[var(--text-secondary)] italic">
-              {resumo.data.description}
-            </p>
-          </div>
+      {renderedChapters.map(({ resumo, Content }, idx) => {
+        const isMateria = resumo.data.type === 'materia';
+        const isFirstOfGroup = hasBothTypes && (idx === 0 || renderedChapters[idx - 1].resumo.data.type !== resumo.data.type);
+        const chapId = isMateria ? `cap-materia-${resumo.data.chapter}` : `cap-${resumo.data.chapter}`;
 
-          <!-- Corpo do Capítulo (Markdown/MDX com KaTeX) -->
-          <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
-            <Content components={{ QuestionCard, BlockDiagram }} />
-          </div>
+        return (
+          <div class="space-y-12">
+            {isFirstOfGroup && (
+              <div class="pt-8 pb-3 border-b-2 border-[var(--border-strong)] flex items-center justify-between not-prose">
+                <div class="space-y-1">
+                  <div class="sans-ui text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
+                    {isMateria ? 'Módulo Teórico da Disciplina' : 'Módulo Prático de Exames'}
+                  </div>
+                  <h3 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                    {isMateria ? 'Resumo da Matéria' : 'Estudo Guiado por Questões'}
+                  </h3>
+                </div>
+              </div>
+            )}
 
-          <!-- Divisor Clássico entre Capítulos -->
-          {idx < renderedChapters.length - 1 && (
-            <div class="text-center py-8 text-[var(--text-muted)] font-serif select-none">
-              * * *
-            </div>
-          )}
-        </section>
-      ))}
+            <section
+              id={chapId}
+              data-chapter-tags={(resumo.data.tags || []).join(',')}
+              data-chapter-type={resumo.data.type || 'questoes'}
+              class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
+            >
+              <!-- Título do Capítulo -->
+              <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
+                <div class="sans-ui flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
+                  <span>Capítulo {resumo.data.chapter}</span>
+                  {hasBothTypes && (
+                    <>
+                      <span>•</span>
+                      <span class="text-[var(--text-muted)] font-normal">
+                        {isMateria ? 'Resumo da Matéria' : 'Estudo Guiado por Questões'}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {resumo.data.title}
+                </h2>
+                <p class="font-serif text-base text-[var(--text-secondary)] italic">
+                  {resumo.data.description}
+                </p>
+              </div>
+
+              <!-- Corpo do Capítulo (Markdown/MDX com KaTeX) -->
+              <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
+                <Content components={{ QuestionCard, BlockDiagram }} />
+              </div>
+
+              <!-- Divisor Clássico entre Capítulos -->
+              {idx < renderedChapters.length - 1 && (
+                <div class="text-center py-8 text-[var(--text-muted)] font-serif select-none">
+                  * * *
+                </div>
+              )}
+            </section>
+          </div>
+        );
+      })}
     </div>
 
     <!-- Final do Documento -->

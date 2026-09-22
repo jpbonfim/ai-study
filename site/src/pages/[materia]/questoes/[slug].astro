@@ -56,12 +56,17 @@ const availableTags = tagList.map((tagId) => {
 
 const primaryTag = questao.data.tags?.[0] || 'teste-1';
 
-const toc = sortedResumos.map((resumo) => ({
-  id: `cap-${resumo.data.chapter}`,
-  title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
-  subsections: resumo.data.sections || [],
-  tags: resumo.data.tags,
-}));
+const toc = sortedResumos.map((resumo) => {
+  const isMateria = resumo.data.type === 'materia';
+  const chapId = isMateria ? `cap-materia-${resumo.data.chapter}` : `cap-${resumo.data.chapter}`;
+  return {
+    id: chapId,
+    title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
+    subsections: resumo.data.sections || [],
+    tags: resumo.data.tags,
+    type: (resumo.data.type || 'questoes') as 'materia' | 'questoes',
+  };
+});
 
 const questionsLinks = allQuestoes.map((q) => ({
   id: q.id,

@@ -24,6 +24,8 @@ const resumos = defineCollection({
       chapter: z.number(),
       description: z.string(),
       order: z.number().default(1),
+      type: z.enum(['materia', 'questoes']).optional(),
+      studyType: z.enum(['materia', 'questoes']).optional(),
       tags: tagSchema,
       tag: z.string().optional(),
       relatedQuestions: z.array(z.string()).default([]),
@@ -41,8 +43,10 @@ const resumos = defineCollection({
       if (data.tag && !tags.includes(data.tag)) {
         tags.push(data.tag);
       }
+      const resolvedType: 'materia' | 'questoes' = data.type || data.studyType || 'questoes';
       return {
         ...data,
+        type: resolvedType,
         tags: tags.length > 0 ? tags : ['teste-1'],
       };
     }),
