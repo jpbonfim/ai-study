@@ -137,7 +137,7 @@ def parse_questions(text: str, force_type: str = "auto") -> list[dict]:
     questions = []
     
     q_pattern = re.compile(
-        r'^\s*(?:Questão\s+)?([1-9]\d?)\.\s*(?:\((\d+[,.]\d+)\s*(?:pontos|pts)?\))?\s*(.*)$',
+        r'^\s*(?:Questão\s+)?([1-9]\d?)(?:ª\s*Questão|\.)?\s*(?:\((\d+[,.]\d+)\s*(?:pontos|pts)?\))?\s*[:\-]?\s*(.*)$',
         re.MULTILINE | re.IGNORECASE
     )
     
@@ -145,13 +145,27 @@ def parse_questions(text: str, force_type: str = "auto") -> list[dict]:
     if not matches:
         return questions
         
-    for i, match in enumerate(matches):
+    for i in range(len(matches)):
+        match = matches[i]
         q_num = int(match.group(1))
-        q_points = match.group(2) or "2,5"
+        pts = match.group(2) if match.group(2) else "2,5"
         start_idx = match.start()
         end_idx = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         
         q_block = text[start_idx:end_idx].strip()
+        
+        if force_type == 'discursiva' or force_type == 'auto':
+            stmt_clean = re.sub(r'^\s*(?:Questão\s+)?[1-9]\d?(?:ª\s*Questão|\.)?\s*(?:\(\d+[,.]\d+\s*(?:pontos|pts)?\))?\s*[:\-]?\s*', '', q_block, flags=re.IGNORECASE).strip()
+            has_options = bool(re.search(r'^\s*\([a-eA-E]\)\s+', q_block, re.MULTILINE))
+            if force_type == 'discursiva' or not has_options:
+                questions.append({
+                    "number": q_num,
+                    "points": pts,
+                    "type": "discursiva",
+                    "statement": " ".join(stmt_clean.split()),
+                    "options": []
+                })
+                continue
         
         opt_pattern = re.compile(r'^\s*\(([a-eA-E])\)\s*(.*)$', re.MULTILINE)
         opt_matches = list(opt_pattern.finditer(q_block))
