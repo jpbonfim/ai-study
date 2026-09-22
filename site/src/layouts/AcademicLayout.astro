@@ -189,10 +189,10 @@ const {
             )}
           </div>
 
-          <!-- Seletor de Avaliações / Tags -->
+          <!-- Seletor Dropdown de Avaliações / Tags -->
           {availableTags && availableTags.length > 0 && (
-            <div class="space-y-2.5 pb-4 border-b border-[var(--border-subtle)]" id="sidebar-tag-section">
-              <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <div class="space-y-2 pb-4 border-b border-[var(--border-subtle)]" id="sidebar-tag-section">
+              <label for="sidebar-tag-select" class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] cursor-pointer">
                 <span class="flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -202,21 +202,29 @@ const {
                 <span class="text-[10px] font-normal lowercase opacity-80" id="sidebar-active-tag-hint">
                   (selecione para ver)
                 </span>
-              </div>
-              <div class="flex flex-wrap gap-1.5" id="sidebar-tag-buttons">
-                {availableTags.map((tag) => (
-                  <button
-                    type="button"
-                    data-tag-slug={tag.id}
-                    class="study-tag-btn sans-ui text-xs font-semibold px-2.5 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <span class="tag-dot w-2 h-2 rounded-full border border-current opacity-40"></span>
-                    <span>{tag.label}</span>
-                    {tag.questionsCount !== undefined && tag.questionsCount > 0 && (
-                      <span class="text-[10px] opacity-70 font-mono">({tag.questionsCount})</span>
-                    )}
-                  </button>
-                ))}
+              </label>
+
+              <div class="relative">
+                <select
+                  id="sidebar-tag-select"
+                  class="w-full appearance-none px-3 py-2 pr-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] hover:border-[var(--border-strong)] focus:border-[var(--accent)] text-[var(--text-primary)] font-serif font-semibold text-sm transition-all focus:outline-none cursor-pointer shadow-2xs"
+                  aria-label="Selecionar avaliação ou tag"
+                >
+                  <option value="" class="font-sans text-xs text-[var(--text-muted)]">
+                    -- Selecione uma Avaliação --
+                  </option>
+                  {availableTags.map((tag) => (
+                    <option value={tag.id} class="font-sans text-sm py-1">
+                      {tag.label} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
+                    </option>
+                  ))}
+                </select>
+                <!-- Seta Customizada do Dropdown -->
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-[var(--text-secondary)]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
               </div>
             </div>
           )}
@@ -385,7 +393,7 @@ const {
           }
 
           function updateSidebarUI(tag) {
-            const tagButtons = document.querySelectorAll('.study-tag-btn');
+            const tagSelect = document.getElementById('sidebar-tag-select');
             const activeHint = document.getElementById('sidebar-active-tag-hint');
             const tocEmpty = document.getElementById('sidebar-toc-empty');
             const tocNav = document.getElementById('sidebar-toc-nav');
@@ -393,21 +401,19 @@ const {
             const questionsList = document.getElementById('sidebar-questions-list');
             const bankLink = document.getElementById('sidebar-questions-bank-link');
 
-            tagButtons.forEach(btn => {
-              const btnTag = btn.getAttribute('data-tag-slug');
-              const dot = btn.querySelector('.tag-dot');
-              if (tag && btnTag === tag) {
-                btn.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]', 'text-[var(--accent)]', 'font-bold');
-                btn.classList.remove('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
-                dot?.classList.add('bg-[var(--accent)]', 'opacity-100');
-                dot?.classList.remove('opacity-40');
+            if (tagSelect && tagSelect.value !== (tag || '')) {
+              tagSelect.value = tag || '';
+            }
+
+            if (tagSelect) {
+              if (tag) {
+                tagSelect.classList.add('border-[var(--accent)]', 'text-[var(--accent)]');
+                tagSelect.classList.remove('text-[var(--text-primary)]');
               } else {
-                btn.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]', 'text-[var(--accent)]', 'font-bold');
-                btn.classList.add('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
-                dot?.classList.remove('bg-[var(--accent)]', 'opacity-100');
-                dot?.classList.add('opacity-40');
+                tagSelect.classList.remove('border-[var(--accent)]', 'text-[var(--accent)]');
+                tagSelect.classList.add('text-[var(--text-primary)]');
               }
-            });
+            }
 
             if (bankLink) {
               bankLink.href = tag ? `/${materiaSlug}/questoes?tag=${tag}` : `/${materiaSlug}/questoes`;
@@ -496,15 +502,10 @@ const {
           window.getCurrentStudyTag = () => currentActiveTag;
 
           function initTags() {
-            document.querySelectorAll('.study-tag-btn').forEach(btn => {
-              btn.addEventListener('click', () => {
-                const slug = btn.getAttribute('data-tag-slug');
-                if (currentActiveTag === slug) {
-                  selectStudyTag(null);
-                } else {
-                  selectStudyTag(slug);
-                }
-              });
+            const tagSelect = document.getElementById('sidebar-tag-select');
+            tagSelect?.addEventListener('change', (e) => {
+              const val = e.target.value;
+              selectStudyTag(val || null);
             });
 
             const initialTag = getParamTag() || defaultInitialTag || getSavedTag() || null;
