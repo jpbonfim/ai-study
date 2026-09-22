@@ -1,79 +1,89 @@
 ---
-import { getCollection, render } from 'astro:content';
+export const prerender = false;
+
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
 import QuestionToggle from '../../../components/QuestionToggle.astro';
 import Theory from '../../../components/Theory.astro';
 import Resolution from '../../../components/Resolution.astro';
-import BlockDiagram from '../../../components/BlockDiagram.astro';
-import { renderMath } from '../../../utils/katex';
-import { MATERIAS, getMateria, formatTag } from '../../../data/materias';
+import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
+import { loadUserChapters, loadUserQuestions, type QuestionItem } from '../../../lib/mdx-runtime';
+import { hasPermissionToSubject } from '../../../lib/permissions';
 
-export async function getStaticPaths() {
-  const allQuestoes = await getCollection('questoes');
-  return allQuestoes.map((questao) => {
-    const materiaObj = getMateria(questao.data.materia) || MATERIAS[0];
-    return {
-      params: {
-        materia: questao.data.materia,
-        slug: questao.id,
-      },
-      props: {
-        questao,
-        materia: materiaObj,
-      },
-    };
-  });
+const user = Astro.locals.user!;
+const { materia: materiaSlug, slug } = Astro.params;
+const ownerParam = Astro.url.searchParams.get('owner');
+
+if (!materiaSlug || !slug) {
+  return Astro.redirect('/');
 }
 
-const { questao, materia } = Astro.props;
-const { Content } = await render(questao);
+const { own, shared } = loadAllAccessibleMaterias(user.id);
+let primaryOwnerId = user.id;
+let materia = own.find((m) => m.slug === materiaSlug);
 
-// Busca dados para o menu lateral
-const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
-const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+if (ownerParam) {
+  const parsedOwner = parseInt(ownerParam, 10);
+  const foundShared = shared.find((m) => m.slug === materiaSlug && m.ownerUserId === parsedOwner);
+  if (foundShared || user.role === 'admin' || hasPermissionToSubject(user.id, parsedOwner, materiaSlug)) {
+    primaryOwnerId = parsedOwner;
+    materia = foundShared || getMateria(materiaSlug, parsedOwner);
+  }
+} else if (!materia) {
+  const foundShared = shared.find((m) => m.slug === materiaSlug);
+  if (foundShared) {
+    primaryOwnerId = foundShared.ownerUserId!;
+    materia = foundShared;
+  }
+}
 
-const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
+if (!materia) {
+  return Astro.redirect('/?error=materia_nao_encontrada');
+}
+
+const allChapters = loadUserChapters(primaryOwnerId, materiaSlug);
+const allQuestoes = loadUserQuestions(primaryOwnerId, materiaSlug);
+
+const questao: QuestionItem | undefined = allQuestoes.find((q) => q.id === slug);
+if (!questao) {
+  return Astro.redirect(`/${materiaSlug}/questoes?error=questao_nao_encontrada`);
+}
 
 // Coleta todas as tags únicas
 const rawTags = [
   ...new Set([
-    ...sortedResumos.flatMap((r) => r.data.tags || []),
-    ...allQuestoes.flatMap((q) => q.data.tags || []),
+    ...allChapters.flatMap((r) => r.tags || []),
+    ...allQuestoes.flatMap((q) => q.tags || []),
   ]),
 ];
 const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
 
-const availableTags = tagList.map((tagId) => {
-  const chaptersCount = sortedResumos.filter((r) => (r.data.tags || []).includes(tagId)).length;
-  const questionsCount = allQuestoes.filter((q) => (q.data.tags || []).includes(tagId)).length;
-  return {
-    id: tagId,
-    label: formatTag(tagId),
-    chaptersCount,
-    questionsCount,
-  };
-});
+const availableTags = tagList.map((tagId) => ({
+  id: tagId,
+  label: formatTag(tagId),
+  chaptersCount: allChapters.filter((r) => (r.tags || []).includes(tagId)).length,
+  questionsCount: allQuestoes.filter((q) => (q.tags || []).includes(tagId)).length,
+}));
 
-const primaryTag = questao.data.tags?.[0] || 'teste-1';
+const primaryTag = questao.tags?.[0] || 'teste-1';
 
-const toc = sortedResumos.map((resumo) => {
-  const isMateria = resumo.data.type === 'materia';
-  const chapId = isMateria ? `cap-materia-${resumo.data.chapter}` : `cap-${resumo.data.chapter}`;
+const toc = allChapters.map((resumo) => {
+  const isMateria = resumo.type === 'materia';
+  const chapId = isMateria ? `cap-materia-${resumo.chapter}` : `cap-${resumo.chapter}`;
   return {
     id: chapId,
-    title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
-    subsections: resumo.data.sections || [],
-    tags: resumo.data.tags,
-    type: (resumo.data.type || 'questoes') as 'materia' | 'questoes',
+    title: `Capítulo ${resumo.chapter}: ${resumo.topic}`,
+    subsections: resumo.sections || [],
+    tags: resumo.tags,
+    type: (resumo.type || 'questoes') as 'materia' | 'questoes',
   };
 });
 
 const questionsLinks = allQuestoes.map((q) => ({
   id: q.id,
-  title: q.data.title,
-  exam: q.data.exam,
-  year: q.data.year,
-  tags: q.data.tags,
+  title: q.title,
+  exam: q.exam,
+  year: q.year,
+  tags: q.tags,
 }));
 
 // Navegação anterior e próxima
@@ -81,25 +91,11 @@ const currentIndex = allQuestoes.findIndex((q) => q.id === questao.id);
 const prevQ = currentIndex > 0 ? allQuestoes[currentIndex - 1] : null;
 const nextQ = currentIndex < allQuestoes.length - 1 ? allQuestoes[currentIndex + 1] : null;
 
-// Tratamento unificado de imagens (suporte a imagem única ou lista de múltiplas imagens com legendas)
-const rawImages = questao.data.images || (questao.data.image ? [questao.data.image] : []);
-const formattedImages = rawImages.map((img: any, idx: number) => {
-  if (typeof img === 'string') {
-    return {
-      src: img,
-      caption: rawImages.length === 1 ? 'Diagrama esquemático oficial da questão' : `Figura ${idx + 1}`,
-    };
-  }
-  const src = typeof img.src === 'string' ? img.src : (img.src?.src || img);
-  return {
-    src,
-    caption: img.caption || (rawImages.length === 1 ? 'Diagrama esquemático oficial da questão' : `Figura ${idx + 1}`),
-  };
-});
+const formattedImages = questao.images || [];
 ---
 
 <AcademicLayout
-  title={`${questao.data.title} | ${materia.name}`}
+  title={`${questao.title} | ${materia.name}`}
   materia={materia}
   availableTags={availableTags}
   activeTag={primaryTag}
@@ -117,49 +113,49 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
           &larr; Banco de Testes
         </a>
         <span>•</span>
-        <a href={`/${materia.slug}?tag=${primaryTag}#${questao.data.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}?tag=${primaryTag}#${questao.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
           Ir para a Teoria do Capítulo &rarr;
         </a>
       </div>
       <span class="font-mono font-bold text-[var(--accent)]">
-        {questao.data.exam} • {questao.data.year}
+        {questao.exam} • {questao.year}
       </span>
     </div>
 
-    <!-- Enunciado e Resolução em Duas Colunas (quando houver largura lateral suficiente) -->
+    <!-- Enunciado e Resolução em Duas Colunas -->
     <QuestionToggle
-      type={questao.data.type || (questao.data.options && questao.data.options.length > 0 ? 'multipla_escolha' : 'discursiva')}
-      correctOption={questao.data.correctOption}
-      expectedAnswer={questao.data.expectedAnswer}
-      options={questao.data.options}
+      type={questao.type}
+      correctOption={questao.correctOption}
+      expectedAnswer={questao.expectedAnswer}
+      options={questao.options}
     >
       <!-- Slot do Enunciado e Figuras (Coluna Esquerda no Desktop) -->
       <div slot="statement" class="space-y-6">
         <!-- Cabeçalho do Exercício -->
         <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
           <div class="sans-ui flex flex-wrap items-center justify-between gap-2 text-xs font-mono uppercase tracking-widest text-[var(--accent)]">
-            <span>{questao.data.exam} ({questao.data.year}) • {questao.data.topic}</span>
+            <span>{questao.exam} ({questao.year}) • {questao.topic}</span>
             <span class="rounded px-2 py-0.5 bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] font-sans font-medium">
-              {questao.data.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
+              {questao.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
             </span>
           </div>
           <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
-            {questao.data.title}
+            {questao.title}
           </h1>
           <div class="sans-ui text-xs text-[var(--text-muted)] italic">
-            Dificuldade estimada: {questao.data.difficulty}
+            Dificuldade estimada: {questao.difficulty}
           </div>
         </div>
 
         <!-- Enunciado -->
-        {questao.data.statement && (
+        {questao.statement && (
           <div class="space-y-2">
             <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
               Enunciado da Questão
             </div>
             <div
               class="font-serif text-base sm:text-lg text-[var(--text-primary)] leading-relaxed"
-              set:html={renderMath(questao.data.statement)}
+              set:html={questao.renderedStatement}
             />
           </div>
         )}
@@ -189,65 +185,48 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
         )}
       </div>
 
-      <!-- Slot Padrão: Explicação Teórica e Resolução Passo a Passo (Coluna Direita no Desktop) -->
-      <Content components={{
-        BlockDiagram,
-        Theory,
-        Resolution,
-        QuestionTheory: Theory,
-        QuestionResolution: Resolution,
-      }} />
+      <!-- Slot Padrão: Explicação Teórica e Resolução Passo a Passo -->
+      <div class="space-y-4">
+        {questao.theoryHtml && (
+          <Theory title="Fundamentação Teórica Necessária">
+            <div set:html={questao.theoryHtml} />
+          </Theory>
+        )}
+
+        {questao.resolutionHtml && (
+          <Resolution title="Resolução Passo a Passo">
+            <div set:html={questao.resolutionHtml} />
+          </Resolution>
+        )}
+
+        {questao.bodyHtml && (
+          <div class="academic-prose leading-relaxed text-[var(--text-primary)]" set:html={questao.bodyHtml} />
+        )}
+      </div>
     </QuestionToggle>
 
-    <!-- Navegação Anterior / Próxima -->
-    <div class="sans-ui grid grid-cols-2 gap-4 text-xs pt-4">
+    <!-- Navegação Inferior Entre Questões -->
+    <nav class="flex items-center justify-between pt-6 border-t border-[var(--border-subtle)] sans-ui text-xs">
       {prevQ ? (
         <a
           href={`/${materia.slug}/questoes/${prevQ.id}`}
-          class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors"
+          class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
-          <span class="text-[var(--text-muted)] block">&larr; Questão Anterior</span>
-          <span class="font-bold text-[var(--text-primary)] font-serif text-sm line-clamp-1 mt-0.5">
-            {prevQ.data.title}
-          </span>
+          <span>&larr;</span>
+          <span class="font-mono">Anterior: {prevQ.title}</span>
         </a>
       ) : <div />}
 
       {nextQ ? (
         <a
           href={`/${materia.slug}/questoes/${nextQ.id}`}
-          class="p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-colors text-right ml-auto w-full"
+          class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--accent)] font-semibold transition-colors"
         >
-          <span class="text-[var(--text-muted)] block">Próxima Questão &rarr;</span>
-          <span class="font-bold text-[var(--text-primary)] font-serif text-sm line-clamp-1 mt-0.5">
-            {nextQ.data.title}
-          </span>
+          <span class="font-mono">Próxima: {nextQ.title}</span>
+          <span>&rarr;</span>
         </a>
       ) : <div />}
-    </div>
+    </nav>
 
   </div>
 </AcademicLayout>
-
-<script>
-  import { openImageModal } from '../../../scripts/diagramManager';
-
-  function setupQuestionImages() {
-    document.querySelectorAll<HTMLImageElement>('img[data-zoomable-image]').forEach((img) => {
-      if (img.dataset.zoomBound === 'true') return;
-      img.dataset.zoomBound = 'true';
-      img.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const src = img.src || img.getAttribute('src');
-        const title = img.getAttribute('data-image-title') || img.alt || 'Imagem da Questão';
-        if (src) {
-          openImageModal(src, title);
-        }
-      });
-    });
-  }
-
-  setupQuestionImages();
-  document.addEventListener('astro:page-load', setupQuestionImages);
-</script>

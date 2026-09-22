@@ -54,3 +54,15 @@ archive/*
 !archive/.gitkeep
 material/
 export/
+
+# ============================================================
+# Dados do Servidor, Banco e Variáveis de Ambiente
+# ============================================================
+.env
+.env.*
+!.env.example
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

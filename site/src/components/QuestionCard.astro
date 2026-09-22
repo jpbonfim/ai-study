@@ -1,58 +1,69 @@
 ---
 import { getEntry } from 'astro:content';
 import { renderMath } from '../utils/katex';
+import type { QuestionItem } from '../lib/mdx-runtime';
 
 interface Props {
-  id: string;
+  id?: string;
+  item?: QuestionItem;
 }
 
-const { id } = Astro.props;
-let questao = null;
-try {
-  questao = await getEntry('questoes', id);
-} catch (e) {
-  // Ignora se não existir
+const { id, item } = Astro.props;
+let questao: any = item || null;
+
+if (!questao && id) {
+  try {
+    questao = await getEntry('questoes', id);
+  } catch (e) {
+    // Fallback
+  }
 }
+
+const isDirectItem = !!item;
+const data = isDirectItem ? item : questao?.data;
+const questionId = isDirectItem ? item.id : questao?.id;
+const materiaSlug = data?.materia || 'pds';
+const ownerParam = isDirectItem && item.ownerUserId ? `?owner=${item.ownerUserId}` : '';
 ---
 
-{questao ? (
+{data ? (
   <div class="question-card-preview my-2.5 p-3.5 sm:p-4 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] not-prose shadow-2xs transition-all">
     <div class="sans-ui flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[var(--border-subtle)] text-[11px]">
       <div class="flex items-center gap-1.5 flex-wrap">
         <span class="font-bold text-[var(--accent)] uppercase tracking-wider">
-          Exercício • {questao.data.exam} ({questao.data.year})
+          Exercício • {data.exam} ({data.year})
         </span>
         <span class="text-[var(--text-muted)]">•</span>
         <span class="text-[var(--text-secondary)]">
-          {questao.data.topic}
+          {data.topic}
         </span>
       </div>
       <div class="flex items-center gap-1.5 shrink-0">
         <span class="rounded px-1.5 py-0.2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] uppercase font-semibold text-[var(--text-muted)]">
-          {questao.data.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha'}
+          {data.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha'}
         </span>
         <span class="text-[var(--text-muted)] italic text-[10px]">
-          {questao.data.difficulty}
+          {data.difficulty}
         </span>
       </div>
     </div>
 
     <h4 class="font-serif text-base font-bold text-[var(--text-primary)] mb-1.5 leading-snug">
-      <a href={`/${questao.data.materia || 'pds'}/questoes/${questao.id}`} class="hover:text-[var(--accent)] transition-colors">
-        {questao.data.title}
+      <a href={`/${materiaSlug}/questoes/${questionId}${ownerParam}`} class="hover:text-[var(--accent)] transition-colors">
+        {data.title}
       </a>
     </h4>
 
-    {questao.data.statement && (
+    {data.statement && (
       <div
         class="font-serif text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-3 mb-2.5 leading-relaxed"
-        set:html={renderMath(questao.data.statement)}
+        set:html={data.renderedStatement || renderMath(data.statement)}
       />
     )}
 
     <div class="sans-ui flex items-center justify-end pt-2 border-t border-[var(--border-subtle)] text-[11px]">
       <a
-        href={`/${questao.data.materia || 'pds'}/questoes/${questao.id}`}
+        href={`/${materiaSlug}/questoes/${questionId}${ownerParam}`}
         class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 text-[11px] sm:text-xs"
       >
         <span>Consultar Resolução Passo a Passo</span>
@@ -62,6 +73,6 @@ try {
   </div>
 ) : (
   <div class="my-2 p-2.5 rounded border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] not-prose">
-    [Questão {id} não encontrada no banco]
+    [Questão {id || ''} não encontrada no banco]
   </div>
 )}

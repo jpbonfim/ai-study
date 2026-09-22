@@ -1,66 +1,83 @@
 ---
-import { getCollection } from 'astro:content';
-import AcademicLayout from '../../../layouts/AcademicLayout.astro';
-import { MATERIAS, getMateria, formatTag } from '../../../data/materias';
-import { renderMath } from '../../../utils/katex';
-import QuestionCard from '../../../components/QuestionCard.astro';
+export const prerender = false;
 
-export async function getStaticPaths() {
-  return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
-    params: { materia: materia.slug },
-    props: { materia },
-  }));
+import AcademicLayout from '../../../layouts/AcademicLayout.astro';
+import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
+import { loadUserChapters, loadUserQuestions } from '../../../lib/mdx-runtime';
+import QuestionCard from '../../../components/QuestionCard.astro';
+import { hasPermissionToSubject } from '../../../lib/permissions';
+
+const user = Astro.locals.user!;
+const { materia: materiaSlug } = Astro.params;
+const ownerParam = Astro.url.searchParams.get('owner');
+
+if (!materiaSlug) {
+  return Astro.redirect('/');
 }
 
-const { materia } = Astro.props;
+const { own, shared } = loadAllAccessibleMaterias(user.id);
+let primaryOwnerId = user.id;
+let materia = own.find((m) => m.slug === materiaSlug);
 
-const allResumos = await getCollection('resumos', (entry) => entry.data.materia === materia.slug);
-const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
+if (ownerParam) {
+  const parsedOwner = parseInt(ownerParam, 10);
+  const foundShared = shared.find((m) => m.slug === materiaSlug && m.ownerUserId === parsedOwner);
+  if (foundShared || user.role === 'admin' || hasPermissionToSubject(user.id, parsedOwner, materiaSlug)) {
+    primaryOwnerId = parsedOwner;
+    materia = foundShared || getMateria(materiaSlug, parsedOwner);
+  }
+} else if (!materia) {
+  const foundShared = shared.find((m) => m.slug === materiaSlug);
+  if (foundShared) {
+    primaryOwnerId = foundShared.ownerUserId!;
+    materia = foundShared;
+  }
+}
 
-const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
+if (!materia) {
+  return Astro.redirect('/?error=materia_nao_encontrada');
+}
+
+const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
+const primaryQuestions = loadUserQuestions(primaryOwnerId, materiaSlug);
 
 // Coleta todas as tags únicas
 const rawTags = [
   ...new Set([
-    ...sortedResumos.flatMap((r) => r.data.tags || []),
-    ...allQuestoes.flatMap((q) => q.data.tags || []),
+    ...primaryChapters.flatMap((r) => r.tags || []),
+    ...primaryQuestions.flatMap((q) => q.tags || []),
   ]),
 ];
 const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
 
-const availableTags = tagList.map((tagId) => {
-  const chaptersCount = sortedResumos.filter((r) => (r.data.tags || []).includes(tagId)).length;
-  const questionsCount = allQuestoes.filter((q) => (q.data.tags || []).includes(tagId)).length;
-  return {
-    id: tagId,
-    label: formatTag(tagId),
-    chaptersCount,
-    questionsCount,
-  };
-});
-
-const toc = sortedResumos.map((resumo) => {
-  const isMateria = resumo.data.type === 'materia';
-  const chapId = isMateria ? `cap-materia-${resumo.data.chapter}` : `cap-${resumo.data.chapter}`;
-  return {
-    id: chapId,
-    title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
-    subsections: resumo.data.sections || [],
-    tags: resumo.data.tags,
-    type: (resumo.data.type || 'questoes') as 'materia' | 'questoes',
-  };
-});
-
-const questionsLinks = allQuestoes.map((q) => ({
-  id: q.id,
-  title: q.data.title,
-  exam: q.data.exam,
-  year: q.data.year,
-  tags: q.data.tags,
+const availableTags = tagList.map((tagId) => ({
+  id: tagId,
+  label: formatTag(tagId),
+  chaptersCount: primaryChapters.filter((r) => (r.tags || []).includes(tagId)).length,
+  questionsCount: primaryQuestions.filter((q) => (q.tags || []).includes(tagId)).length,
 }));
 
-// Tópicos únicos para filtro
-const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
+const toc = primaryChapters.map((resumo) => {
+  const isMateria = resumo.type === 'materia';
+  const chapId = isMateria ? `cap-materia-${resumo.chapter}` : `cap-${resumo.chapter}`;
+  return {
+    id: chapId,
+    title: `Capítulo ${resumo.chapter}: ${resumo.topic}`,
+    subsections: resumo.sections || [],
+    tags: resumo.tags,
+    type: (resumo.type || 'questoes') as 'materia' | 'questoes',
+  };
+});
+
+const questionsLinks = primaryQuestions.map((q) => ({
+  id: q.id,
+  title: q.title,
+  exam: q.exam,
+  year: q.year,
+  tags: q.tags,
+}));
+
+const topics = [...new Set(primaryQuestions.map((q) => q.topic))].sort();
 ---
 
 <AcademicLayout
@@ -117,7 +134,7 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
       </div>
 
       <div id="results-count" class="text-[var(--text-muted)] text-[11px] flex items-center justify-between">
-        <span>{allQuestoes.length} questões disponíveis no caderno.</span>
+        <span>{primaryQuestions.length} questões disponíveis no caderno.</span>
         <button
           type="button"
           id="clear-filters-btn"
@@ -130,14 +147,14 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
 
     <!-- Lista Acadêmica de Questões -->
     <div id="questions-list" class="space-y-4">
-      {allQuestoes.map((q) => (
+      {primaryQuestions.map((q) => (
         <div
           class="question-entry"
-          data-topic={q.data.topic}
-          data-tags={(q.data.tags || []).join(',')}
-          data-text={`${q.data.title} ${q.data.statement || ''}`.toLowerCase()}
+          data-topic={q.topic}
+          data-tags={(q.tags || []).join(',')}
+          data-text={`${q.title} ${q.statement || ''}`.toLowerCase()}
         >
-          <QuestionCard id={q.id} />
+          <QuestionCard item={q} />
         </div>
       ))}
     </div>
@@ -190,40 +207,20 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
   }
 
   search?.addEventListener('input', filter);
+  tagFilter?.addEventListener('change', filter);
   topic?.addEventListener('change', filter);
-  tagFilter?.addEventListener('change', () => {
-    filter();
-    // Opcionalmente atualiza a tag global
-    if (tagFilter && typeof window.selectStudyTag === 'function') {
-      window.selectStudyTag(tagFilter.value || null, true);
-    }
-  });
 
   clearBtn?.addEventListener('click', () => {
     if (search) search.value = '';
-    if (topic) topic.value = '';
     if (tagFilter) tagFilter.value = '';
-    if (typeof window.selectStudyTag === 'function') {
-      window.selectStudyTag(null, true);
-    }
+    if (topic) topic.value = '';
     filter();
   });
 
-  // Reage à mudança de tag vinda do menu lateral
-  window.addEventListener('study-tag-changed', (e) => {
-    const newTag = e.detail?.tag || '';
-    if (tagFilter && tagFilter.value !== newTag) {
-      tagFilter.value = newTag;
-      filter();
-    }
-  });
-
-  // Inicialização com tag atual
-  document.addEventListener('DOMContentLoaded', () => {
-    const curTag = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
-    if (curTag && tagFilter) {
-      tagFilter.value = curTag;
-    }
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTag = urlParams.get('tag');
+  if (initialTag && tagFilter) {
+    tagFilter.value = initialTag;
     filter();
-  });
+  }
 </script>

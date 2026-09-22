@@ -1,0 +1,45 @@
+# ============================================================
+# Caddyfile de Exemplo para a Biblioteca de Estudos Acadêmicos
+# ============================================================
+#
+# Modo 1: Acesso direto por IP com HTTPS Autoassinado (Padrão)
+# Caddy gerencia certificado TLS interno automaticamente.
+# No primeiro acesso pelo navegador, aceite o aviso de segurança do certificado autoassinado.
+#
+# Modo 2: Acesso por Domínio
+# Substitua ":443" pelo seu domínio (ex: "estudos.exemplo.com").
+# O Caddy obterá certificado Let's Encrypt gratuito automaticamente.
+# ============================================================
+
+:443 {
+    # Habilita certificado TLS interno gerado pelo Caddy para acesso por IP
+    tls internal
+
+    # Proxy reverso para o processo Node.js na porta 3000
+    reverse_proxy 127.0.0.1:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Cabeçalhos de Segurança HTTP
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
+    # Logs de Acesso
+    log {
+        output file /var/log/caddy/study_access.log {
+            roll_size 20mb
+            roll_keep 5
+        }
+    }
+}
+
+# Redirecionamento de HTTP para HTTPS
+:80 {
+    redir https://{host}{uri} permanent
+}
