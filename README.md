@@ -1,49 +1,118 @@
 # Academic Study Platform and Digital Signal Processing Notebook
 
-A unified academic study and exam preparation system developed with Astro, KaTeX, and Tailwind CSS, orchestrated by Antigravity agentic skills. The platform pairs rigorous theoretical course notes with step-by-step resolved university exam problems, featuring a textbook-inspired reading experience, responsive split-screen problem solving, tag-based syllabus filtering, and self-contained offline exports.
+A production-ready, full-stack academic study and exam preparation platform developed with Astro (SSR Node.js), KaTeX, SQLite, and Tailwind CSS, orchestrated by Antigravity and Claude Code agentic skills.
+
+The platform pairs rigorous theoretical course notes with step-by-step resolved university exam problems, featuring a textbook-inspired reading experience, responsive split-screen problem solving, tag-based syllabus filtering, multi-user isolation with granular cross-user permissions, ZIP upload/backup download, and automated deployment scripts for production VPS environments (with zero conflict for existing VPN services like Amnezia).
 
 ---
 
 ## 1. Overview
 
-This repository provides an end-to-end environment for university-level engineering courses, primarily configured for Digital Signal Processing (PDS - Processamento Digital de Sinais).
+This repository provides an end-to-end, multi-user environment for university-level engineering courses, primarily configured for Digital Signal Processing (PDS - Processamento Digital de Sinais).
 
-Key goals of the project:
-- Provide self-contained theoretical notebooks structured logically from first principles to exam-level problems, without skipping intermediate steps.
-- Offer an active learning question bank where students can inspect required theoretical background without spoiler calculations, attempt problems independently, and review verified step-by-step derivations.
-- Maintain a distraction-free, publication-grade reading environment across paper, dark, and OLED display modes with reader-customizable typography.
-- Support complete offline study through standalone single-file HTML distributions that embed all styles, mathematical fonts, assets, and client-side functionality.
-- Automate curriculum generation, PDF exam extraction, figure cropping, and vector block diagram rendering using specialized agentic skills.
+Key goals and capabilities of the project:
+- **Rigorous Theoretical Notebooks**: Structured logically from first principles to exam-level problems, without skipping intermediate steps.
+- **Active Learning Question Bank**: Students can inspect theoretical prerequisites without spoiler calculations, attempt problems independently, and reveal verified step-by-step derivations.
+- **Multi-User Role-Based Access (RBAC)**: Secure multi-user environment with `admin` and `normal` roles, isolated study archives per user, and an audit activity log.
+- **Granular Cross-User Material Sharing**: Administrators can grant per-course access from one user to another; shared courses seamlessly integrate into the recipient's home and sidebar with distinct visual badges and unified tag filters.
+- **Archive Management & Backups**: In-browser ZIP archive upload (full archive or single-course) with Zip Slip protection and one-click ZIP backup downloads.
+- **Publication-Grade Reading Experience**: Distraction-free reading across paper, dark, and OLED display modes with reader-customizable typography and split-screen sticky question solvers.
+- **Autonomous Agentic Automation**: Automates syllabus generation, PDF exam extraction, figure cropping, and vector block diagram rendering via Antigravity and Claude Code skills.
+- **Production-Ready VPS Deployment**: Fully automated server provisioning script (`scripts/setup-vps.sh`), Caddy reverse proxy with automatic self-signed or Let's Encrypt TLS, systemd service hardening, and full compatibility with existing server services (such as Amnezia VPN and Docker).
 
 ---
 
 ## 2. Architecture and Core Mechanics
 
-The platform combines static site generation with a curated content archive and automated agent workflows.
+The platform runs as a modern Server-Side Rendered (SSR) Node.js web application coupled with an embedded SQLite database and dynamic MDX rendering.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Clients / Users                       │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTPS (Port 443)
+┌──────────────────────────────▼──────────────────────────────┐
+│                    Caddy Reverse Proxy                      │
+│   (Automatic TLS: Let's Encrypt Domain or 'tls internal')    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTP (127.0.0.1:3000)
+┌──────────────────────────────▼──────────────────────────────┐
+│             Astro SSR Server (Node.js Adapter)              │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────┐  │
+│  │ Auth & Sessions  │  │  RBAC Middleware │  │ Activity  │  │
+│  │ (scrypt + cookie)│  │ (Normal vs Admin)│  │   Logs    │  │
+│  └──────────────────┘  └──────────────────┘  └───────────┘  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────┐  │
+│  │ Multi-User Store │  │  Dynamic MDX +   │  │ ZIP Upload│  │
+│  │ (data/archives/) │  │  KaTeX Runtime   │  │ & Download│  │
+│  └──────────────────┘  └──────────────────┘  └───────────┘  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+            ┌──────────────────┴──────────────────┐
+            ▼                                     ▼
+┌───────────────────────┐             ┌───────────────────────┐
+│   SQLite Database     │             │  User Study Archives  │
+│   (data/study.db)     │             │  (data/archives/<id>) │
+└───────────────────────┘             └───────────────────────┘
+```
 
 ### 2.1 Technology Stack
-- Framework: Astro 5 using static site generation (SSG) and island architecture.
-- Content Format: MDX (Markdown with JSX components) parsed with `remark-math` and `rehype-katex`.
-- Styling: Tailwind CSS v4 with semantic CSS variables for multi-theme contrast containment.
-- Mathematical Typesetting: KaTeX 0.16 with horizontal scroll protection containers (`.katex-display`) ensuring long formulas do not break mobile viewports.
-- Diagram Engine: Native SVG with compile-time KaTeX labels via `<BlockDiagram />`, including full-screen pan and zoom capabilities.
-- Automation & Agent Skills: Antigravity CLI skills (`question-study-generator`, `explain-question`, `block-diagram-generator`) with Python utilities.
+- **Web Framework**: Astro 5 configured in Server-Side Rendering (`output: 'server'`) with the `@astrojs/node` standalone adapter.
+- **Database**: SQLite 3 via `better-sqlite3` with Write-Ahead Logging (WAL) enabled, storing user accounts, active sessions, granular access permissions, and activity audit logs.
+- **Authentication & Security**:
+  - Secure, HTTP-only, SameSite session cookies with cryptographically random tokens (`crypto.randomBytes`).
+  - Passwords hashed using Node's native `crypto.scrypt` with unique 16-byte random salts.
+  - Rate limiting against brute-force login attempts (configurable window and max attempts).
+  - Sanitized ZIP extraction preventing Path Traversal ("Zip Slip") attacks and enforcing file size / extension whitelists.
+- **Dynamic Content & Math Rendering**:
+  - Markdown / MDX parsed at runtime with `gray-matter`, `marked`, and `katex` (`site/src/lib/mdx-runtime.ts`).
+  - Inline and block KaTeX rendering ($...$ and $$...$$) with horizontal scroll protection (`.katex-display`).
+  - Automatic asset rewriting routing local `./image.png` references to authenticated media streaming endpoints (`/api/media/[...path]`).
+- **Styling**: Tailwind CSS v4 with semantic CSS variables supporting Paper/Sepia, Dark Library, and OLED Black modes.
+- **Reverse Proxy & TLS**: Caddy web server providing reverse proxying to `127.0.0.1:3000` with self-signed certificates (`tls internal` for raw IP access) or Let's Encrypt for domains.
+- **Process Supervision**: hardened `systemd` service with automatic restarts and security sandboxing.
 
 ### 2.2 Content Storage Model
-The content is decoupled from the web application and organized under the `archive/` directory:
-- `archive/<subject>/materia.json`: Course manifest defining metadata, course codes, institution, and topic syllabi.
-- `archive/<subject>/resumos/*.mdx`: Theoretical chapters rendered in sequence. Frontmatter defines title, chapter index, topic anchors, related question IDs, and evaluation tags.
-- `archive/<subject>/questoes/*.mdx`: Individual exam exercises classified as multiple-choice (`multipla_escolha`) or open-ended analytical (`discursiva`). Contains separate `<Theory>` and `<Resolution>` MDX sections.
-- `archive/<subject>/questoes/*.png`: High-resolution figures and schematics cropped from primary source exam PDFs.
+Each user has their own isolated content directory under `data/archives/<userId>/`:
+- `data/archives/<userId>/<subject>/materia.json`: Course manifest defining course codes, institution, syllabus, and evaluation tags.
+- `data/archives/<userId>/<subject>/resumos/*.mdx`: Theoretical chapters rendered in continuous reading sequence.
+- `data/archives/<userId>/<subject>/questoes/*.mdx`: Solved exam questions (`multipla_escolha` or `discursiva`) with separate `<Theory>` and `<Resolution>` sections.
+- `data/archives/<userId>/<subject>/questoes/*.png`: High-resolution figures and schematics cropped from primary source exam PDFs.
 
-### 2.3 Evaluation Tag System
-All course materials and exam problems are categorized by evaluation tags (e.g., `teste-1`, `teste-2`, `p1`, `p2`).
-- The sidebar provides a custom dropdown filter allowing students to scope the entire curriculum to a specific examination.
-- When a tag is selected, the sidebar table of contents, chapter cards, and question lists update immediately to display only content tagged for that assessment.
-- Selections persist across sessions through browser `localStorage` and sync with the URL parameter (`?tag=<tag-name>`).
+> **Note**: For local development or initial migrations, the repository's root `archive/` folder can be migrated directly into the primary admin user's directory (`data/archives/1/`) using `scripts/migrate-archive.sh`.
 
-### 2.4 Standalone Offline Bundling
-The project includes a generator (`site/src/pages/downloads/[materia].html.ts`) that compiles all chapters, solved exercises, KaTeX CSS/fonts, and theme scripts into a single self-contained HTML file (`export/processamento-digital-de-sinais/main.html`). This file operates completely offline in any modern web browser without internet access or an active web server.
+### 2.3 Role-Based Access Control (RBAC)
+- **Normal User (`role: 'normal'`)**:
+  - Access to their own study materials in `data/archives/<userId>/`.
+  - Access to specific courses of other users that have been explicitly granted by an administrator.
+  - Ability to upload new course materials via ZIP or download their own archive backup.
+  - Reader typography customization and profile settings.
+- **Administrator (`role: 'admin'`)**:
+  - Everything a normal user can do.
+  - Access to the Administration Panel (`/admin`).
+  - User management: create, view, edit role, reset password, delete users.
+  - Granular permission manager: grant or revoke access to any course from user A to user B.
+  - Activity and audit log viewer: filter logs by user, action type, IP address, and date.
+
+### 2.4 Cross-User Course Sharing & Unified Tag Selector
+When an administrator grants user B access to user A's course (e.g. `pds`):
+- The course immediately appears on user B's dashboard and sidebar.
+- A visual indicator badge (`[Compartilhado: <dono>]`) clearly marks the course and its origin.
+- The sidebar evaluation tag dropdown dynamically unifies tags from user B's own courses and the shared course, tagging shared evaluation filters accordingly.
+- Media requests for diagrams and schematics within shared courses are securely authenticated and streamed via `/api/media`.
+
+### 2.5 In-Browser ZIP Archive Upload & Backup Download
+- **ZIP Upload (`/api/archive/upload`)**:
+  - Users can upload a complete study archive or an individual course ZIP directly from the UI.
+  - Validates ZIP archive structure (ensures `materia.json`, `resumos/`, or `questoes/` exist).
+  - Protects against malicious ZIP archives (Zip Slip path traversal prevention).
+  - Enforces strict file extension whitelists (`.json`, `.mdx`, `.png`, `.jpg`, `.jpeg`, `.svg`, `.webp`).
+- **ZIP Download (`/api/archive/download`)**:
+  - One-click backup of a specific course (`/api/archive/download?materia=pds`) or the entire user archive (`/api/archive/download?materia=_all`).
+  - Generated on-the-fly using streaming `archiver`.
+
+### 2.6 Standalone Offline Bundling
+The platform includes an export generator (`site/src/pages/downloads/[materia].html.ts`) that compiles all chapters, solved exercises, KaTeX fonts, and theme scripts into a single self-contained HTML file. This file functions completely offline in any modern web browser without internet access or an active web server.
 
 ---
 
@@ -55,327 +124,330 @@ The project includes a generator (`site/src/pages/downloads/[materia].html.ts`) 
 │   └── skills/
 │       ├── block-diagram-generator/    # Vector SVG and KaTeX block diagram generator
 │       ├── explain-question/           # Problem extraction, cropping, and pedagogical solver
-│       └── question-study-generator/   # Syllabus orchestrator and theory notebook generator
-├── archive/
+│       ├── question-study-generator/   # Syllabus orchestrator and theory notebook generator
+│       └── summary-study-generator/    # Theory notebook generator from lecture slides/PDFs
+├── archive/                            # Base/legacy course content (can be migrated to data/archives/1/)
 │   └── pds/
 │       ├── materia.json                # Course metadata manifest
 │       ├── questoes/                   # Solved exam questions and cropped figures (MDX + PNG)
 │       └── resumos/                    # Theoretical chapters in continuous reading flow (MDX)
+├── data/                               # Persistent runtime storage (gitignored)
+│   ├── study.db                        # SQLite database (users, sessions, permissions, audit logs)
+│   └── archives/                       # Per-user study archives
+│       ├── 1/                          # Admin (User 1) courses
+│       │   └── pds/
+│       └── 2/                          # Normal (User 2) courses
 ├── export/
 │   └── processamento-digital-de-sinais/
-│       ├── main.html                   # Standalone single-file offline distribution
-│       └── images/                     # Static diagrams and cropped illustrations
-├── material/
-│   ├── provas/                         # Raw university exam PDFs (P1, P2, P3, Sub)
-│   └── testes/                         # Raw university quiz PDFs (Testes 2019-2024)
+│       └── main.html                   # Standalone single-file offline distribution
+├── material/                           # Raw course materials (slides, exam PDFs, quizzes)
+├── scripts/
+│   ├── Caddyfile.example               # Production Caddy reverse proxy template (with internal TLS)
+│   ├── deploy.sh                       # Production zero-downtime update script
+│   ├── migrate-archive.sh              # Utility to import root archive/ into data/archives/1/
+│   ├── setup-vps.sh                    # Automated VPS setup (Node 24, Caddy, UFW, VPN preservation)
+│   └── study-site.service.example      # Systemd service unit definition
 ├── site/
-│   ├── astro.config.mjs                # Astro configuration with MDX, KaTeX, and Tailwind
-│   ├── package.json                    # Dependencies and scripts
-│   ├── public/                         # Public static assets and images
+│   ├── astro.config.mjs                # Astro configuration (Node SSR adapter, KaTeX, Tailwind)
+│   ├── package.json                    # Dependencies and runtime scripts
 │   └── src/
-│       ├── components/                 # Astro components (Header, Theme, Cards, Diagrams)
-│       ├── layouts/                    # AcademicLayout and BaseLayout
-│       ├── pages/                      # File-based routes (Home, Reader, Questions, Settings)
-│       └── styles/                     # Tailwind CSS and semantic theme variables
+│       ├── components/                 # UI components (Header, Theme, Cards, Diagrams, Modal)
+│       ├── layouts/                    # AcademicLayout, BaseLayout, AdminLayout
+│       ├── lib/                        # Server-side business logic
+│       │   ├── auth.ts                 # scrypt hashing, session cookies, rate limiting
+│       │   ├── db.ts                   # SQLite schema, connection, and auto-migrations
+│       │   ├── log.ts                  # Activity and audit logger
+│       │   ├── mdx-runtime.ts          # Runtime MDX parser, KaTeX math compiler, media rewriter
+│       │   ├── multiuser-archive.ts    # Multi-user filesystem reader and permission-aware course loader
+│       │   └── zip-handler.ts          # Secure ZIP extraction (Zip Slip safe) and ZIP backup bundler
+│       ├── middleware.ts               # Authentication, RBAC, and throttled page view logging
+│       └── pages/
+│           ├── admin/                  # Admin dashboard, user management, permissions, audit logs
+│           ├── api/                    # REST APIs (auth, admin, archive upload/download, media)
+│           ├── login.astro             # User login page
+│           ├── index.astro             # Course catalog and user home
+│           ├── configuracoes.astro     # Typography, theme, and archive upload/download settings
+│           └── [materia]/              # Dynamic course reader and split-screen question views
+├── .env.example                        # Environment variables template
 └── README.md
 ```
 
 ---
 
-## 4. Getting Started
+## 4. Getting Started (Local Development)
 
 ### 4.1 Prerequisites
-- Node.js 18.17+ or 20.0+
-- npm 9.0+
-- Python 3.10+ (required only if running the question extraction and PDF cropping scripts)
-  - Recommended Python packages: `pypdf`, `pdf2image`, `pillow`, `pymupdf`
+- **Node.js**: 20.0+ or 24 LTS
+- **npm**: 9.0+
+- **Python**: 3.10+ (required only if running the exam PDF extraction and cropping scripts)
 
-### 4.2 Installation
-Clone the repository and install site dependencies:
+### 4.2 Installation and Environment Setup
+1. Clone the repository:
+   ```bash
+   git clone <repo-url> estudo-p1
+   cd estudo-p1
+   ```
 
-```bash
-cd site
-npm install
-```
+2. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+   Generate a secure random session secret:
+   ```bash
+   openssl rand -hex 32
+   ```
+   Paste the generated value into `SESSION_SECRET` in `.env`. You can also configure initial administrator credentials:
+   ```env
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=change_this_secure_password
+   ADMIN_DISPLAY_NAME=Administrador
+   HOST=0.0.0.0
+   PORT=3000
+   SESSION_SECRET=your_32_byte_hex_secret
+   DATA_DIR=../data
+   ```
+
+3. Install dependencies in `site/`:
+   ```bash
+   cd site
+   npm install
+   ```
+
+4. Populate initial course content:
+   To import the existing `archive/` course files into the administrator's account (`data/archives/1/`):
+   ```bash
+   cd ..
+   bash scripts/migrate-archive.sh
+   ```
 
 ### 4.3 Running the Development Server
-Start the local Astro development server:
-
+Start the local development server:
 ```bash
 cd site
 npm run dev
 ```
+The server will start at `http://localhost:3000` (or the port defined in `.env`).
+Open your browser at `http://localhost:3000/login` and log in with your configured administrator credentials.
 
-The site will be available at `http://localhost:4321`.
-
-### 4.4 Building for Production
-To compile the static production site:
-
+### 4.4 Production Build Locally
+To test the production build locally:
 ```bash
 cd site
 npm run build
+npm run start
 ```
 
-The compiled output will be generated in `site/dist/`.
+---
 
-### 4.5 Synchronizing the Offline Standalone Export
-When running `npm run build`, Astro automatically generates the standalone offline page at `site/dist/downloads/pds.html`. To synchronize it with the repository export folder:
+## 5. Deploying to a VPS (Ubuntu / Debian)
+
+This platform is configured for self-hosting on any Ubuntu/Debian VPS. The deployment uses:
+- **Node.js 24 LTS** running the standalone Astro SSR server on `127.0.0.1:3000`.
+- **systemd** managing the service with automatic restarts and security sandboxing.
+- **Caddy** acting as a high-performance reverse proxy with automatic TLS (self-signed `tls internal` for direct IP access or Let's Encrypt for a custom domain).
+- **Firewall & VPN Coexistence**: The setup automatically preserves existing services running on the VPS, including UDP ports and packet forwarding for VPNs such as **Amnezia VPN** (`30388/udp`).
+
+### 5.1 Step 1: Clone the Repository on the VPS
+Connect to your VPS via SSH and clone the repository:
+```bash
+ssh user@vps-ip
+git clone <repo-url> /var/www/estudo-p1
+cd /var/www/estudo-p1
+```
+
+> **Tip (GitHub SSH Key)**: To clone privately without typing passwords:
+> ```bash
+> ssh-keygen -t ed25519 -C "vps-deploy"
+> cat ~/.ssh/id_ed25519.pub
+> ```
+> Add the public key to your repository's **Settings > Deploy Keys** on GitHub.
+
+### 5.2 Step 2: Configure Environment Variables
+Create the production `.env` file:
+```bash
+cp .env.example .env
+nano .env
+```
+Ensure you configure:
+- `ADMIN_USERNAME` and a strong `ADMIN_PASSWORD`.
+- `SESSION_SECRET`: generate with `openssl rand -hex 32`.
+- `PORT=3000` and `HOST=127.0.0.1`.
+
+### 5.3 Step 3: Run the Automated VPS Provisioning Script
+Run the provided automated setup script as `root` (or with `sudo`):
+```bash
+sudo bash scripts/setup-vps.sh
+```
+
+What this script automatically does:
+1. Installs system build dependencies (`build-essential`, `python3`, `curl`, `git`, `ufw`).
+2. Installs Node.js 24.x LTS and npm.
+3. Installs the official Caddy web server.
+4. **Configures the UFW Firewall safely**:
+   - Opens SSH (`22/tcp`), HTTP (`80/tcp`), and HTTPS (`443/tcp`).
+   - Automatically preserves and permits existing UDP services (specifically **Amnezia VPN** on port `30388/udp`).
+   - Enables packet forwarding (`DEFAULT_FORWARD_POLICY="ACCEPT"` in `/etc/default/ufw` and `net.ipv4.ip_forward=1` in `/etc/sysctl.conf`), ensuring existing VPN tunnels and Docker bridge networks are not disrupted.
+5. Installs npm packages in `site/` and builds the Astro application.
+6. Populates initial course content via `migrate-archive.sh`.
+
+### 5.4 Step 4: Configure the Caddy Reverse Proxy
+Caddy automatically provides TLS encryption. Inspect `scripts/Caddyfile.example` and copy it to `/etc/caddy/Caddyfile`:
 
 ```bash
-cp site/dist/downloads/pds.html export/processamento-digital-de-sinais/main.html
-cp site/dist/downloads/pds.html export/processamento-digital-de-sinais/processamento-digital-de-sinais.html
+sudo cp scripts/Caddyfile.example /etc/caddy/Caddyfile
+sudo nano /etc/caddy/Caddyfile
 ```
 
----
+#### Option A: Direct IP Access (No Domain Required)
+If you are accessing the server directly through its IP address (e.g., `123.45.67.89`), use Caddy's internal certificate authority (`tls internal`):
+```caddy
+https://123.45.67.89 {
+    tls internal
 
-## 5. Using the Website
+    reverse_proxy 127.0.0.1:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 
-### 5.1 Navigation and Sidebar
-- Left Sidebar: Displays the course header, offline download shortcut, evaluation tag dropdown, hierarchical table of contents, and quick access to the resolved question bank.
-- Toggle Controls: On desktop, click the close button `[x]` next to the settings gear to collapse the sidebar for full-width focus reading; click the floating menu icon in the upper left to reopen it. On mobile, the sidebar acts as an accessible drawer.
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+}
 
-### 5.2 Reading Modes and Themes
-The theme selector is located in the sidebar header and supports three palettes:
-- Paper / Sepia (`theme-paper`): Warm parchment background (`#fbf8f2`) with terracotta accents (`#8b3a2b`). Default textbook mode.
-- Dark Library (`theme-dark`): Low-contrast charcoal background (`#151619`) with warm amber accents (`#d89b65`).
-- OLED Black (`theme-oled`): Pure black (`#000000`) background with muted gold accents (`#e5b378`) for high-contrast reading and OLED power savings.
+http://123.45.67.89 {
+    redir https://{host}{uri} permanent
+}
+```
 
-### 5.3 Reader Typography Settings (`/configuracoes`)
-Navigate to the gear icon in the header to customize:
-- Font Family: Choose between Newsreader / Garamond (Classic Textbook), Lora / Charter, Inter / System Sans, or JetBrains Mono.
-- Font Size: Four steps ranging from 16px to 22px.
-- Reading Width: Adjustable text container constraints from compact (672px) to wide (1088px).
-- Settings persist automatically across page reloads via `localStorage`.
+#### Option B: Custom Domain (Automatic Let's Encrypt)
+If you have a domain pointing to your VPS IP (e.g. `estudos.seudominio.com`):
+```caddy
+estudos.seudominio.com {
+    reverse_proxy 127.0.0.1:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+```
 
-### 5.4 Solved Question Page Layout (`/pds/questoes/[slug]`)
-- Split-Screen Workspace (Desktop): When screen width permits, the question statement and diagram remain sticky on the left half of the screen, while the theoretical review and step-by-step solution scroll independently on the right half.
-- Independent Toggles:
-  - Theoretical Foundation: Click `[ § ] Explicação Teórica Necessária` to review theorems, variable definitions, and conditions without revealing problem steps or answers.
-  - Step-by-Step Resolution: Click `[ ¶ ] Resolução Passo a Passo` to view full algebraic steps and the highlighted answer key.
-- Diagram Viewer: Click on any question diagram to open a full-screen modal with pan, zoom, and mouse-wheel navigation.
-
-### 5.5 In-Text Question Cards (`<QuestionCard id="..." />`)
-Theoretical chapters embed compact preview cards for exercises directly relevant to the discussed topic.
-- Clean Previews: Preview cards show the problem prompt and multiple-choice alternatives without disclosing the answer key.
-- Overflow Collapse: When three or more questions appear sequentially in a chapter, excess cards are automatically collapsed behind an interactive toggle button to maintain reading momentum.
-
----
-
-## 6. Using the Agentic Skills
-
-The project includes specialized skills under `.agents/skills/` designed for the Antigravity agentic assistant.
-
-### 6.1 `question-study-generator`
-Orchestrates high-level syllabus structuring, continuous theoretical notebooks, and concurrent exam resolution across subagents. Chapters appear under the "Estudo guiado por questões" collapsible tab in the sidebar.
-
-#### Operational Workflow:
-1. Tag Requirement: When instructed to generate study notebooks or solve an exam, the agent must check if an evaluation tag was specified (e.g., `teste-1`, `p1`). If not provided, it must prompt the user before creating files.
-2. The Golden Writing Guideline:
-   - Self-Contained: Explain concepts thoroughly so the student can solve exam problems without outside resources.
-   - Practical Results: Present definitive equations, transform tables, and operational criteria; omit tedious derivations.
-   - Sequential Order: Introduce prerequisite variables and definitions before dependent concepts.
-   - Direct Execution: Avoid filler introductory sentences; begin directly with definitions and equations.
-3. Subagent Orchestration: Distributes PDF exams across concurrent subagents using `invoke_subagent`. Each subagent extracts questions and generates solutions using `explain-question`.
-4. Synthesis: Upon subagent completion, the orchestrator compiles all covered topics, drafts the theoretical chapters (`archive/<materia>/resumos/*.mdx`), links `relatedQuestions`, and embeds `<QuestionCard />` components.
-
-### 6.2 `summary-study-generator`
-Generates comprehensive theoretical summaries directly from course materials (lecture slides, lecture notes, textbook chapters, and syllabi) without linking question cards. Summaries appear under the "Resumo da matéria" collapsible tab in the sidebar.
-
-#### Operational Workflow:
-1. Tag Requirement: Verifies the evaluation tag (`teste-1`, `p1`, etc.) or asks the user before generating files.
-2. The Golden Writing Guideline: Follows the same strict 6-pillar standard (self-contained, direct and rigorous, no proofs, logical order, no introductions, comprehensive and detailed coverage).
-3. Selective Diagram Extraction: Uses the dedicated utility `.agents/skills/summary-study-generator/scripts/extract_material_images.py` to inspect and extract only strictly necessary schematics, block diagrams, frequency response curves, and sensor layouts. Does not extract plain-text slides or decorative art.
-4. Output Schema: Saves chapters to `archive/<materia>/resumos/<slug>.mdx` with frontmatter `type: "materia"`.
-
-#### Official Utility Script:
+Restart Caddy:
 ```bash
-# 1. Inspect course material PDF (page count, embedded raster images, outline)
-python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py inspect material/slides/aula-amostragem.pdf
-
-# 2. Crop high-resolution (200 DPI) schematic from specific page
-python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop material/slides/aula-amostragem.pdf \
-  --page 8 --output archive/pds/resumos/materia/esquema-amostragem.png --padding 20
-
-# 3. Render complete slide as full-width figure
-python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py render-page material/slides/aula-amostragem.pdf \
-  --page 14 --output archive/pds/resumos/materia/espectro-zoh.png
+sudo systemctl reload caddy
 ```
 
-### 6.3 `explain-question`
-Handles per-problem extraction from exam PDFs, figure cropping, and dual-section (`<Theory>` and `<Resolution>`) pedagogical authoring.
-
-#### Official Utility Script:
-Use `.agents/skills/explain-question/scripts/extract_question.py` for all extraction tasks:
-
+### 5.5 Step 5: Configure and Start the systemd Service
+Copy the systemd service template to the systemd directory:
 ```bash
-# 1. Inspect an exam PDF and auto-detect multiple-choice vs discursive questions
-python3 .agents/skills/explain-question/scripts/extract_question.py inspect material/testes/teste-1-2024.pdf
-
-# 2. Render exam pages to PNG for diagram inspection
-python3 .agents/skills/explain-question/scripts/extract_question.py render-pages material/testes/teste-1-2024.pdf --outdir archive/pds/questoes
-
-# 3. Crop a schematic figure while preserving upper equations and context
-python3 .agents/skills/explain-question/scripts/extract_question.py crop-figure material/testes/teste-1-2024.pdf \
-  --out archive/pds/questoes/sistema-amostragem-figura1.png \
-  --page 1 --top 770 --bottom 1540 --padding 25
-
-# 4. Dump question structure to JSON
-python3 .agents/skills/explain-question/scripts/extract_question.py dump-json material/testes/teste-1-2024.pdf -o questoes.json
-
-# 5. Scaffold ready-to-solve MDX files
-python3 .agents/skills/explain-question/scripts/extract_question.py scaffold material/testes/teste-1-2024.pdf --materia pds
+sudo cp scripts/study-site.service.example /etc/systemd/system/study-site.service
+sudo nano /etc/systemd/system/study-site.service
+```
+Ensure the `WorkingDirectory`, `ExecStart`, and `User` match your VPS paths. Then enable and start the service:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable study-site
+sudo systemctl start study-site
+sudo systemctl status study-site
 ```
 
-#### Cropping Guidelines:
-- Preserve Mathematical Context: Never crop flush to diagram borders. Always capture upper defining formulas (e.g., impulse train definitions, signal equations) and bottom figure labels.
-- Safety Padding: Always maintain at least 25px vertical padding (`--padding 25`) to prevent clipping superscripts, subscripts, or mathematical accents.
-
-#### Problem Frontmatter Format:
-
-Multiple-Choice Problem:
-```yaml
----
-materia: "pds"
-tags:
-  - "teste-1"
-id: "teste-1-2024-q1"
-title: "Amostragem com Aliasing e Reconstrução"
-exam: "Teste 1"
-year: 2024
-topic: "Amostragem e Aliasing"
-topicSlug: "cap-2-amostragem"
-difficulty: "Médio"
-type: "multipla_escolha"
-statement: "No sistema da Figura 1, suponha que $x_c(t) = 2\\cos(30\\pi t)$..."
-image: "/images/questoes/diagrama.png"
-options:
-  - label: "A"
-    text: "$2\\cos(30\\pi t)$"
-  - label: "B"
-    text: "$2\\cos(40\\pi t)$"
-correctOption: "B"
----
+### 5.6 Step 6: Ongoing Deployments and Zero-Downtime Updates
+Whenever you push new commits to your repository, simply update the VPS using the deployment script:
+```bash
+bash scripts/deploy.sh
 ```
+This script pulls the latest code from Git, runs `npm install`, compiles the production bundle with `npm run build`, and reloads the systemd service with zero manual intervention.
 
-Open-Ended Discursive Problem:
-```yaml
 ---
-materia: "pds"
-tags:
-  - "teste-2"
-id: "teste-2-2024-q2"
-title: "Função de Transferência, ROC e Resposta ao Impulso"
-exam: "Teste 2"
-year: 2024
-topic: "Transformada Z e Estabilidade"
-topicSlug: "cap-3-slits-convolucao"
-difficulty: "Médio"
-type: "discursiva"
-statement: "Considere um sistema SLIT causal... Obtenha: (a) H(z); (b) ROC; (c) h[n]."
-expectedAnswer: "H(z) = (1 + (1/3)z^-1)/(1 - (1/2)z^-1); ROC: |z| > 1/2"
----
-```
 
-### 6.4 `block-diagram-generator`
+## 6. Using the Platform
+
+### 6.1 Authentication and Roles
+- **Login (`/login`)**: Direct authentication with username and password. Supports "remember me" session cookies.
+- **Admin Dashboard (`/admin`)**:
+  - Overview statistics: Total registered users, total courses, active sessions, and recent logs.
+  - **User Management (`/admin/users`)**: Create new users, toggle admin privileges, reset user passwords, or delete accounts.
+  - **Permissions Manager (`/admin/permissions`)**: Assign read access for specific courses from one user to another with real-time feedback.
+  - **Audit Logs (`/admin/logs`)**: Filterable table tracking logins, failed attempts, archive uploads, permission changes, and user updates.
+
+### 6.2 Archive Management (Upload & Download)
+Navigate to the Settings page (`/configuracoes`) or use the UI shortcuts:
+- **Uploading an Archive**: Upload a `.zip` file containing your course structure (`<subject>/materia.json`, `resumos/`, `questoes/`). The system verifies archive integrity and extracts files into your isolated directory (`data/archives/<userId>/<subject>/`).
+- **Downloading a Backup**: Export individual courses or your entire multi-course archive as a ZIP file at any time.
+
+### 6.3 Reader Modes, Themes, and Typography
+- **Theme Palettes**: Switch between Paper / Sepia (`#fbf8f2`), Dark Library (`#151619`), and OLED Black (`#000000`).
+- **Reader Settings (`/configuracoes`)**: Adjust font family (Newsreader/Garamond, Lora/Charter, Inter, JetBrains Mono), font size (16px to 22px), and content reading width (672px to 1088px). Preferences persist automatically in `localStorage`.
+
+### 6.4 Solved Question Workspace (`/[materia]/questoes/[slug]`)
+- **Sticky Split-Screen (Desktop)**: The question prompt and diagram remain pinned on the left, while theoretical prerequisite explanations and step-by-step solutions scroll independently on the right.
+- **Dual Toggles**:
+  - `[ § ] Explicação Teórica Necessária`: Theory and theorem review without spoilers.
+  - `[ ¶ ] Resolução Passo a Passo`: Step-by-step derivations and highlighted answer key.
+- **Diagram Viewer**: Click any diagram to open a full-screen interactive modal with pan and zoom.
+
+---
+
+## 7. Using the Agentic Skills
+
+The repository includes specialized skills under `.agents/skills/` designed for the Antigravity agentic assistant and Claude Code:
+
+### 7.1 `question-study-generator`
+Orchestrates high-level syllabus structuring, continuous theoretical notebooks, and concurrent exam resolution across subagents.
+- Generates chapters under the "Estudo guiado por questões" tab in the sidebar.
+- Enforces the Golden Writing Guideline (self-contained, practical formulas, prerequisite ordering, zero filler).
+- Links `relatedQuestions` and embeds `<QuestionCard />` components.
+
+### 7.2 `summary-study-generator`
+Generates comprehensive theoretical summaries directly from course materials (lecture slides, lecture notes, textbook chapters, and syllabi) without linking question cards.
+- Chapters appear under the "Resumo da matéria" tab in the sidebar.
+- Uses `.agents/skills/summary-study-generator/scripts/extract_material_images.py` to extract only essential schematics and curves.
+
+### 7.3 `explain-question`
+Handles per-problem extraction from exam PDFs, diagram cropping, and dual-section (`<Theory>` and `<Resolution>`) authoring.
+- CLI Utility: `.agents/skills/explain-question/scripts/extract_question.py`.
+- Preserves upper mathematical definitions and enforces at least 25px vertical safety padding.
+
+### 7.4 `block-diagram-generator`
 Generates clean vector SVG block diagrams with KaTeX labels for signals and systems, feedback control, and digital filter structures.
-
-#### Available Presets:
-- `feedback`: Canonical closed-loop system with controller $C(s)$, plant $G(s)$, and feedback $H(s)$.
-- `feedback-disturbance`: Closed-loop system with load disturbance $D(s)$ injected at plant input.
-- `cascade`: Series subsystem connection $H_1(z) \cdot H_2(z)$.
-- `parallel`: Parallel subsystem connection $H_1(s) + H_2(s)$.
-- `direct-form-1`: IIR filter Direct Form I structure with separate zeros and poles.
-- `direct-form-2`: IIR filter Direct Form II canonical structure sharing state delay elements.
-- `fir`: Transversal FIR filter tapped-delay line.
-- `state-space`: Continuous or discrete dynamic state-space representation ($A, B, C, D$).
-- `custom`: Arbitrary topology using custom SVG child elements.
-
-#### Example Usage in MDX:
-```mdx
-<BlockDiagram
-  preset="direct-form-2"
-  title="Filtro IIR em Forma Direta II Canônica"
-  input="x[n]"
-  output="y[n]"
-  zeros={["b_0", "b_1", "b_2"]}
-  poles={["-a_1", "-a_2"]}
-  delayLabel="z^{-1}"
-/>
-```
+- Presets: `feedback`, `cascade`, `parallel`, `direct-form-1`, `direct-form-2`, `fir`, `state-space`, and `custom`.
 
 ---
 
-## 7. Using the Skills with Claude Code
+## 8. Using the Skills with Claude Code
 
-The agentic skills in `.agents/skills/` are fully interoperable with Anthropic's Claude Code CLI. Because the skills are built on standard Markdown instructions, portable Python CLI utilities, and standard MDX schemas, Claude Code can execute the exact same workflows as Antigravity.
+The agentic skills in `.agents/skills/` are fully interoperable with Anthropic's Claude Code CLI.
 
-### 7.1 Required Adaptations and Setup
+### 8.1 Slash Commands (`.claude/commands/`)
+- `/explain-question <pdf-path> --tag <tag>`: Scaffolds and solves exam questions with diagram cropping.
+- `/study-generator <tag>`: Drafts continuous theoretical study notebooks linked to solved questions.
+- `/summary-study-generator <tag>`: Generates lecture notes summaries from slides/PDFs.
+- `/block-diagram <preset>`: Configures and inserts vector KaTeX block diagrams.
 
-To use the skills seamlessly in Claude Code, the following components and configurations are applied:
-
-1. **Root Instructions File (`CLAUDE.md`)**:
-   Claude Code reads `CLAUDE.md` automatically at the start of every session. A `CLAUDE.md` file in the repository root provides Claude Code with:
-   - Primary build and development commands (`npm run dev`, `npm run build`).
-   - Pointers to the skills in `.agents/skills/` (`question-study-generator`, `summary-study-generator`, `explain-question`, `block-diagram-generator`).
-   - Strict workspace hygiene rules (prohibition of root temporary scripts, mandatory cleanup, and prompt process termination).
-
-2. **Custom Slash Commands (`.claude/commands/`)**:
-   Claude Code supports custom slash commands defined as markdown files in `.claude/commands/`. The repository includes pre-configured commands:
-   - `/explain-question <pdf-path>`: Prompts Claude Code to inspect the PDF, crop diagrams, apply `<Theory>` and `<Resolution>` sections, and scaffold resolved questions.
-   - `/study-generator <tag>`: Instructs Claude Code to verify the evaluation tag, follow the Golden Writing Guideline, and generate a continuous chapter in `archive/<materia>/resumos/` linked to exam questions.
-   - `/summary-study-generator <tag>`: Generates complete lecture theoretical summaries directly from course materials (slides/textbooks) with selective diagram cropping, classified under "Resumo da matéria".
-   - `/block-diagram <preset>`: Guides Claude Code to configure and output a `<BlockDiagram />` vector component with KaTeX mathematics.
-
-3. **Execution Model Differences (Subagents vs Sequential Processing)**:
-   - Antigravity uses a native `invoke_subagent` tool schema with JSON payloads for concurrent task processing.
-   - Claude Code handles multi-file or multi-exam processing sequentially or through its own task delegation. When instructing Claude Code to solve multiple exams (for example, Testes 2019 to 2024), Claude Code executes the official Python script (`extract_question.py`) sequentially for each exam file via its standard `Bash` tool. The resulting MDX output is identical.
-
-4. **Evaluation Tag Enforcement**:
-   Just as in Antigravity, Claude Code must enforce evaluation tags (`tags: ["<tag>"]`). If you do not specify a tag when asking Claude Code to generate content or solve exams, Claude Code will prompt you for the tag before creating files.
-
-### 7.2 Step-by-Step Usage in Claude Code
-
-#### Method A: Using Slash Commands
-Launch Claude Code in the repository directory:
-
-```bash
-claude
-```
-
-Run any of the configured commands directly:
-
-```
-# Extract and solve an exam
-/explain-question material/testes/teste-1-2024.pdf --tag teste-1
-
-# Generate a continuous theoretical study notebook
-/study-generator teste-1
-
-# Generate a block diagram
-/block-diagram direct-form-2
-```
-
-#### Method B: Natural Language Prompting
-You can also prompt Claude Code with natural language instructions. Claude Code will consult `CLAUDE.md` and read the relevant `SKILL.md` automatically:
-
+### 8.2 Natural Language Prompting
+You can prompt Claude Code directly:
 > "Read `.agents/skills/explain-question/SKILL.md` and solve all questions from `material/testes/teste-2-2023.pdf` for the tag `teste-2`."
 
-> "Follow `.agents/skills/question-study-generator/SKILL.md` to draft Chapter 3 on Discrete Systems for tag `teste-1`."
-
-Claude Code will read the specification, run `extract_question.py` through its terminal tool, generate cropped images and MDX files, and clean up temporary assets.
+Claude Code will consult `CLAUDE.md`, read the skill specification, execute `extract_question.py`, generate MDX solutions, and clean up temporary assets.
 
 ---
 
-## 8. Development and Workspace Hygiene
+## 9. Development and Workspace Hygiene
 
-When working on this repository, all contributors and agents must adhere to the rules defined in `AGENTS.md`:
-1. No Loose Files in Root: Temporary scripts (`.py`, `.sh`), intermediate dumps (`.json`), or scratch images must never be placed in the workspace root.
-2. Mandatory Cleanup: Any temporary file or debug script created during a session must be removed before completing the task.
-3. Official Script Locations: Use `.agents/skills/explain-question/scripts/extract_question.py` for extraction and cropping workflows.
-4. Process Termination: No background dev servers, watch tasks, or background processes may be left running at the end of an execution turn.
+All contributors and autonomous agents must adhere to the rules defined in `AGENTS.md`:
+1. **No Loose Files in Root**: Never create temporary scripts (`.py`, `.sh`), intermediate dumps (`.json`), or scratch images in the workspace root.
+2. **Mandatory Cleanup**: Any temporary debug file or script created during a session must be removed before ending the turn.
+3. **Official Script Locations**: Use `.agents/skills/explain-question/scripts/extract_question.py` for extraction and cropping workflows.
+4. **Process Termination**: Never leave background servers, watch tasks, or orphaned processes running at the end of an execution turn.
 
 ---
 
-## 9. License
+## 10. License
 
 Educational material and codebase developed for university engineering studies. All rights reserved to original exam and course authors.
