@@ -282,7 +282,67 @@ Generates clean vector SVG block diagrams with KaTeX labels for signals and syst
 
 ---
 
-## 7. Development and Workspace Hygiene
+## 7. Using the Skills with Claude Code
+
+The agentic skills in `.agents/skills/` are fully interoperable with Anthropic's Claude Code CLI. Because the skills are built on standard Markdown instructions, portable Python CLI utilities, and standard MDX schemas, Claude Code can execute the exact same workflows as Antigravity.
+
+### 7.1 Required Adaptations and Setup
+
+To use the skills seamlessly in Claude Code, the following components and configurations are applied:
+
+1. **Root Instructions File (`CLAUDE.md`)**:
+   Claude Code reads `CLAUDE.md` automatically at the start of every session. A `CLAUDE.md` file in the repository root provides Claude Code with:
+   - Primary build and development commands (`npm run dev`, `npm run build`).
+   - Pointers to the three skills in `.agents/skills/` (`question-study-generator`, `explain-question`, `block-diagram-generator`).
+   - Strict workspace hygiene rules (prohibition of root temporary scripts, mandatory cleanup, and prompt process termination).
+
+2. **Custom Slash Commands (`.claude/commands/`)**:
+   Claude Code supports custom slash commands defined as markdown files in `.claude/commands/`. The repository includes three pre-configured commands:
+   - `/explain-question <pdf-path>`: Prompts Claude Code to inspect the PDF, crop diagrams, apply `<Theory>` and `<Resolution>` sections, and scaffold resolved questions.
+   - `/study-generator <tag>`: Instructs Claude Code to verify the evaluation tag, follow the Golden Writing Guideline, and generate a continuous chapter in `archive/<materia>/resumos/`.
+   - `/block-diagram <preset>`: Guides Claude Code to configure and output a `<BlockDiagram />` vector component with KaTeX mathematics.
+
+3. **Execution Model Differences (Subagents vs Sequential Processing)**:
+   - Antigravity uses a native `invoke_subagent` tool schema with JSON payloads for concurrent task processing.
+   - Claude Code handles multi-file or multi-exam processing sequentially or through its own task delegation. When instructing Claude Code to solve multiple exams (for example, Testes 2019 to 2024), Claude Code executes the official Python script (`extract_question.py`) sequentially for each exam file via its standard `Bash` tool. The resulting MDX output is identical.
+
+4. **Evaluation Tag Enforcement**:
+   Just as in Antigravity, Claude Code must enforce evaluation tags (`tags: ["<tag>"]`). If you do not specify a tag when asking Claude Code to generate content or solve exams, Claude Code will prompt you for the tag before creating files.
+
+### 7.2 Step-by-Step Usage in Claude Code
+
+#### Method A: Using Slash Commands
+Launch Claude Code in the repository directory:
+
+```bash
+claude
+```
+
+Run any of the configured commands directly:
+
+```
+# Extract and solve an exam
+/explain-question material/testes/teste-1-2024.pdf --tag teste-1
+
+# Generate a continuous theoretical study notebook
+/study-generator teste-1
+
+# Generate a block diagram
+/block-diagram direct-form-2
+```
+
+#### Method B: Natural Language Prompting
+You can also prompt Claude Code with natural language instructions. Claude Code will consult `CLAUDE.md` and read the relevant `SKILL.md` automatically:
+
+> "Read `.agents/skills/explain-question/SKILL.md` and solve all questions from `material/testes/teste-2-2023.pdf` for the tag `teste-2`."
+
+> "Follow `.agents/skills/question-study-generator/SKILL.md` to draft Chapter 3 on Discrete Systems for tag `teste-1`."
+
+Claude Code will read the specification, run `extract_question.py` through its terminal tool, generate cropped images and MDX files, and clean up temporary assets.
+
+---
+
+## 8. Development and Workspace Hygiene
 
 When working on this repository, all contributors and agents must adhere to the rules defined in `AGENTS.md`:
 1. No Loose Files in Root: Temporary scripts (`.py`, `.sh`), intermediate dumps (`.json`), or scratch images must never be placed in the workspace root.
@@ -292,6 +352,6 @@ When working on this repository, all contributors and agents must adhere to the 
 
 ---
 
-## 8. License
+## 9. License
 
 Educational material and codebase developed for university engineering studies. All rights reserved to original exam and course authors.
