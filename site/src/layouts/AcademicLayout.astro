@@ -365,7 +365,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       <button
                         type="button"
                         class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
-                        aria-expanded="true"
+                        aria-expanded="false"
                         data-target-group="materia"
                       >
                         <span class="flex items-center gap-2 truncate">
@@ -376,11 +376,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                           </span>
                           <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Resumo da matéria</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1.5 pt-0.5" data-group-content="materia">
+                      <div class="toc-collapsible-content space-y-1.5 pt-0.5 hidden" data-group-content="materia">
                         {materiaToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
@@ -420,7 +420,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       <button
                         type="button"
                         class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
-                        aria-expanded="true"
+                        aria-expanded="false"
                         data-target-group="questoes"
                       >
                         <span class="flex items-center gap-2 truncate">
@@ -431,11 +431,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                           </span>
                           <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Estudo guiado por questões</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1.5 pt-0.5" data-group-content="questoes">
+                      <div class="toc-collapsible-content space-y-1.5 pt-0.5 hidden" data-group-content="questoes">
                         {questoesToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
