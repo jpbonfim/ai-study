@@ -390,7 +390,17 @@ const maxMb = user.role === 'admin'
             method: 'POST',
             body: formData,
           });
-          const data = await res.json();
+
+          let data;
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            data = await res.json();
+          } else {
+            const rawText = await res.text();
+            showFeedback('error', rawText || `Erro no servidor (HTTP ${res.status})`);
+            return;
+          }
+
           if (res.ok && data.success) {
             showFeedback('success', data.message || 'Archive atualizado com sucesso!');
             fullForm.reset();
@@ -399,7 +409,7 @@ const maxMb = user.role === 'admin'
             showFeedback('error', data.error || 'Erro ao processar upload.');
           }
         } catch (err) {
-          showFeedback('error', 'Falha de conexão com o servidor.');
+          showFeedback('error', 'Falha ao enviar: ' + (err?.message || 'Erro de conexão com o servidor.'));
         } finally {
           submitFullBtn?.removeAttribute('disabled');
           submitFullBtn.innerHTML = origText;
@@ -421,7 +431,17 @@ const maxMb = user.role === 'admin'
             method: 'POST',
             body: formData,
           });
-          const data = await res.json();
+
+          let data;
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            data = await res.json();
+          } else {
+            const rawText = await res.text();
+            showFeedback('error', rawText || `Erro no servidor (HTTP ${res.status})`);
+            return;
+          }
+
           if (res.ok && data.success) {
             showFeedback('success', data.message || 'Matéria atualizada com sucesso!');
             materiaForm.reset();
@@ -429,7 +449,7 @@ const maxMb = user.role === 'admin'
             showFeedback('error', data.error || 'Erro ao processar matéria.');
           }
         } catch (err) {
-          showFeedback('error', 'Falha de conexão com o servidor.');
+          showFeedback('error', 'Falha ao enviar: ' + (err?.message || 'Erro de conexão com o servidor.'));
         } finally {
           submitMateriaBtn?.removeAttribute('disabled');
           submitMateriaBtn.innerHTML = origText;

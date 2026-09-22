@@ -21,6 +21,9 @@ export default defineConfig({
     host: process.env.HOST || '0.0.0.0',
     port: parseInt(process.env.PORT || '3000', 10),
   },
+  security: {
+    checkOrigin: false,
+  },
   integrations: [mdx()],
   markdown: {
     shikiConfig: {
