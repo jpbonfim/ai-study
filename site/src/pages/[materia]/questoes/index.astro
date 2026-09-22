@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import AcademicLayout from '../../../layouts/AcademicLayout.astro';
-import { MATERIAS, getMateria } from '../../../data/materias';
+import { MATERIAS, getMateria, formatTag } from '../../../data/materias';
 import { renderMath } from '../../../utils/katex';
 import QuestionCard from '../../../components/QuestionCard.astro';
 
@@ -19,10 +19,31 @@ const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
 
 const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
 
+// Coleta todas as tags únicas
+const rawTags = [
+  ...new Set([
+    ...sortedResumos.flatMap((r) => r.data.tags || []),
+    ...allQuestoes.flatMap((q) => q.data.tags || []),
+  ]),
+];
+const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
+
+const availableTags = tagList.map((tagId) => {
+  const chaptersCount = sortedResumos.filter((r) => (r.data.tags || []).includes(tagId)).length;
+  const questionsCount = allQuestoes.filter((q) => (q.data.tags || []).includes(tagId)).length;
+  return {
+    id: tagId,
+    label: formatTag(tagId),
+    chaptersCount,
+    questionsCount,
+  };
+});
+
 const toc = sortedResumos.map((resumo) => ({
   id: `cap-${resumo.data.chapter}`,
   title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
   subsections: resumo.data.sections || [],
+  tags: resumo.data.tags,
 }));
 
 const questionsLinks = allQuestoes.map((q) => ({
@@ -30,6 +51,7 @@ const questionsLinks = allQuestoes.map((q) => ({
   title: q.data.title,
   exam: q.data.exam,
   year: q.data.year,
+  tags: q.data.tags,
 }));
 
 // Tópicos únicos para filtro
@@ -39,6 +61,7 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
 <AcademicLayout
   title={`Banco de Questões | ${materia.name}`}
   materia={materia}
+  availableTags={availableTags}
   toc={toc}
   questions={questionsLinks}
 >
@@ -53,22 +76,33 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
         Banco de Questões Resolvidas
       </h1>
       <p class="font-serif text-base text-[var(--text-secondary)] italic">
-        Questões oficiais extraídas dos testes de {materia.name} com resolução comentada e verificação de alternativas.
+        Questões oficiais de {materia.name} com fundamentação teórica, resolução analítica passo a passo e gabarito.
       </p>
     </header>
 
-    <!-- Barra de Busca Minimalista -->
-    <div class="sans-ui p-4 rounded border border-[var(--border-subtle)] bg-[var(--bg-surface)] space-y-3 text-xs">
+    <!-- Barra de Filtros Minimalista -->
+    <div class="sans-ui p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] space-y-3 text-xs shadow-2xs">
       <div class="flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           id="search-input"
           placeholder="Filtrar por enunciado, palavra-chave ou conceito..."
-          class="flex-1 px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
+          class="flex-1 px-3 py-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
         />
+
+        <select
+          id="tag-filter"
+          class="px-3 py-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+        >
+          <option value="">Todas as Avaliações / Tags</option>
+          {availableTags.map((t) => (
+            <option value={t.id}>{t.label}</option>
+          ))}
+        </select>
+
         <select
           id="topic-filter"
-          class="px-3 py-2 rounded border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+          class="px-3 py-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
         >
           <option value="">Todos os Tópicos</option>
           {topics.map((t) => (
@@ -76,8 +110,16 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
           ))}
         </select>
       </div>
-      <div id="results-count" class="text-[var(--text-muted)] text-[11px]">
-        {allQuestoes.length} questões disponíveis no caderno.
+
+      <div id="results-count" class="text-[var(--text-muted)] text-[11px] flex items-center justify-between">
+        <span>{allQuestoes.length} questões disponíveis no caderno.</span>
+        <button
+          type="button"
+          id="clear-filters-btn"
+          class="text-[var(--accent)] hover:underline hidden cursor-pointer"
+        >
+          Limpar filtros
+        </button>
       </div>
     </div>
 
@@ -87,6 +129,7 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
         <div
           class="question-entry"
           data-topic={q.data.topic}
+          data-tags={(q.data.tags || []).join(',')}
           data-text={`${q.data.title} ${q.data.statement || ''}`.toLowerCase()}
         >
           <QuestionCard id={q.id} />
@@ -99,23 +142,28 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
 
 <script is:inline>
   const search = document.getElementById('search-input');
+  const tagFilter = document.getElementById('tag-filter');
   const topic = document.getElementById('topic-filter');
   const entries = document.querySelectorAll('.question-entry');
-  const count = document.getElementById('results-count');
+  const count = document.getElementById('results-count')?.querySelector('span');
+  const clearBtn = document.getElementById('clear-filters-btn');
 
   function filter() {
     const sVal = (search?.value || '').toLowerCase().trim();
     const tVal = topic?.value || '';
+    const tagVal = tagFilter?.value || '';
 
     let visible = 0;
     entries.forEach((el) => {
       const elTopic = el.getAttribute('data-topic') || '';
+      const elTags = (el.getAttribute('data-tags') || '').split(',').map(s => s.trim());
       const elText = el.getAttribute('data-text') || '';
 
       const matchSearch = !sVal || elText.includes(sVal);
       const matchTopic = !tVal || elTopic === tVal;
+      const matchTag = !tagVal || elTags.includes(tagVal);
 
-      if (matchSearch && matchTopic) {
+      if (matchSearch && matchTopic && matchTag) {
         el.classList.remove('hidden');
         visible++;
       } else {
@@ -126,8 +174,51 @@ const topics = [...new Set(allQuestoes.map((q) => q.data.topic))].sort();
     if (count) {
       count.textContent = `Exibindo ${visible} de ${entries.length} questões.`;
     }
+
+    if (clearBtn) {
+      if (sVal || tVal || tagVal) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+    }
   }
 
   search?.addEventListener('input', filter);
   topic?.addEventListener('change', filter);
+  tagFilter?.addEventListener('change', () => {
+    filter();
+    // Opcionalmente atualiza a tag global
+    if (tagFilter && typeof window.selectStudyTag === 'function') {
+      window.selectStudyTag(tagFilter.value || null, true);
+    }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    if (search) search.value = '';
+    if (topic) topic.value = '';
+    if (tagFilter) tagFilter.value = '';
+    if (typeof window.selectStudyTag === 'function') {
+      window.selectStudyTag(null, true);
+    }
+    filter();
+  });
+
+  // Reage à mudança de tag vinda do menu lateral
+  window.addEventListener('study-tag-changed', (e) => {
+    const newTag = e.detail?.tag || '';
+    if (tagFilter && tagFilter.value !== newTag) {
+      tagFilter.value = newTag;
+      filter();
+    }
+  });
+
+  // Inicialização com tag atual
+  document.addEventListener('DOMContentLoaded', () => {
+    const curTag = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
+    if (curTag && tagFilter) {
+      tagFilter.value = curTag;
+    }
+    filter();
+  });
 </script>

@@ -82,6 +82,8 @@ A skill suporta tanto **questões de múltipla escolha** quanto **questões diss
 ```yaml
 ---
 materia: "pds"
+tags:
+  - "teste-1"
 id: "teste-1-2024-q1"
 title: "Amostragem com Aliasing e Reconstrução"
 exam: "Teste 1"
@@ -115,6 +117,8 @@ correctOption: "B"
 ```yaml
 ---
 materia: "pds"
+tags:
+  - "teste-2"
 id: "teste-2-2024-q2"
 title: "Função de Transferência, Região de Convergência e Resposta ao Impulso"
 exam: "Teste 2"

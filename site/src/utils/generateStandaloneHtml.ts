@@ -484,11 +484,20 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             </div>
         </div>
 
-        <div class="chapter-nav-row">
-            <label for="chapter-select" class="nav-label">
-                Navegação por Capítulos e Banco de Questões:
-            </label>
-            <select id="chapter-select"></select>
+        <div class="chapter-nav-row" style="gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="tag-select" class="nav-label">
+                    Avaliação:
+                </label>
+                <select id="tag-select" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--bg-surface); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer;"></select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 260px;">
+                <label for="chapter-select" class="nav-label">
+                    Capítulo:
+                </label>
+                <select id="chapter-select" style="flex: 1;"></select>
+            </div>
         </div>
     </header>
 
@@ -578,7 +587,8 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             if (!q) return '<div class="question-card"><i>Questão ' + id + ' não encontrada no banco.</i></div>';
             
             const cardClasses = isPreview ? 'question-card question-card-preview' : 'question-card';
-            let html = '<div class="' + cardClasses + '" id="' + id + '" data-question-id="' + id + '" data-topic="' + (q.frontmatter.topic || '') + '" data-exam="' + (q.frontmatter.exam || '') + '">';
+            const qTags = q.frontmatter.tags || (q.frontmatter.tag ? [q.frontmatter.tag] : ['teste-1']);
+            let html = '<div class="' + cardClasses + '" id="' + id + '" data-question-id="' + id + '" data-topic="' + (q.frontmatter.topic || '') + '" data-exam="' + (q.frontmatter.exam || '') + '" data-tags="' + qTags.join(',') + '">';
             
             html += '<div class="question-badge-bar">';
             html += '<span>' + (q.frontmatter.exam || 'Exercício') + ' (' + (q.frontmatter.year || '') + ') • ' + (q.frontmatter.topic || '') + '</span>';
@@ -745,12 +755,17 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             setTimeout(renderMath, 100);
         }
 
+        let currentTag = '';
+
         function filterBanco(query) {
-            const q = query.toLowerCase().trim();
+            const q = query ? query.toLowerCase().trim() : (document.getElementById('banco-search-input')?.value || '').toLowerCase().trim();
             const cards = document.querySelectorAll('#banco-questoes-list .question-card');
             cards.forEach(card => {
                 const text = card.textContent.toLowerCase();
-                if (!q || text.includes(q)) {
+                const cardTags = (card.getAttribute('data-tags') || '').split(',').map(s => s.trim());
+                const matchText = !q || text.includes(q);
+                const matchTag = !currentTag || cardTags.includes(currentTag);
+                if (matchText && matchTag) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';
@@ -758,32 +773,106 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             });
         }
 
+        function formatTagLabel(t) {
+            if (!t) return 'Todas as Avaliações';
+            const lower = t.toLowerCase().trim();
+            if (lower === 'p1') return 'P1';
+            if (lower === 'p2') return 'P2';
+            if (lower === 'p3') return 'P3';
+            if (lower === 'sub') return 'SUB';
+            if (lower === 'rec') return 'REC';
+            return t.split(/[-_ ]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
         window.onload = () => {
-            const select = document.getElementById('chapter-select');
+            const tagSelect = document.getElementById('tag-select');
+            const chapterSelect = document.getElementById('chapter-select');
+
             DB.resumos.sort((a,b) => {
                 let orderA = a.frontmatter.order !== undefined ? a.frontmatter.order : 999;
                 let orderB = b.frontmatter.order !== undefined ? b.frontmatter.order : 999;
                 return orderA - orderB;
             });
-            
-            DB.resumos.forEach((cap, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx.toString();
-                opt.textContent = cap.frontmatter.title;
-                select.appendChild(opt);
-            });
-            
-            // Adiciona a página especial do Banco de Questões
-            const optBanco = document.createElement('option');
-            optBanco.value = 'banco-questoes';
-            optBanco.textContent = 'Banco de Questões (' + Object.keys(DB.questoes).length + ' Questões)';
-            select.appendChild(optBanco);
 
-            select.onchange = (e) => loadChapter(e.target.value);
-            
-            if (DB.resumos.length > 0) {
-                loadChapter('0');
+            // Extrai todas as tags únicas
+            const tagsSet = new Set();
+            DB.resumos.forEach(r => {
+                const tags = r.frontmatter.tags || (r.frontmatter.tag ? [r.frontmatter.tag] : ['teste-1']);
+                tags.forEach(t => tagsSet.add(t));
+            });
+            Object.values(DB.questoes).forEach(q => {
+                const tags = q.frontmatter.tags || (q.frontmatter.tag ? [q.frontmatter.tag] : ['teste-1']);
+                tags.forEach(t => tagsSet.add(t));
+            });
+
+            const allTags = Array.from(tagsSet);
+            if (allTags.length > 1) {
+                const optAll = document.createElement('option');
+                optAll.value = '';
+                optAll.textContent = 'Todas as Avaliações';
+                tagSelect.appendChild(optAll);
             }
+
+            allTags.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = formatTagLabel(t);
+                tagSelect.appendChild(opt);
+            });
+
+            currentTag = allTags.includes('teste-1') ? 'teste-1' : (allTags[0] || '');
+            tagSelect.value = currentTag;
+
+            function updateChapterOptions() {
+                chapterSelect.innerHTML = '';
+                let firstVal = null;
+
+                DB.resumos.forEach((cap, idx) => {
+                    const capTags = cap.frontmatter.tags || (cap.frontmatter.tag ? [cap.frontmatter.tag] : ['teste-1']);
+                    if (!currentTag || capTags.includes(currentTag)) {
+                        const opt = document.createElement('option');
+                        opt.value = idx.toString();
+                        opt.textContent = cap.frontmatter.title;
+                        chapterSelect.appendChild(opt);
+                        if (firstVal === null) firstVal = idx.toString();
+                    }
+                });
+
+                // Adiciona o Banco de Questões
+                const optBanco = document.createElement('option');
+                optBanco.value = 'banco-questoes';
+                const countQ = Object.values(DB.questoes).filter(q => {
+                    const qTags = q.frontmatter.tags || (q.frontmatter.tag ? [q.frontmatter.tag] : ['teste-1']);
+                    return !currentTag || qTags.includes(currentTag);
+                }).length;
+                optBanco.textContent = 'Banco de Questões (' + countQ + ' Questões)';
+                chapterSelect.appendChild(optBanco);
+
+                if (firstVal !== null) {
+                    chapterSelect.value = firstVal;
+                    loadChapter(firstVal);
+                } else {
+                    chapterSelect.value = 'banco-questoes';
+                    loadChapter('banco-questoes');
+                }
+            }
+
+            tagSelect.onchange = (e) => {
+                currentTag = e.target.value;
+                updateChapterOptions();
+                if (chapterSelect.value === 'banco-questoes') {
+                    filterBanco();
+                }
+            };
+
+            chapterSelect.onchange = (e) => {
+                loadChapter(e.target.value);
+                if (e.target.value === 'banco-questoes') {
+                    filterBanco();
+                }
+            };
+
+            updateChapterOptions();
         };
     </script>
 </body>

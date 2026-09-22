@@ -6,7 +6,7 @@ import Theory from '../../../components/Theory.astro';
 import Resolution from '../../../components/Resolution.astro';
 import BlockDiagram from '../../../components/BlockDiagram.astro';
 import { renderMath } from '../../../utils/katex';
-import { MATERIAS, getMateria } from '../../../data/materias';
+import { MATERIAS, getMateria, formatTag } from '../../../data/materias';
 
 export async function getStaticPaths() {
   const allQuestoes = await getCollection('questoes');
@@ -34,10 +34,33 @@ const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
 
 const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
 
+// Coleta todas as tags únicas
+const rawTags = [
+  ...new Set([
+    ...sortedResumos.flatMap((r) => r.data.tags || []),
+    ...allQuestoes.flatMap((q) => q.data.tags || []),
+  ]),
+];
+const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
+
+const availableTags = tagList.map((tagId) => {
+  const chaptersCount = sortedResumos.filter((r) => (r.data.tags || []).includes(tagId)).length;
+  const questionsCount = allQuestoes.filter((q) => (q.data.tags || []).includes(tagId)).length;
+  return {
+    id: tagId,
+    label: formatTag(tagId),
+    chaptersCount,
+    questionsCount,
+  };
+});
+
+const primaryTag = questao.data.tags?.[0] || 'teste-1';
+
 const toc = sortedResumos.map((resumo) => ({
   id: `cap-${resumo.data.chapter}`,
   title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
   subsections: resumo.data.sections || [],
+  tags: resumo.data.tags,
 }));
 
 const questionsLinks = allQuestoes.map((q) => ({
@@ -45,6 +68,7 @@ const questionsLinks = allQuestoes.map((q) => ({
   title: q.data.title,
   exam: q.data.exam,
   year: q.data.year,
+  tags: q.data.tags,
 }));
 
 // Navegação anterior e próxima
@@ -72,6 +96,8 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
 <AcademicLayout
   title={`${questao.data.title} | ${materia.name}`}
   materia={materia}
+  availableTags={availableTags}
+  activeTag={primaryTag}
   toc={toc}
   questions={questionsLinks}
   wide={true}
@@ -81,11 +107,11 @@ const formattedImages = rawImages.map((img: any, idx: number) => {
     <!-- Navegação Superior Estilo Artigo -->
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
       <div class="flex items-center gap-2">
-        <a href={`/${materia.slug}/questoes`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}/questoes?tag=${primaryTag}`} class="hover:text-[var(--accent)] transition-colors">
           &larr; Banco de Testes
         </a>
         <span>•</span>
-        <a href={`/${materia.slug}#${questao.data.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}?tag=${primaryTag}#${questao.data.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
           Ir para a Teoria do Capítulo &rarr;
         </a>
       </div>

@@ -85,3 +85,17 @@ export const MATERIAS: Subject[] = loadMateriasFromArchive();
 export function getMateria(slug: string): Subject | undefined {
   return MATERIAS.find((m) => m.slug === slug);
 }
+
+export function formatTag(tag: string): string {
+  if (!tag) return '';
+  const lower = tag.toLowerCase().trim();
+  if (lower === 'p1') return 'P1';
+  if (lower === 'p2') return 'P2';
+  if (lower === 'p3') return 'P3';
+  if (lower === 'sub') return 'SUB';
+  if (lower === 'rec') return 'REC';
+  return tag
+    .split(/[-_ ]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}

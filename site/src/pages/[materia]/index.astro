@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import AcademicLayout from '../../layouts/AcademicLayout.astro';
 import QuestionCard from '../../components/QuestionCard.astro';
 import BlockDiagram from '../../components/BlockDiagram.astro';
-import { MATERIAS, getMateria } from '../../data/materias';
+import { MATERIAS, getMateria, formatTag } from '../../data/materias';
 
 export async function getStaticPaths() {
   return MATERIAS.filter((m) => m.status === 'active').map((materia) => ({
@@ -20,19 +20,42 @@ const sortedResumos = allResumos.sort((a, b) => a.data.order - b.data.order);
 
 const allQuestoes = await getCollection('questoes', (entry) => entry.data.materia === materia.slug);
 
-// Constrói a estrutura do Sumário (TOC) para o menu lateral
+// Coleta todas as tags únicas disponíveis na matéria
+const rawTags = [
+  ...new Set([
+    ...sortedResumos.flatMap((r) => r.data.tags || []),
+    ...allQuestoes.flatMap((q) => q.data.tags || []),
+  ]),
+];
+
+const tagList = rawTags.length > 0 ? rawTags : ['teste-1'];
+
+const availableTags = tagList.map((tagId) => {
+  const chaptersCount = sortedResumos.filter((r) => (r.data.tags || []).includes(tagId)).length;
+  const questionsCount = allQuestoes.filter((q) => (q.data.tags || []).includes(tagId)).length;
+  return {
+    id: tagId,
+    label: formatTag(tagId),
+    chaptersCount,
+    questionsCount,
+  };
+});
+
+// Constrói a estrutura do Sumário (TOC) para o menu lateral com tags
 const toc = sortedResumos.map((resumo) => ({
   id: `cap-${resumo.data.chapter}`,
   title: `Capítulo ${resumo.data.chapter}: ${resumo.data.topic}`,
   subsections: resumo.data.sections || [],
+  tags: resumo.data.tags,
 }));
 
-// Lista de questões para atalho no menu lateral
+// Lista de questões para atalho no menu lateral com tags
 const questionsLinks = allQuestoes.map((q) => ({
   id: q.id,
   title: q.data.title,
   exam: q.data.exam,
   year: q.data.year,
+  tags: q.data.tags,
 }));
 
 // Renderiza o conteúdo de todos os capítulos para leitura contínua em página única
@@ -50,11 +73,89 @@ const renderedChapters = await Promise.all(
 <AcademicLayout
   title={`${materia.name} (${materia.code})`}
   materia={materia}
+  availableTags={availableTags}
   toc={toc}
   questions={questionsLinks}
 >
-  <article class="space-y-16 w-full min-w-0">
+  <!-- ESTADO 1: Prompt Inicial quando NENHUMA tag estiver selecionada -->
+  <div id="tag-select-prompt" class="space-y-8 py-6 max-w-3xl mx-auto w-full">
+    <div class="p-8 sm:p-12 rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-surface)] shadow-sm text-center space-y-6">
+      
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/30 mx-auto">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      </div>
+
+      <div class="space-y-3">
+        <div class="sans-ui text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
+          {materia.institution} • {materia.code}
+        </div>
+        <h1 class="font-serif text-3xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">
+          {materia.name}
+        </h1>
+        <p class="font-serif text-base sm:text-lg text-[var(--text-secondary)] italic max-w-xl mx-auto">
+          Para visualizar o caderno de estudos, selecione uma avaliação ou tag no menu lateral esquerdo.
+        </p>
+      </div>
+
+      <div class="pt-6 border-t border-[var(--border-subtle)] space-y-4">
+        <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+          Avaliações Disponíveis para Estudo
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+          {availableTags.map((tag) => (
+            <button
+              type="button"
+              onclick={`window.selectStudyTag && window.selectStudyTag('${tag.id}')`}
+              class="p-5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-page)] hover:bg-[var(--bg-surface-hover)] hover:border-[var(--accent)] transition-all cursor-pointer group shadow-2xs space-y-2 text-left w-full"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-serif text-lg font-bold text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">
+                  {tag.label}
+                </span>
+                <span class="sans-ui text-xs font-semibold text-[var(--accent)] flex items-center gap-1">
+                  <span>Estudar</span>
+                  <span class="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                </span>
+              </div>
+              <div class="sans-ui flex items-center gap-3 text-xs text-[var(--text-secondary)]">
+                <span>{tag.chaptersCount} {tag.chaptersCount === 1 ? 'Capítulo' : 'Capítulos'}</span>
+                <span>•</span>
+                <span>{tag.questionsCount} {tag.questionsCount === 1 ? 'Questão' : 'Questões'}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="sans-ui text-xs text-[var(--text-muted)] pt-2">
+        Dica: Você também pode alternar entre avaliações a qualquer momento pelo menu lateral.
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADO 2: Caderno Completo da Tag Selecionada ("tudo como está agora") -->
+  <article id="notebook-content" class="space-y-14 w-full min-w-0 hidden">
     
+    <!-- Barra Informativa da Tag Ativa -->
+    <div class="sans-ui flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs shadow-2xs">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[var(--accent)]"></span>
+        <span class="text-[var(--text-secondary)]">Avaliação Selecionada:</span>
+        <strong id="active-tag-display-name" class="text-[var(--accent)] font-bold font-serif text-sm"></strong>
+      </div>
+      <button
+        type="button"
+        id="btn-switch-tag"
+        class="text-[var(--accent)] hover:underline font-semibold cursor-pointer flex items-center gap-1"
+      >
+        <span>Trocar Avaliação / Ver Todas</span>
+        <span>&rarr;</span>
+      </button>
+    </div>
+
     <!-- Cabeçalho Acadêmico do Caderno Completo -->
     <header class="text-center pb-12 border-b border-[var(--border-strong)] space-y-4">
       <div class="sans-ui text-xs font-mono tracking-widest uppercase text-[var(--text-muted)]">
@@ -68,17 +169,26 @@ const renderedChapters = await Promise.all(
       </p>
 
       <div class="sans-ui flex items-center justify-center gap-4 pt-3 text-xs text-[var(--text-muted)]">
-        <span>{sortedResumos.length} Capítulos em Fluxo Contínuo</span>
+        <span id="header-chapters-count">{sortedResumos.length} Capítulos em Fluxo Contínuo</span>
         <span>•</span>
-        <span>{allQuestoes.length} Questões com Gabarito e Solução</span>
+        <span id="header-questions-count">{allQuestoes.length} Questões com Gabarito e Solução</span>
       </div>
     </header>
 
-    <!-- Fluxo Contínuo de Leitura de Todos os Capítulos -->
-    <div class="space-y-20 w-full min-w-0">
+    <!-- Alerta quando a tag selecionada não tiver capítulos -->
+    <div id="no-chapters-for-tag" class="hidden p-8 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-secondary)] space-y-2">
+      <p class="font-serif text-base font-bold text-[var(--text-primary)]">Nenhum capítulo teórico cadastrado para esta tag ainda.</p>
+      <p>Você pode acessar as questões diretamente pelo menu lateral ou escolher outra tag.</p>
+    </div>
+
+    <!-- Fluxo Contínuo de Leitura dos Capítulos -->
+    <div class="space-y-20 w-full min-w-0" id="chapters-container">
       {renderedChapters.map(({ resumo, Content }, idx) => (
-        <section id={`cap-${resumo.data.chapter}`} class="scroll-mt-20 space-y-8 w-full min-w-0">
-          
+        <section
+          id={`cap-${resumo.data.chapter}`}
+          data-chapter-tags={(resumo.data.tags || []).join(',')}
+          class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
+        >
           <!-- Título do Capítulo -->
           <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
             <div class="sans-ui text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
@@ -112,7 +222,7 @@ const renderedChapters = await Promise.all(
       <p>Fim do Caderno Teórico de {materia.name}.</p>
       <p>
         Para praticar com mais exercícios, consulte o{' '}
-        <a href={`/${materia.slug}/questoes`} class="text-[var(--accent)] font-semibold hover:underline">
+        <a id="footer-banco-link" href={`/${materia.slug}/questoes`} class="text-[var(--accent)] font-semibold hover:underline">
           Banco Completo de Questões Resolvidas
         </a>.
       </p>
@@ -120,3 +230,94 @@ const renderedChapters = await Promise.all(
 
   </article>
 </AcademicLayout>
+
+<script is:inline>
+  (function() {
+    const promptEl = document.getElementById('tag-select-prompt');
+    const notebookEl = document.getElementById('notebook-content');
+    const activeLabelEl = document.getElementById('active-tag-display-name');
+    const chaptersCountEl = document.getElementById('header-chapters-count');
+    const questionsCountEl = document.getElementById('header-questions-count');
+    const btnSwitch = document.getElementById('btn-switch-tag');
+    const noChaptersEl = document.getElementById('no-chapters-for-tag');
+    const footerBancoLink = document.getElementById('footer-banco-link');
+
+    function formatTagName(t) {
+      if (!t) return '';
+      const lower = t.toLowerCase().trim();
+      if (lower === 'p1') return 'P1';
+      if (lower === 'p2') return 'P2';
+      if (lower === 'p3') return 'P3';
+      if (lower === 'sub') return 'SUB';
+      if (lower === 'rec') return 'REC';
+      return t
+        .split(/[-_ ]+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function applyActiveTag(tag) {
+      if (!tag) {
+        promptEl?.classList.remove('hidden');
+        notebookEl?.classList.add('hidden');
+        return;
+      }
+
+      promptEl?.classList.add('hidden');
+      notebookEl?.classList.remove('hidden');
+
+      if (activeLabelEl) {
+        activeLabelEl.textContent = formatTagName(tag);
+      }
+
+      if (footerBancoLink) {
+        const matSlug = footerBancoLink.getAttribute('href')?.split('/')[1] || 'pds';
+        footerBancoLink.href = `/${matSlug}/questoes?tag=${tag}`;
+      }
+
+      let visibleCaps = 0;
+      document.querySelectorAll('.chapter-section').forEach(sec => {
+        const tags = (sec.getAttribute('data-chapter-tags') || '').split(',').map(s => s.trim());
+        if (tags.includes(tag)) {
+          sec.classList.remove('hidden');
+          visibleCaps++;
+        } else {
+          sec.classList.add('hidden');
+        }
+      });
+
+      if (noChaptersEl) {
+        if (visibleCaps === 0) {
+          noChaptersEl.classList.remove('hidden');
+        } else {
+          noChaptersEl.classList.add('hidden');
+        }
+      }
+
+      if (chaptersCountEl) {
+        chaptersCountEl.textContent = `${visibleCaps} ${visibleCaps === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
+      }
+    }
+
+    btnSwitch?.addEventListener('click', () => {
+      if (typeof window.selectStudyTag === 'function') {
+        window.selectStudyTag(null);
+      }
+    });
+
+    window.addEventListener('study-tag-changed', (e) => {
+      applyActiveTag(e.detail?.tag || null);
+    });
+
+    function initPageTag() {
+      const cur = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
+      applyActiveTag(cur);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPageTag);
+    } else {
+      initPageTag();
+    }
+  })();
+</script>

@@ -40,7 +40,22 @@ Ao redigir os cadernos e capítulos teóricos (`archive/<materia>/resumos/<slug>
 
 ---
 
-## 2. Orquestração Concorrente com Subagentes na Resolução de Provas
+## 2. Separação Obrigatória por Tags / Avaliações
+
+Todos os conteúdos (cadernos teóricos) e questões resolvidas no website acadêmico são organizados e filtrados por **tags de avaliação** (ex: `teste-1`, `teste-2`, `p1`, `prova-2`, `sub`).
+
+> ### ⚠️ REGRA CRÍTICA DE INTERAÇÃO COM O USUÁRIO (OBRIGATÓRIA):
+> Ao invocar a skill `question-study-generator` ou ao receber do usuário um pedido para gerar cadernos de estudo ou resolver provas de uma avaliação:
+> 
+> 1. O assistente **DEVE VERIFICAR** se o usuário forneceu explicitamente o nome da tag (ex: `teste-1`, `teste-2`, `p1`, `prova-2`).
+> 2. Se o usuário **NÃO forneceu o nome da tag**, o assistente **DEVE OBRIGATORIAMENTE PARAR e perguntar diretamente ao usuário antes de tomar qualquer outra ação**:
+>    > *"Por favor, informe o nome da tag ou avaliação para este conteúdo (por exemplo: `teste-1`, `teste-2`, `p1` ou `prova-2`)."*
+> 3. Nenhuma geração de arquivos `.mdx` ou disparo de subagentes pode ocorrer sem que a tag de destino esteja definida.
+> 4. Todos os arquivos gerados (tanto resumos teóricos quanto questões) devem receber a tag definida no campo `tags: ["<tag>"]` do seu frontmatter.
+
+---
+
+## 3. Orquestração Concorrente com Subagentes na Resolução de Provas
 
 Quando o objetivo do estudo envolver a extração e resolução de questões de avaliações, o assistente **deve aproveitar a capacidade de paralelização do Antigravity CLI através de subagentes (`invoke_subagent`)**.
 
@@ -50,7 +65,7 @@ Quando o objetivo do estudo envolver a extração e resolução de questões de 
 
 ### Padrão de Invocação de Subagentes
 
-O agente orquestrador principal lança múltiplos subagentes concorrentes utilizando o tool `invoke_subagent`:
+O agente orquestrador principal lança múltiplos subagentes concorrentes utilizando o tool `invoke_subagent`, **repassando obrigatoriamente a tag definida**:
 
 ```json
 {
@@ -58,12 +73,12 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 1 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-1' no frontmatter: tags: ['teste-1']. Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     },
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 2 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-2' no frontmatter: tags: ['teste-2']. Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     }
   ]
 }
@@ -76,12 +91,13 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
    * Recortar figuras preservando contexto superior e fórmulas matemáticas.
    * Utilizar `<Theory>` para teoria prévia pedagógica e `<Resolution>` para o desenvolvimento algébrico.
    * Usar delimitadores KaTeX `$...$` no `statement`, nas opções (`options[].text`) e no gabarito (`correctOption` ou `expectedAnswer`).
+   * **Incluir a tag no frontmatter:** `tags: ["<tag>"]`.
 3. **Higiene e Limpeza Obrigatória de Workspace:**
    * É terminantemente proibido deixar scripts temporários (`crop_*.py`, etc.), dumps `.json` ou rascunhos de imagens na raiz do projeto.
    * O orquestrador deve instruir explicitamente os subagentes no prompt a utilizarem o utilitário oficial `.agents/skills/explain-question/scripts/extract_question.py` e a deletarem qualquer script temporário antes de finalizar.
 4. **Consolidação pelo Orquestrador Principal:**
    * Assim que os subagentes retornarem, o agente principal colhe os tópicos cobrados e os IDs gerados.
-   * Em seguida, redige ou aprimora o caderno teórico contínuo (`archive/<materia>/resumos/<slug>.mdx`), garantindo que a teoria cubra integralmente todos os pontos demandados pelas questões recém-resolvidas.
+   * Em seguida, redige ou aprimora o caderno teórico contínuo (`archive/<materia>/resumos/<slug>.mdx`), garantindo que a teoria cubra integralmente todos os pontos demandados pelas questões recém-resolvidas e contenha `tags: ["<tag>"]`.
    * Adiciona os IDs em `relatedQuestions` no frontmatter e insere os cartões `<QuestionCard id="..." />` nos pontos estratégicos do caderno.
 
 ---
@@ -124,6 +140,8 @@ Cada capítulo do caderno é um arquivo `.mdx` independente que compõe o fluxo 
 ```mdx
 ---
 materia: "pds" # Slug da disciplina
+tags:
+  - "teste-1"  # Tag ou avaliação associada (ex: teste-1, teste-2, p1)
 title: "Capítulo 2: Amostragem de Sinais em Tempo Contínuo"
 topic: "Amostragem e Aliasing"
 chapter: 2

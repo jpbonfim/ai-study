@@ -7,6 +7,7 @@ interface TocItem {
   id: string;
   title: string;
   subsections?: { id: string; title: string }[];
+  tags?: string[];
 }
 
 interface QuestionLink {
@@ -14,18 +15,37 @@ interface QuestionLink {
   title: string;
   exam: string;
   year: number;
+  tags?: string[];
+}
+
+export interface TagOption {
+  id: string;
+  label: string;
+  chaptersCount?: number;
+  questionsCount?: number;
 }
 
 interface Props {
   title: string;
   materia?: Subject;
+  availableTags?: TagOption[];
+  activeTag?: string | null;
   toc?: TocItem[];
   questions?: QuestionLink[];
   activeSectionId?: string;
   wide?: boolean;
 }
 
-const { title, materia, toc = [], questions = [], activeSectionId, wide = false } = Astro.props;
+const {
+  title,
+  materia,
+  availableTags = [],
+  activeTag = null,
+  toc = [],
+  questions = [],
+  activeSectionId,
+  wide = false,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -169,16 +189,57 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
             )}
           </div>
 
+          <!-- Seletor de Avaliações / Tags -->
+          {availableTags && availableTags.length > 0 && (
+            <div class="space-y-2.5 pb-4 border-b border-[var(--border-subtle)]" id="sidebar-tag-section">
+              <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <span class="flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span>Avaliação / Tag</span>
+                </span>
+                <span class="text-[10px] font-normal lowercase opacity-80" id="sidebar-active-tag-hint">
+                  (selecione para ver)
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-1.5" id="sidebar-tag-buttons">
+                {availableTags.map((tag) => (
+                  <button
+                    type="button"
+                    data-tag-slug={tag.id}
+                    class="study-tag-btn sans-ui text-xs font-semibold px-2.5 py-1.5 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <span class="tag-dot w-2 h-2 rounded-full border border-current opacity-40"></span>
+                    <span>{tag.label}</span>
+                    {tag.questionsCount !== undefined && tag.questionsCount > 0 && (
+                      <span class="text-[10px] opacity-70 font-mono">({tag.questionsCount})</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <!-- Sumário do Documento (Capítulos e Seções) -->
           {toc.length > 0 && (
-            <div class="space-y-3">
+            <div class="space-y-3" id="sidebar-toc-container">
               <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Conteúdo</span>
                 <span class="text-[10px] lowercase font-normal opacity-80">(clique para ir)</span>
               </div>
+
+              <!-- Estado Vazio quando nenhuma tag estiver selecionada -->
+              <div id="sidebar-toc-empty" class="hidden p-3 rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-xs text-[var(--text-muted)] text-center italic">
+                Selecione uma tag acima para visualizar o sumário.
+              </div>
+
               <nav class="space-y-1.5 text-sm" id="sidebar-toc-nav">
                 {toc.map((chap) => (
-                  <div class="space-y-0.5">
+                  <div
+                    class="space-y-0.5 sidebar-chapter-item"
+                    data-chapter-tags={(chap.tags || []).join(',')}
+                  >
                     <a
                       href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
                       data-toc-id={chap.id}
@@ -210,21 +271,29 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
 
           <!-- Banco de Questões -->
           {questions.length > 0 && materia && (
-            <div class="space-y-3 pt-4 border-t border-[var(--border-subtle)]">
+            <div class="space-y-3 pt-4 border-t border-[var(--border-subtle)]" id="sidebar-questions-container">
               <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Questões Resolvidas</span>
                 <a
+                  id="sidebar-questions-bank-link"
                   href={`/${materia.slug}/questoes`}
                   class="text-[11px] font-normal text-[var(--accent)] hover:underline lowercase"
                 >
                   ver banco
                 </a>
               </div>
-              <div class="space-y-1.5">
+
+              <!-- Estado Vazio quando nenhuma tag estiver selecionada -->
+              <div id="sidebar-questions-empty" class="hidden p-3 rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--bg-subtle)]/50 text-xs text-[var(--text-muted)] text-center italic">
+                Selecione uma tag acima para visualizar as questões.
+              </div>
+
+              <div class="space-y-1.5" id="sidebar-questions-list">
                 {questions.map((q) => (
                   <a
                     href={`/${materia.slug}/questoes/${q.id}`}
-                    class="sans-ui block text-xs p-2 rounded-md hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    data-question-tags={(q.tags || []).join(',')}
+                    class="sidebar-question-item sans-ui block text-xs p-2 rounded-md hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   >
                     <div class="font-semibold text-[var(--text-primary)] truncate">
                       {q.exam} ({q.year}) — {q.title}
@@ -288,6 +357,166 @@ const { title, materia, toc = [], questions = [], activeSectionId, wide = false 
         } catch (e) {
           console.error(e);
         }
+      </script>
+    )}
+
+    <!-- Script de Gestão e Filtragem de Tags / Avaliações -->
+    {materia && (
+      <script is:inline define:vars={{ materiaSlug: materia.slug, defaultInitialTag: activeTag }}>
+        (function() {
+          const storageKey = 'study_selected_tag_' + materiaSlug;
+          let currentActiveTag = null;
+
+          function getParamTag() {
+            try {
+              const params = new URLSearchParams(window.location.search);
+              return params.get('tag');
+            } catch(e) {
+              return null;
+            }
+          }
+
+          function getSavedTag() {
+            try {
+              return localStorage.getItem(storageKey);
+            } catch(e) {
+              return null;
+            }
+          }
+
+          function updateSidebarUI(tag) {
+            const tagButtons = document.querySelectorAll('.study-tag-btn');
+            const activeHint = document.getElementById('sidebar-active-tag-hint');
+            const tocEmpty = document.getElementById('sidebar-toc-empty');
+            const tocNav = document.getElementById('sidebar-toc-nav');
+            const questionsEmpty = document.getElementById('sidebar-questions-empty');
+            const questionsList = document.getElementById('sidebar-questions-list');
+            const bankLink = document.getElementById('sidebar-questions-bank-link');
+
+            tagButtons.forEach(btn => {
+              const btnTag = btn.getAttribute('data-tag-slug');
+              const dot = btn.querySelector('.tag-dot');
+              if (tag && btnTag === tag) {
+                btn.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]', 'text-[var(--accent)]', 'font-bold');
+                btn.classList.remove('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
+                dot?.classList.add('bg-[var(--accent)]', 'opacity-100');
+                dot?.classList.remove('opacity-40');
+              } else {
+                btn.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]', 'text-[var(--accent)]', 'font-bold');
+                btn.classList.add('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
+                dot?.classList.remove('bg-[var(--accent)]', 'opacity-100');
+                dot?.classList.add('opacity-40');
+              }
+            });
+
+            if (bankLink) {
+              bankLink.href = tag ? `/${materiaSlug}/questoes?tag=${tag}` : `/${materiaSlug}/questoes`;
+            }
+
+            if (!tag) {
+              if (activeHint) activeHint.textContent = '(nenhuma selecionada)';
+              if (tocEmpty) tocEmpty.classList.remove('hidden');
+              if (tocNav) tocNav.classList.add('hidden');
+              if (questionsEmpty) questionsEmpty.classList.remove('hidden');
+              if (questionsList) questionsList.classList.add('hidden');
+              return;
+            }
+
+            if (activeHint) activeHint.textContent = `(ativo: ${tag})`;
+
+            // Filtra os capítulos do sumário no menu lateral
+            let visibleChapters = 0;
+            document.querySelectorAll('.sidebar-chapter-item').forEach(item => {
+              const itemTags = (item.getAttribute('data-chapter-tags') || '').split(',').map(s => s.trim());
+              if (itemTags.includes(tag)) {
+                item.classList.remove('hidden');
+                visibleChapters++;
+              } else {
+                item.classList.add('hidden');
+              }
+            });
+
+            if (visibleChapters > 0) {
+              tocEmpty?.classList.add('hidden');
+              tocNav?.classList.remove('hidden');
+            } else {
+              tocEmpty?.classList.remove('hidden');
+              tocNav?.classList.add('hidden');
+            }
+
+            // Filtra as questões do menu lateral
+            let visibleQuestions = 0;
+            document.querySelectorAll('.sidebar-question-item').forEach(item => {
+              const itemTags = (item.getAttribute('data-question-tags') || '').split(',').map(s => s.trim());
+              if (itemTags.includes(tag)) {
+                item.classList.remove('hidden');
+                visibleQuestions++;
+              } else {
+                item.classList.add('hidden');
+              }
+            });
+
+            if (visibleQuestions > 0) {
+              questionsEmpty?.classList.add('hidden');
+              questionsList?.classList.remove('hidden');
+            } else {
+              questionsEmpty?.classList.remove('hidden');
+              questionsList?.classList.add('hidden');
+            }
+          }
+
+          function selectStudyTag(tagSlug, updateUrl = true) {
+            currentActiveTag = tagSlug;
+            try {
+              if (tagSlug) {
+                localStorage.setItem(storageKey, tagSlug);
+              } else {
+                localStorage.removeItem(storageKey);
+              }
+            } catch(e) {}
+
+            if (updateUrl && typeof window !== 'undefined') {
+              const url = new URL(window.location.href);
+              if (tagSlug) {
+                url.searchParams.set('tag', tagSlug);
+              } else {
+                url.searchParams.delete('tag');
+              }
+              window.history.replaceState(null, '', url.toString());
+            }
+
+            updateSidebarUI(tagSlug);
+
+            window.dispatchEvent(new CustomEvent('study-tag-changed', {
+              detail: { tag: tagSlug, materia: materiaSlug }
+            }));
+          }
+
+          window.selectStudyTag = selectStudyTag;
+          window.getCurrentStudyTag = () => currentActiveTag;
+
+          function initTags() {
+            document.querySelectorAll('.study-tag-btn').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const slug = btn.getAttribute('data-tag-slug');
+                if (currentActiveTag === slug) {
+                  selectStudyTag(null);
+                } else {
+                  selectStudyTag(slug);
+                }
+              });
+            });
+
+            const initialTag = getParamTag() || defaultInitialTag || getSavedTag() || null;
+            selectStudyTag(initialTag, false);
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTags);
+          } else {
+            initTags();
+          }
+        })();
       </script>
     )}
 

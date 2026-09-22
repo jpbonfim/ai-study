@@ -229,6 +229,7 @@ def main():
     p_scaffold = subparsers.add_parser("scaffold", help="Gera esqueletos .mdx na pasta archive/<materia>/questoes")
     p_scaffold.add_argument("pdf_path", help="Caminho para o arquivo PDF")
     p_scaffold.add_argument("--materia", default="pds", help="Identificador da matéria (padrão: pds)")
+    p_scaffold.add_argument("--tag", default="teste-1", help="Tag ou avaliação da questão (ex: teste-1, teste-2, p1)")
     p_scaffold.add_argument("--type", choices=["auto", "multipla_escolha", "discursiva"], default="auto", help="Tipo das questões")
     
     args = parser.parse_args()
@@ -315,6 +316,8 @@ def main():
 
             content = f"""---
 materia: "{args.materia}"
+tags:
+  - "{args.tag}"
 id: "{slug}"
 title: "{meta['exam']} - Questão {q['number']}"
 exam: "{meta['exam']}"
