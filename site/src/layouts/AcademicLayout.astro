@@ -221,7 +221,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                 <option value="">-- Todas as Avaliações / Início --</option>
                 {availableTags.map((tag) => (
                   <option value={tag.id}>
-                    {tag.label} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
+                    {tag.id} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
                   </option>
                 ))}
               </select>
@@ -274,7 +274,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                   </button>
 
                   {availableTags.map((tag) => {
-                    const displayLabel = `${tag.label}${tag.questionsCount !== undefined && tag.questionsCount > 0 ? ` (${tag.questionsCount} questões)` : ''}`;
+                    const displayLabel = `${tag.id}${tag.questionsCount !== undefined && tag.questionsCount > 0 ? ` (${tag.questionsCount} questões)` : ''}`;
                     return (
                       <button
                         type="button"
@@ -283,7 +283,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                         class="tag-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] focus:text-[var(--accent)] focus:bg-[var(--accent-subtle)] focus:outline-none transition-colors duration-150 cursor-pointer group"
                         role="option"
                       >
-                        <span class="truncate">{displayLabel}</span>
+                        <span class="truncate font-mono">{displayLabel}</span>
                         <span class="tag-opt-check text-[var(--accent)] font-bold shrink-0 ml-1.5 hidden">✓</span>
                       </button>
                     );
@@ -726,6 +726,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
             if (selectedLabelEl) {
               selectedLabelEl.textContent = activeLabel;
+              if (tag) {
+                selectedLabelEl.classList.add('font-mono');
+              } else {
+                selectedLabelEl.classList.remove('font-mono');
+              }
             }
 
             if (trigger) {

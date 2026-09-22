@@ -786,13 +786,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
 
         function formatTagLabel(t) {
             if (!t) return 'Todas as Avaliações';
-            const lower = t.toLowerCase().trim();
-            if (lower === 'p1') return 'P1';
-            if (lower === 'p2') return 'P2';
-            if (lower === 'p3') return 'P3';
-            if (lower === 'sub') return 'SUB';
-            if (lower === 'rec') return 'REC';
-            return t.split(/[-_ ]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            return t;
         }
 
         window.onload = () => {
