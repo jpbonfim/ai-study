@@ -366,7 +366,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                     </div>
 
                     <!-- Seção Colapsável: Estudo Guiado por Questões -->
-                    <div class="toc-collapsible-group space-y-1 pt-3 border-t border-[var(--border-subtle)]" data-group-type="questoes">
+                    <div class="toc-collapsible-group space-y-1" data-group-type="questoes">
                       <button
                         type="button"
                         class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
@@ -811,16 +811,8 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               else groupMateria.classList.add('hidden');
             }
             if (groupQuestoes) {
-              if (visibleQuestoes > 0) {
-                groupQuestoes.classList.remove('hidden');
-                if (visibleMateria > 0) {
-                  groupQuestoes.classList.add('pt-3', 'border-t', 'border-[var(--border-subtle)]');
-                } else {
-                  groupQuestoes.classList.remove('pt-3', 'border-t', 'border-[var(--border-subtle)]');
-                }
-              } else {
-                groupQuestoes.classList.add('hidden');
-              }
+              if (visibleQuestoes > 0) groupQuestoes.classList.remove('hidden');
+              else groupQuestoes.classList.add('hidden');
             }
 
             if (visibleChapters > 0) {
