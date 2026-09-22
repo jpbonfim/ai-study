@@ -93,7 +93,7 @@ topicSlug: "cap-2-amostragem"
 difficulty: "Médio"
 type: "multipla_escolha"
 statement: "No sistema da Figura 1, suponha que $x_c(t) = 2\\cos(30\\pi t)$..."
-image: "/images/questoes/diagrama.png" # opcional se houver figura (ou images: [{ src, caption }])
+image: "./diagrama.png" # Salva obrigatoriamente na mesma pasta archive/<materia>/questoes/ (ou images: [{ src: "./figura.png", caption }])
 options:
   - label: "A"
     text: "$2\\cos(30\\pi t)$"
@@ -102,7 +102,8 @@ options:
 correctOption: "B"
 ---
 ```
-> **Exibição de Imagens e Zoom:** As imagens das questões são inseridas limpas e sem caixas ou botões redundantes. Ao clicar diretamente sobre qualquer imagem, o estudante entra no modo de visualização com zoom interativo, arraste (*pan*), roda do mouse e reset.
+> **Destino e Inserção de Imagens:** As imagens das questões devem residir **obrigatoriamente dentro de `archive/<materia>/questoes/`** e ser referenciadas por caminho relativo (`./<figura>.png`). **Nunca salve imagens em `site/public/`** para não versionar binários no Git.
+> **Exibição de Imagens e Zoom:** Ao clicar diretamente sobre qualquer imagem, o estudante entra no modo de visualização com zoom interativo, arraste (*pan*), roda do mouse e reset.
 
 
 ---
@@ -205,4 +206,5 @@ Para evitar a poluição do repositório Git e da pasta raiz:
   ```bash
   python3 .agents/skills/explain-question/scripts/extract_question.py [subcomando] ...
   ```
+* **Destino de imagens em `archive/` (Proibição de imagens em `site/public/`):** Toda e qualquer imagem recortada de provas e listas deve ser gravada diretamente em `archive/<materia>/questoes/`. É terminantemente proibido salvar imagens em `site/public/` ou em qualquer outra pasta versionada pelo Git. O Astro processa e otimiza automaticamente as imagens referenciadas por `./<imagem>.png` a partir de `archive/` em tempo de build.
 * **Limpeza imediata de rascunhos:** Se o subagente gerar qualquer arquivo temporário durante o trabalho, ele é **estritamente obrigado** a remover esses arquivos com `rm` antes de finalizar sua execução e reportar os resultados ao agente pai.

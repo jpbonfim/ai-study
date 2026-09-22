@@ -77,21 +77,22 @@ python3 .agents/skills/summary-study-generator/scripts/extract_material_images.p
 # 2. Recortar diagrama ou figura de uma página específica com alta resolução (200 DPI)
 python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop <caminho_do_material.pdf> \
   --page <NUM> \
-  --output site/public/images/resumos/<materia>/<nome_descritivo>.png \
+  --output archive/<materia>/resumos/materia/<nome_descritivo>.png \
   --padding 20
 
 # 3. Renderizar slide inteiro quando o slide for um esquema gráfico completo
 python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py render-page <caminho_do_material.pdf> \
   --page <NUM> \
-  --output site/public/images/resumos/<materia>/<nome_descritivo>.png
+  --output archive/<materia>/resumos/materia/<nome_descritivo>.png
 ```
 
 ### Inserção da Imagem no MDX
-As imagens salvas em `site/public/images/resumos/<materia>/` ficam automaticamente acessíveis no website pela raiz `/images/resumos/<materia>/...`. No texto MDX, insira a figura com legenda descritiva:
+As imagens devem ser salvas dentro da pasta não versionada `archive/<materia>/resumos/materia/` (ou `archive/<materia>/resumos/`), junto aos arquivos MDX correspondentes. No texto MDX, insira a figura utilizando caminho relativo (`./`):
 
 ```markdown
-![Diagrama de Blocos do Filtro FIR em Forma Direta](/images/resumos/pds/filtro-fir-forma-direta.png)
+![Diagrama de Blocos do Filtro FIR em Forma Direta](./filtro-fir-forma-direta.png)
 ```
+O compilador Astro processa automaticamente imagens referenciadas por caminho relativo no MDX, otimizando-as para WebP no build final sem poluir o repositório Git com binários pesados.
 
 ---
 
@@ -126,7 +127,7 @@ sections:
 
 Um sinal contínuo $x(t)$ é definido para todo $t \in \mathbb{R}$. A versão discreta $x[n]$ é uma sequência indexada por inteiros $n \in \mathbb{Z}$.
 
-![Esquema do Processo de Amostragem Periódica](/images/resumos/pds/esquema-amostragem.png)
+![Esquema do Processo de Amostragem Periódica](./esquema-amostragem.png)
 
 ... (explicação detalhada, fórmulas com KaTeX $, $$, diagramas se necessários) ...
 ```
@@ -144,7 +145,7 @@ Um sinal contínuo $x(t)$ é definido para todo $t \in \mathbb{R}$. A versão di
    * Não crie scripts `.py`, `.sh` ou dumps de imagens na raiz do repositório.
    * Utilize exclusivamente o utilitário `.agents/skills/summary-study-generator/scripts/extract_material_images.py`.
 2. **Destino de Imagens:**
-   * Todas as imagens extraídas devem ser gravadas diretamente em `site/public/images/resumos/<materia>/`.
+   * Todas as imagens extraídas devem ser gravadas diretamente em `archive/<materia>/resumos/materia/` (ou `archive/<materia>/resumos/`), ficando contidas dentro de `archive/` que é desconsiderada pelo Git.
 3. **Limpeza de Arquivos Temporários:**
    * O script oficial gerencia limpeza interna automaticamente via diretórios temporários. Se qualquer teste manual for realizado, exclua os rascunhos antes de finalizar o turno.
 4. **Validação do Build:**

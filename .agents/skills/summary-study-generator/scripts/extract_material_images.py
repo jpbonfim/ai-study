@@ -110,11 +110,11 @@ def inspect_material(pdf_path: str, max_pages_preview: int = 15):
 
     print("\nPara extrair ou recortar figuras relevantes:")
     print(f"  1. Recortar diagrama de página específica:")
-    print(f"     python3 extract_material_images.py crop {path} --page <NUM> --output site/public/images/resumos/<materia>/<nome>.png")
+    print(f"     python3 extract_material_images.py crop {path} --page <NUM> --output archive/<materia>/resumos/materia/<nome>.png")
     print(f"  2. Renderizar slide inteiro como figura:")
-    print(f"     python3 extract_material_images.py render-page {path} --page <NUM> --output site/public/images/resumos/<materia>/<nome>.png")
+    print(f"     python3 extract_material_images.py render-page {path} --page <NUM> --output archive/<materia>/resumos/materia/<nome>.png")
     print(f"  3. Extrair imagens embutidas brutas:")
-    print(f"     python3 extract_material_images.py extract-embedded {path} --output-dir site/public/images/resumos/<materia>/")
+    print(f"     python3 extract_material_images.py extract-embedded {path} --output-dir archive/<materia>/resumos/materia/")
 
 def render_page(pdf_path: str, page: int, out_path: str, dpi: int = 200) -> str:
     """Renderiza uma página inteira do PDF com alta resolução."""

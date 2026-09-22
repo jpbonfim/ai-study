@@ -194,11 +194,11 @@ python3 .agents/skills/summary-study-generator/scripts/extract_material_images.p
 
 # 2. Crop high-resolution (200 DPI) schematic from specific page
 python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop material/slides/aula-amostragem.pdf \
-  --page 8 --output site/public/images/resumos/pds/esquema-amostragem.png --padding 20
+  --page 8 --output archive/pds/resumos/materia/esquema-amostragem.png --padding 20
 
 # 3. Render complete slide as full-width figure
 python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py render-page material/slides/aula-amostragem.pdf \
-  --page 14 --output site/public/images/resumos/pds/espectro-zoh.png
+  --page 14 --output archive/pds/resumos/materia/espectro-zoh.png
 ```
 
 ### 6.3 `explain-question`

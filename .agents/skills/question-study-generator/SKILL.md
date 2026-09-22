@@ -73,12 +73,12 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 1 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-1' no frontmatter: tags: ['teste-1']. Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-1-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-1' no frontmatter: tags: ['teste-1']. Salve cada questão em 'archive/pds/questoes/teste-1-2024-qX.mdx'. Recorte figuras salvando-as diretamente em 'archive/pds/questoes/<nome_figura>.png' e referenciando no frontmatter como 'image: \"./<nome_figura>.png\"'. NUNCA salve imagens em 'site/public/'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     },
     {
       "TypeName": "self",
       "Role": "Resolvedor Teste 2 2024",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-2' no frontmatter: tags: ['teste-2']. Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens (se houver) e resolver todas as questões de 'material/testes/teste-2-2024.pdf'. Para cada questão, aplique o prompt fundamental: explique detalhadamente a teoria necessária (<Theory>) e então resolva passo a passo (<Resolution>), utilizando KaTeX nas fórmulas matemáticas ($...$ e $$...$$). Adicione obrigatoriamente a tag 'teste-2' no frontmatter: tags: ['teste-2']. Salve cada questão em 'archive/pds/questoes/teste-2-2024-qX.mdx'. Recorte figuras salvando-as diretamente em 'archive/pds/questoes/<nome_figura>.png' e referenciando no frontmatter como 'image: \"./<nome_figura>.png\"'. NUNCA salve imagens em 'site/public/'. Higiene obrigatória: Não crie scripts ou imagens temporárias na raiz; limpe qualquer rascunho antes de concluir. Ao finalizar, responda com a lista de IDs das questões criadas e seus tópicos."
     }
   ]
 }
@@ -89,6 +89,7 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
 2. **Delegação Especializada à Skill `explain-question`:** Cada subagente deve seguir as convenções estritas da skill `explain-question`:
    * Inspecionar e classificar questões (`multipla_escolha` vs `discursiva`).
    * Recortar figuras preservando contexto superior e fórmulas matemáticas.
+   * **Destino Obrigatório de Imagens:** Toda e qualquer imagem recortada deve ser salva diretamente dentro de `archive/<materia>/questoes/` e referenciada no frontmatter por caminho relativo (`image: "./<figura>.png"`). **É expressamente proibido salvar imagens em `site/public/`** para não versionar arquivos binários no Git.
    * Utilizar `<Theory>` para teoria prévia pedagógica e `<Resolution>` para o desenvolvimento algébrico.
    * Usar delimitadores KaTeX `$...$` no `statement`, nas opções (`options[].text`) e no gabarito (`correctOption` ou `expectedAnswer`).
    * **Incluir a tag no frontmatter:** `tags: ["<tag>"]`.
@@ -99,6 +100,7 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
    * Assim que os subagentes retornarem, o agente principal colhe os tópicos cobrados e os IDs gerados.
    * Em seguida, redige ou aprimora o caderno teórico contínuo (`archive/<materia>/resumos/<slug>.mdx`), garantindo que a teoria cubra integralmente todos os pontos demandados pelas questões recém-resolvidas e contenha `tags: ["<tag>"]`.
    * Adiciona os IDs em `relatedQuestions` no frontmatter e insere os cartões `<QuestionCard id="..." />` nos pontos estratégicos do caderno.
+   * Se forem necessárias figuras adicionais no caderno teórico, salve-as em `archive/<materia>/resumos/<imagem>.png` e referencie no MDX por `![Legenda](./<imagem>.png)`. O Astro compila e otimiza imagens relativas em `archive/` automaticamente em tempo de build.
 
 ---
 
@@ -204,9 +206,10 @@ $$X_p(j\Omega) = \frac{1}{T} \sum_{k=-\infty}^{+\infty} X_c(j(\Omega - k\omega_s
      ]
    }
    ```
-3. **Criar subpastas:**
-   * `archive/<slug-da-materia>/resumos/` (para os capítulos teóricos `.mdx`)
-   * `archive/<slug-da-materia>/questoes/` (para as questões geradas pela skill `explain-question`)
+3. **Criar subpastas em `archive/` (não versionadas):**
+   * `archive/<slug-da-materia>/resumos/` (para os capítulos teóricos `.mdx` e suas respectivas imagens `.png`)
+   * `archive/<slug-da-materia>/questoes/` (para as questões geradas e diagramas recortados pela skill `explain-question`)
+   * *Atenção:* Nenhuma mídia ou imagem deve ser salva em `site/public/`. Todo o acervo reside sob `archive/`.
 4. **Executar o Pipeline:**
    * Orquestrar subagentes para resolução dos exames existentes da matéria.
    * Gerar os cadernos teóricos em fluxo contínuo obedecendo à **Diretriz de Ouro**.

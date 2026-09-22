@@ -35,14 +35,14 @@ Specialized agent workflows and instructions are located in `.agents/skills/`. W
    - Output destination: `archive/<subject>/resumos/<slug>.mdx` with `type: "materia"` in the frontmatter.
    - Section: Classified under the "Resumo da matéria" collapsible tab in the sidebar.
    - Focus: Purely theoretical lecture summaries derived from lecture slides, textbooks, and notes; does NOT link questions.
-   - Diagram extraction: Extract only strictly relevant visual diagrams and graphs to `site/public/images/resumos/<subject>/`.
+   - Diagram extraction: Extract only strictly relevant visual diagrams and graphs directly to `archive/<subject>/resumos/materia/` (or `archive/<subject>/resumos/`), referenced via relative paths (`./<image>.png`) in MDX.
 
 3. **Exam Question Extraction and Resolution (`explain-question`)**:
    - Location: `.agents/skills/explain-question/SKILL.md`
    - CLI utility: `python3 .agents/skills/explain-question/scripts/extract_question.py`
    - Output destination: `archive/<subject>/questoes/<slug>.mdx`
    - Format: Must use `<Theory>` for pedagogical background (no spoilers) and `<Resolution>` for step-by-step algebra and answer keys.
-   - Figure cropping: Use `crop-figure` command with `--padding 25` and preserve upper mathematical definitions and equations.
+   - Figure cropping: Use `crop-figure` command with `--padding 25` and preserve upper mathematical definitions and equations. Save cropped figures directly to `archive/<subject>/questoes/<figure>.png` and reference via `image: "./<figure>.png"` (never save to `site/public/`).
 
 4. **Vector Block Diagrams (`block-diagram-generator`)**:
    - Location: `.agents/skills/block-diagram-generator/SKILL.md`
