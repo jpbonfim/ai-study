@@ -1785,8 +1785,8 @@ const previewMathDisplay = katex.renderToString(
           const last = localStorage.getItem('last_visited_subject');
           if (last) {
             const parsed = JSON.parse(last);
-            if (parsed && parsed.slug) {
-              window.location.href = `/${parsed.slug}`;
+            if (parsed && (parsed.lastUrl || parsed.url || parsed.slug)) {
+              window.location.href = parsed.lastUrl || parsed.url || `/${parsed.slug}`;
               return;
             }
           }

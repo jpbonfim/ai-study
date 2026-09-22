@@ -408,27 +408,82 @@ const {
 
     </div>
 
-    <!-- Script de rastreamento de matéria recente -->
+    <!-- Script de rastreamento de matéria recente e última posição de estudo -->
     {materia && (
-      <script is:inline define:vars={{ curMat: { slug: materia.slug, name: materia.name, code: materia.code, institution: materia.institution, period: materia.period, chaptersCount: materia.chaptersCount, questionsCount: materia.questionsCount } }}>
+      <script is:inline define:vars={{
+        curMat: {
+          slug: materia.slug,
+          name: materia.name,
+          code: materia.code,
+          institution: materia.institution,
+          period: materia.period,
+          chaptersCount: materia.chaptersCount,
+          questionsCount: materia.questionsCount
+        },
+        pageTitle: title
+      }}>
         try {
           if (typeof localStorage !== 'undefined') {
-            const now = new Date().toISOString();
-            const data = {
-              ...curMat,
-              visitedAt: now
-            };
-            localStorage.setItem('last_visited_subject', JSON.stringify(data));
+            function saveCurrentStudyPosition(extraSectionTitle, extraHash) {
+              try {
+                const now = new Date().toISOString();
+                const currentPath = window.location.pathname;
+                const currentSearch = window.location.search;
+                const currentHash = extraHash !== undefined ? extraHash : window.location.hash;
+                const fullUrl = currentPath + currentSearch + (currentHash || '');
 
-            // Histórico ordenado de matérias acessadas recentemente
-            let recentList = [];
-            try {
-              recentList = JSON.parse(localStorage.getItem('study_recent_materias') || '[]');
-            } catch(e) {}
-            if (!Array.isArray(recentList)) recentList = [];
-            recentList = recentList.filter(item => item && item.slug !== curMat.slug);
-            recentList.unshift({ slug: curMat.slug, visitedAt: now });
-            localStorage.setItem('study_recent_materias', JSON.stringify(recentList.slice(0, 30)));
+                const isQuestionPage = currentPath.includes('/questoes/');
+                const isQuestionsBank = currentPath.endsWith('/questoes') || currentPath.endsWith('/questoes/');
+
+                let sectionDesc = extraSectionTitle || pageTitle;
+                if (!extraSectionTitle) {
+                  if (isQuestionPage) {
+                    sectionDesc = pageTitle;
+                  } else if (isQuestionsBank) {
+                    sectionDesc = 'Banco de Questões Resolvidas';
+                  } else if (currentHash) {
+                    const hashEl = document.querySelector(`a[href*="${currentHash}"]`);
+                    if (hashEl && hashEl.textContent) {
+                      sectionDesc = hashEl.textContent.trim();
+                    }
+                  }
+                }
+
+                const data = {
+                  ...curMat,
+                  pageTitle: pageTitle,
+                  lastSectionTitle: sectionDesc,
+                  lastUrl: fullUrl,
+                  url: fullUrl,
+                  visitedAt: now
+                };
+                localStorage.setItem('last_visited_subject', JSON.stringify(data));
+
+                // Histórico ordenado de matérias acessadas recentemente
+                let recentList = [];
+                try {
+                  recentList = JSON.parse(localStorage.getItem('study_recent_materias') || '[]');
+                } catch(e) {}
+                if (!Array.isArray(recentList)) recentList = [];
+                recentList = recentList.filter(item => item && item.slug !== curMat.slug);
+                recentList.unshift({
+                  slug: curMat.slug,
+                  lastUrl: fullUrl,
+                  lastSectionTitle: sectionDesc,
+                  visitedAt: now
+                });
+                localStorage.setItem('study_recent_materias', JSON.stringify(recentList.slice(0, 30)));
+              } catch(e) {}
+            }
+
+            window._saveCurrentStudyPosition = saveCurrentStudyPosition;
+            saveCurrentStudyPosition();
+
+            window.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'hidden') {
+                saveCurrentStudyPosition();
+              }
+            });
           }
         } catch (e) {
           console.error(e);
@@ -807,6 +862,11 @@ const {
           if (history.pushState) {
             history.pushState(null, '', `#${targetId}`);
           }
+
+          // Atualiza a posição de estudo no localStorage
+          if (window._saveCurrentStudyPosition) {
+            window._saveCurrentStudyPosition(anchor.textContent?.trim(), `#${targetId}`);
+          }
         });
       });
 
@@ -962,6 +1022,11 @@ const {
                 chapLink.classList.remove('is-parent-active');
               }
             });
+
+            // Atualiza a posição de estudo no localStorage em tempo real conforme a leitura avança
+            if (window._saveCurrentStudyPosition) {
+              window._saveCurrentStudyPosition(activeSection.title, '#' + activeSection.id);
+            }
           }
         }
 

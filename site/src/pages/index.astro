@@ -252,7 +252,7 @@ import { MATERIAS } from '../data/materias';
             <div class="sans-ui flex items-center justify-between text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
               <span class="font-mono font-bold uppercase tracking-wider text-[var(--accent)] flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
-                Continuar Estudando • Última Matéria Acessada
+                Continuar Estudando • Última Sessão de Estudo
               </span>
               <span id="recent-time-badge" class="italic">Caderno em andamento</span>
             </div>
@@ -275,7 +275,7 @@ import { MATERIAS } from '../data/materias';
                 href="/pds"
                 class="sans-ui shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded border border-[var(--accent)] bg-[var(--accent)] hover:opacity-90 text-white dark:text-black font-semibold text-xs transition-opacity cursor-pointer shadow-xs"
               >
-                <span>Continuar Caderno</span>
+                <span id="recent-continue-btn-text">Continuar Caderno</span>
                 <span>&rarr;</span>
               </a>
             </div>
@@ -527,20 +527,36 @@ import { MATERIAS } from '../data/materias';
         const last = localStorage.getItem('last_visited_subject');
         if (last) {
           const parsed = JSON.parse(last);
-          if (parsed && parsed.slug) {
+          if (parsed && (parsed.slug || parsed.lastUrl)) {
             const titleEl = document.getElementById('recent-title');
             const codeEl = document.getElementById('recent-code');
             const descEl = document.getElementById('recent-desc');
             const btnEl = document.getElementById('recent-continue-btn');
+            const btnTextEl = document.getElementById('recent-continue-btn-text');
             const timeBadge = document.getElementById('recent-time-badge');
 
             if (titleEl) titleEl.textContent = parsed.name;
             if (codeEl) codeEl.textContent = `${parsed.code} • ${parsed.institution || 'USP'}`;
-            if (descEl) descEl.textContent = `${parsed.period || ''} — Caderno Integral`;
-            if (btnEl) btnEl.href = `/${parsed.slug}`;
+
+            // Destino exato da última página da última sessão de estudo
+            const targetUrl = parsed.lastUrl || parsed.url || `/${parsed.slug}`;
+            if (btnEl) btnEl.href = targetUrl;
+
+            // Ajusta o texto descritivo e do botão baseado na URL e seção
+            if (targetUrl.includes('/questoes/')) {
+              if (btnTextEl) btnTextEl.textContent = 'Continuar Questão';
+              if (descEl) descEl.textContent = parsed.lastSectionTitle ? `Última questão: ${parsed.lastSectionTitle}` : `Questão Resolvida — ${parsed.name}`;
+            } else if (targetUrl.includes('#')) {
+              if (btnTextEl) btnTextEl.textContent = 'Continuar Leitura';
+              if (descEl) descEl.textContent = parsed.lastSectionTitle ? `Continuar em: ${parsed.lastSectionTitle}` : `${parsed.period || ''} — Caderno Integral`;
+            } else {
+              if (btnTextEl) btnTextEl.textContent = 'Continuar Caderno';
+              if (descEl) descEl.textContent = parsed.lastSectionTitle ? `Última seção: ${parsed.lastSectionTitle}` : `${parsed.period || ''} — Caderno Integral`;
+            }
+
             if (timeBadge && parsed.visitedAt) {
               const dt = new Date(parsed.visitedAt);
-              timeBadge.textContent = `Acessado recentemente (${dt.toLocaleDateString('pt-BR')})`;
+              timeBadge.textContent = `Acessado recentemente (${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})`;
             }
           }
         }
