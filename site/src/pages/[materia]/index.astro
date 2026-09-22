@@ -44,7 +44,9 @@ if (!materia) {
 const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
 const primaryQuestions = loadUserQuestions(primaryOwnerId, materiaSlug);
 
-// 3. Busca outras fontes acessíveis com o mesmo "code" para tags cruzadas
+const isOwnSubject = user.id === primaryOwnerId;
+
+// 3. Busca outras fontes acessíveis com o mesmo "code" para tags cruzadas (APENAS ao acessar a matéria própria)
 const canonicalCode = (materia.code || '').trim().toUpperCase();
 
 interface OtherSource {
@@ -58,22 +60,7 @@ interface OtherSource {
 
 const otherSources: OtherSource[] = [];
 
-if (canonicalCode) {
-  // Se estivermos visualizando a matéria de outro, verifica se o usuário logado tem sua própria versão
-  if (user.id !== primaryOwnerId) {
-    const ownMatch = own.find((m) => (m.code || '').trim().toUpperCase() === canonicalCode);
-    if (ownMatch) {
-      otherSources.push({
-        ownerUserId: user.id,
-        ownerDisplayName: user.displayName,
-        ownerUsername: user.username,
-        materiaSlug: ownMatch.slug,
-        chapters: loadUserChapters(user.id, ownMatch.slug),
-        questions: loadUserQuestions(user.id, ownMatch.slug),
-      });
-    }
-  }
-
+if (canonicalCode && isOwnSubject) {
   // Verifica outras matérias compartilhadas que compartilham o mesmo código
   for (const s of shared) {
     if (s.ownerUserId && s.ownerUserId !== primaryOwnerId && (s.code || '').trim().toUpperCase() === canonicalCode) {

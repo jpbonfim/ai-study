@@ -54,23 +54,11 @@ interface OtherSource {
   questions: QuestionItem[];
 }
 
+const isOwnSubject = user.id === primaryOwnerId;
+
 const otherSources: OtherSource[] = [];
 
-if (canonicalCode) {
-  if (user.id !== primaryOwnerId) {
-    const ownMatch = own.find((m) => (m.code || '').trim().toUpperCase() === canonicalCode);
-    if (ownMatch) {
-      otherSources.push({
-        ownerUserId: user.id,
-        ownerDisplayName: user.displayName,
-        ownerUsername: user.username,
-        materiaSlug: ownMatch.slug,
-        chapters: loadUserChapters(user.id, ownMatch.slug),
-        questions: loadUserQuestions(user.id, ownMatch.slug),
-      });
-    }
-  }
-
+if (canonicalCode && isOwnSubject) {
   for (const s of shared) {
     if (s.ownerUserId && s.ownerUserId !== primaryOwnerId && (s.code || '').trim().toUpperCase() === canonicalCode) {
       otherSources.push({
@@ -290,7 +278,7 @@ const topics = [...new Set(allQuestionsToRender.map((q) => q.topic))].sort();
           data-text={`${q.title} ${q.statement || ''} ${q.ownerDisplayName || ''}`.toLowerCase()}
           data-is-other={q.isFromOther ? 'true' : 'false'}
         >
-          {q.isFromOther && (
+          {q.isFromOther && isOwnSubject && (
             <div class="mb-1.5 flex items-center gap-1.5 sans-ui text-xs">
               <span class="px-2 py-0.5 rounded font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
                 Compartilhada por: {q.ownerDisplayName}

@@ -56,23 +56,11 @@ interface OtherSource {
   questions: QuestionItem[];
 }
 
+const isOwnSubject = user.id === primaryOwnerId;
+
 const otherSources: OtherSource[] = [];
 
-if (canonicalCode) {
-  if (user.id !== primaryOwnerId) {
-    const ownMatch = own.find((m) => (m.code || '').trim().toUpperCase() === canonicalCode);
-    if (ownMatch) {
-      otherSources.push({
-        ownerUserId: user.id,
-        ownerDisplayName: user.displayName,
-        ownerUsername: user.username,
-        materiaSlug: ownMatch.slug,
-        chapters: loadUserChapters(user.id, ownMatch.slug),
-        questions: loadUserQuestions(user.id, ownMatch.slug),
-      });
-    }
-  }
-
+if (canonicalCode && isOwnSubject) {
   for (const s of shared) {
     if (s.ownerUserId && s.ownerUserId !== primaryOwnerId && (s.code || '').trim().toUpperCase() === canonicalCode) {
       otherSources.push({
@@ -295,7 +283,7 @@ const formattedImages = questao.images || [];
         </a>
       </div>
       <div class="flex items-center gap-2 font-mono">
-        {questionIsFromOther && (
+        {questionIsFromOther && isOwnSubject && (
           <span class="px-2 py-0.5 rounded text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
             Compartilhada por: {questionOwnerDisplayName}
           </span>

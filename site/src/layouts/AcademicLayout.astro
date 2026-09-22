@@ -60,6 +60,8 @@ const {
 } = Astro.props;
 
 const user = Astro.locals.user;
+const isOwnSubject = !materia?.ownerUserId || !user || materia.ownerUserId === user.id;
+const materiaOwnerParam = materia?.ownerUserId && !isOwnSubject ? `?owner=${materia.ownerUserId}` : '';
 const materiaToc = toc.filter((item) => item.type === 'materia');
 const questoesToc = toc.filter((item) => item.type !== 'materia');
 const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
@@ -184,12 +186,22 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                 <span class="sans-ui text-[11px] font-mono uppercase tracking-widest text-[var(--accent)] block font-semibold">
                   {materia.code} • {materia.institution}
                 </span>
-                <div class="flex items-center justify-between gap-2 mt-1">
-                  <h2 class="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug">
-                    <a href={`/${materia.slug}`} class="hover:text-[var(--accent)] transition-colors">
-                      {materia.name}
-                    </a>
-                  </h2>
+                <div class="flex items-start justify-between gap-2 mt-1">
+                  <div class="min-w-0 flex-1">
+                    <h2 class="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug">
+                      <a href={`/${materia.slug}${materiaOwnerParam}`} class="hover:text-[var(--accent)] transition-colors inline">
+                        {materia.name}
+                      </a>
+                      {!isOwnSubject && (
+                        <span
+                          class="sans-ui align-middle ml-1.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
+                          title={`Matéria compartilhada por ${materia.ownerDisplayName || materia.ownerUsername || 'outro usuário'}`}
+                        >
+                          De: {materia.ownerDisplayName || materia.ownerUsername || `Usuário ${materia.ownerUserId}`}
+                        </span>
+                      )}
+                    </h2>
+                  </div>
                   <a
                     href={`/downloads/${materia.slug}.html`}
                     download={`${materia.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`}
@@ -226,8 +238,8 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                 </span>
               </div>
 
-              <!-- Toggle de Tags de Outros Usuários (se houver matérias compartilhadas com mesmo código) -->
-              {hasOtherUsersTags && (
+              <!-- Toggle de Tags de Outros Usuários (APENAS ao acessar a própria matéria) -->
+              {hasOtherUsersTags && isOwnSubject && (
                 <div class="flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg bg-[var(--bg-page)] border border-[var(--border-subtle)] sans-ui">
                   <span class="text-[11px] text-[var(--text-secondary)]">Tags de outros:</span>
                   <button
@@ -392,7 +404,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
-                              href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
+                              href={materia ? `/${materia.slug}${materiaOwnerParam}#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
                               class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
@@ -403,7 +415,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
                                   <a
-                                    href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
+                                    href={materia ? `/${materia.slug}${materiaOwnerParam}#${sub.id}` : `#${sub.id}`}
                                     data-toc-id={sub.id}
                                     data-toc-title={sub.title}
                                     data-parent-id={chap.id}
@@ -448,7 +460,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
-                              href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
+                              href={materia ? `/${materia.slug}${materiaOwnerParam}#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
                               class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
@@ -459,7 +471,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
                                   <a
-                                    href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
+                                    href={materia ? `/${materia.slug}${materiaOwnerParam}#${sub.id}` : `#${sub.id}`}
                                     data-toc-id={sub.id}
                                     data-toc-title={sub.title}
                                     data-parent-id={chap.id}
@@ -486,7 +498,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                         data-is-other={chap.isFromOther ? 'true' : 'false'}
                       >
                         <a
-                          href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
+                          href={materia ? `/${materia.slug}${materiaOwnerParam}#${chap.id}` : `#${chap.id}`}
                           data-toc-id={chap.id}
                           data-toc-title={chap.title}
                           class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
@@ -497,7 +509,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                           <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                             {chap.subsections.map((sub) => (
                               <a
-                                href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
+                                href={materia ? `/${materia.slug}${materiaOwnerParam}#${sub.id}` : `#${sub.id}`}
                                 data-toc-id={sub.id}
                                 data-toc-title={sub.title}
                                 data-parent-id={chap.id}
@@ -523,7 +535,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                 <span>Questões Resolvidas</span>
                 <a
                   id="sidebar-questions-bank-link"
-                  href={`/${materia.slug}/questoes`}
+                  href={`/${materia.slug}/questoes${materiaOwnerParam}`}
                   class="text-[11px] font-normal text-[var(--accent)] hover:underline"
                 >
                   Ver banco ({questions.length})
@@ -563,7 +575,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       <div class="font-medium truncate">
                         {q.exam} ({q.year}) — {q.title}
                       </div>
-                      {isOther && q.ownerDisplayName && (
+                      {isOther && isOwnSubject && q.ownerDisplayName && (
                         <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono truncate mt-0.5">
                           De: {q.ownerDisplayName}
                         </div>
@@ -858,7 +870,12 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
             // Atualiza o link "Ver banco (XX)" com a contagem total de questões no banco para esta tag
             if (bankLink) {
-              bankLink.href = tag ? `/${materiaSlug}/questoes?tag=${tag}` : `/${materiaSlug}/questoes`;
+              const currentOwner = new URLSearchParams(window.location.search).get('owner');
+              const bParams = new URLSearchParams();
+              if (tag) bParams.set('tag', tag);
+              if (currentOwner) bParams.set('owner', currentOwner);
+              const bQuery = bParams.toString() ? `?${bParams.toString()}` : '';
+              bankLink.href = `/${materiaSlug}/questoes${bQuery}`;
               bankLink.textContent = `Ver banco (${matchingItems.length})`;
             }
 
