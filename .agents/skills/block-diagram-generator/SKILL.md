@@ -7,7 +7,7 @@ description: >-
 
 # Skill: Gerador e Projetista de Diagramas de Blocos (`block-diagram-generator`)
 
-Esta skill capacita o assistente **Antigravity CLI** a conceber, parametrizar e integrar diagramas de blocos vetoriais (SVG nativo com tipografia matemática KaTeX) em cadernos teóricos e questões resolvidas em formato MDX.
+Esta skill capacita o assistente a conceber, parametrizar e integrar diagramas de blocos vetoriais (SVG nativo com tipografia matemática KaTeX) em cadernos teóricos e questões resolvidas em formato MDX.
 
 Os diagramas são renderizados pelo componente `<BlockDiagram />` do Astro, contando com suporte automático a temas (Papel, Escuro e OLED), visualizador interativo em modal de tela cheia (pan & pinch-to-zoom) e atalhos de navegação.
 

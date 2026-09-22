@@ -7,7 +7,7 @@ description: >-
 
 # Skill: Gerador de Cadernos Teóricos e Estudo por Questões (`question-study-generator`)
 
-Esta skill orienta o assistente **Antigravity CLI** no processamento de notas de aula, ementas, materiais didáticos e avaliações universitárias (provas, testes e listas), orquestrando a geração de cadernos teóricos completos em fluxo contínuo e a resolução de questões de exames para o website acadêmico em Astro.
+Esta skill orienta o assistente no processamento de notas de aula, ementas, materiais didáticos e avaliações universitárias (provas, testes e listas), orquestrando a geração de cadernos teóricos completos em fluxo contínuo e a resolução de questões de exames para o website acadêmico em Astro.
 
 ---
 
@@ -103,32 +103,6 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
 ---
 
 ## 3. Ecossistema Integrado de Skills
-
-```
-                  ┌─────────────────────────────────────────────────┐
-                  │                 CADERNOS TEÓRICOS               │
-                  └───────────────┬─────────────────┬───────────────┘
-                                  │                 │
-                                  ▼                 ▼
-          ┌──────────────────────────────┐   ┌──────────────────────────────┐
-          │   question-study-generator   │   │   summary-study-generator    │
-          │  ("Estudo guiado por         │   │  ("Resumo da matéria" via    │
-          │   questões" via provas)      │   │   slides/notas + figuras)    │
-          └──────────────┬───────────────┘   └──────────────┬───────────────┘
-                         │                                  │
-                         ▼                                  │
-          ┌──────────────────────────────┐                  │
-          │       explain-question       │                  │
-          │ (Resolução Micro de Questões │                  │
-          │  Paralelizável Subagentes)   │                  │
-          └──────────────┬───────────────┘                  │
-                         │                                  │
-                         ▼                                  ▼
-          ┌─────────────────────────────────────────────────────────┐
-          │                block-diagram-generator                  │
-          │       (Diagramas Vetoriais KaTeX / SLITs / PDS)         │
-          └─────────────────────────────────────────────────────────┘
-```
 
 1. **`question-study-generator` (Esta skill):**
    * Cadernos teóricos focados no conteúdo cobrado por exames (`archive/<materia>/resumos/...`).

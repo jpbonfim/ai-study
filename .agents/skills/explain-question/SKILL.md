@@ -8,7 +8,7 @@ description: >-
 
 # Skill: Resolução Pedagógica de Questões e Extração (`explain-question`)
 
-Esta skill orienta o assistente **Antigravity CLI** na extração de questões de avaliações (provas, testes e listas) e na elaboração de resoluções de alto nível acadêmico para o website de estudos.
+Esta skill orienta o assistente na extração de questões de avaliações (provas, testes e listas) e na elaboração de resoluções de alto nível acadêmico para o website de estudos.
 
 ---
 

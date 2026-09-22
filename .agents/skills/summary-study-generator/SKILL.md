@@ -8,7 +8,7 @@ description: >-
 
 # Skill: Gerador de Resumos Teóricos a partir de Materiais (`summary-study-generator`)
 
-Esta skill orienta o assistente **Antigravity CLI** e o **Claude Code** no processamento de materiais didáticos de disciplinas universitárias (slides de aula, notas de aula, apostilas, ementas e capítulos de livros em PDF/texto). Ela gera cadernos teóricos completos em fluxo contínuo, fazendo **apenas os resumos conceituais** (sem a necessidade de vincular questões ou cartões de exercícios), com suporte a extração criteriosa de imagens e diagramas úteis.
+Esta skill orienta o assistente no processamento de materiais didáticos de disciplinas universitárias (slides de aula, notas de aula, apostilas, ementas e capítulos de livros em PDF/texto). Ela gera cadernos teóricos completos em fluxo contínuo, fazendo **apenas os resumos conceituais** (sem a necessidade de vincular questões ou cartões de exercícios), com suporte a extração criteriosa de imagens e diagramas úteis.
 
 ---
 
@@ -16,7 +16,7 @@ Esta skill orienta o assistente **Antigravity CLI** e o **Claude Code** no proce
 
 Ao redigir os cadernos e capítulos de resumo (`archive/<materia>/resumos/<slug>.mdx` ou `archive/<materia>/resumos/materia/<slug>.mdx`), o assistente **deve seguir rigorosamente a seguinte filosofia metodológica**:
 
-> **"Faça uma explicação teórica completa que aborde todo o conteúdo cobrado pelas provas. O conteúdo deve ser o suficiente para resolver todas as questões das provas sem conhecimento prévio dos tópicos abordados.**
+> **"Faça uma explicação teórica completa que abranja todo o conteúdo abordado pelo material. O conteúdo deve ser o suficiente para aprender toda a matéria, não presuma que o leitor já sabe partes do conteúdo.**
 > 
 > **A explicação deve ser direta ao ponto e de fácil entendimento, use linguagem simples e precisa (mantenha as explicações e termos corretos, não faça simplificações que prejudiquem a precisão do conteúdo).**
 > 
