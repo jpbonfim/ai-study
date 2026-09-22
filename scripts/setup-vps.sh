@@ -46,14 +46,34 @@ if [ -f "${SCRIPT_DIR}/Caddyfile.example" ]; then
   echo "    Caddyfile configurado com proxy reverso e TLS interno na porta 443."
 fi
 
-echo "==> [5/7] Configurando o Firewall UFW..."
+echo "==> [5/7] Configurando o Firewall UFW e Preservando Serviços Existentes (VPN/Docker)..."
+# 1. Garante que o UFW permita encaminhamento de tráfego para Docker e VPN (AmneziaWG)
+if [ -f "/etc/default/ufw" ]; then
+  sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+fi
+
+# 2. Habilita/preserva IP Forwarding no kernel para a VPN
+sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1 || true
+if ! grep -q "^net.ipv4.ip_forward=1" /etc/sysctl.conf 2>/dev/null; then
+  echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+fi
+
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow 22/tcp comment 'SSH'
 ufw allow 80/tcp comment 'HTTP Redirect'
 ufw allow 443/tcp comment 'HTTPS'
+
+# 3. Libera explicitamente a porta UDP da VPN Amnezia (AmneziaWG)
+ufw allow 30388/udp comment 'Amnezia VPN WireGuard'
+
+# Preserva portas e roteamento do Docker
+if command -v docker &>/dev/null; then
+  echo "    Docker detectado. Encaminhamento de pacotes configurado para Amnezia VPN."
+fi
+
 ufw --force enable
-echo "    Firewall ativo e protegido."
+echo "    Firewall ativo e protegido (portas 22, 80, 443 TCP e 30388 UDP liberadas com forwarding ativo)."
 
 echo "==> [6/7] Criando usuário de sistema dedicado 'study'..."
 if ! id -u study &>/dev/null; then
