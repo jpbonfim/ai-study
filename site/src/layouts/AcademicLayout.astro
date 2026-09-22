@@ -308,13 +308,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
               <nav class="space-y-2 text-sm" id="sidebar-toc-nav">
                 {hasBothTocTypes ? (
-                  <div class="space-y-2.5" id="sidebar-toc-groups">
+                  <div class="space-y-3" id="sidebar-toc-groups">
                     
-                    <!-- Aba Colapsável: Resumo da Matéria -->
-                    <div class="toc-collapsible-group space-y-1 border border-[var(--border-subtle)] rounded-lg p-2 bg-[var(--bg-surface)] shadow-2xs" data-group-type="materia">
+                    <!-- Seção Colapsável: Resumo da Matéria -->
+                    <div class="toc-collapsible-group space-y-1" data-group-type="materia">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1 px-1.5 rounded-md text-xs font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors cursor-pointer select-none group"
+                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)]/30 transition-colors cursor-pointer select-none group"
                         aria-expanded="true"
                         data-target-group="materia"
                       >
@@ -322,13 +322,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                           <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
-                          <span class="tracking-wide">Resumo da matéria</span>
+                          <span class="truncate">Resumo da matéria</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1 pt-1" data-group-content="materia">
+                      <div class="toc-collapsible-content space-y-1.5 pt-0.5" data-group-content="materia">
                         {materiaToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
@@ -339,19 +339,19 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
-                              class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1 px-2 rounded-md"
+                              class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
                             >
                               {chap.title}
                             </a>
                             {chap.subsections && chap.subsections.length > 0 && (
-                              <div class="pl-2.5 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
+                              <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
                                   <a
                                     href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
                                     data-toc-id={sub.id}
                                     data-toc-title={sub.title}
                                     data-parent-id={chap.id}
-                                    class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-0.5 px-1.5 rounded transition-colors leading-snug"
+                                    class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
                                   >
                                     {sub.title}
                                   </a>
@@ -363,11 +363,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       </div>
                     </div>
 
-                    <!-- Aba Colapsável: Estudo Guiado por Questões -->
-                    <div class="toc-collapsible-group space-y-1 border border-[var(--border-subtle)] rounded-lg p-2 bg-[var(--bg-surface)] shadow-2xs" data-group-type="questoes">
+                    <!-- Seção Colapsável: Estudo Guiado por Questões -->
+                    <div class="toc-collapsible-group space-y-1 pt-3 border-t border-[var(--border-subtle)]" data-group-type="questoes">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1 px-1.5 rounded-md text-xs font-bold text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors cursor-pointer select-none group"
+                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)]/30 transition-colors cursor-pointer select-none group"
                         aria-expanded="true"
                         data-target-group="questoes"
                       >
@@ -375,13 +375,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                           <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                           </svg>
-                          <span class="tracking-wide">Estudo guiado por questões</span>
+                          <span class="truncate">Estudo guiado por questões</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1 pt-1" data-group-content="questoes">
+                      <div class="toc-collapsible-content space-y-1.5 pt-0.5" data-group-content="questoes">
                         {questoesToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
@@ -392,19 +392,19 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               href={materia ? `/${materia.slug}#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
-                              class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1 px-2 rounded-md"
+                              class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
                             >
                               {chap.title}
                             </a>
                             {chap.subsections && chap.subsections.length > 0 && (
-                              <div class="pl-2.5 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
+                              <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
                                   <a
                                     href={materia ? `/${materia.slug}#${sub.id}` : `#${sub.id}`}
                                     data-toc-id={sub.id}
                                     data-toc-title={sub.title}
                                     data-parent-id={chap.id}
-                                    class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-0.5 px-1.5 rounded transition-colors leading-snug"
+                                    class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
                                   >
                                     {sub.title}
                                   </a>
@@ -807,8 +807,16 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               else groupMateria.classList.add('hidden');
             }
             if (groupQuestoes) {
-              if (visibleQuestoes > 0) groupQuestoes.classList.remove('hidden');
-              else groupQuestoes.classList.add('hidden');
+              if (visibleQuestoes > 0) {
+                groupQuestoes.classList.remove('hidden');
+                if (visibleMateria > 0) {
+                  groupQuestoes.classList.add('pt-3', 'border-t', 'border-[var(--border-subtle)]');
+                } else {
+                  groupQuestoes.classList.remove('pt-3', 'border-t', 'border-[var(--border-subtle)]');
+                }
+              } else {
+                groupQuestoes.classList.add('hidden');
+              }
             }
 
             if (visibleChapters > 0) {
