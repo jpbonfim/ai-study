@@ -487,6 +487,25 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       </div>
                     </div>
 
+                    <script is:inline define:vars={{ mSlug: materia?.slug }}>
+                      try {
+                        if (typeof localStorage !== 'undefined' && mSlug) {
+                          ['materia', 'questoes'].forEach(function(grp) {
+                            var saved = localStorage.getItem('study_toc_expanded_' + mSlug + '_' + grp);
+                            var isQ = window.location.pathname.includes('/questoes');
+                            var expand = saved !== null ? (saved === 'true') : (grp === 'questoes' ? isQ : !isQ);
+                            if (expand) {
+                              var c = document.querySelector('.toc-collapsible-content[data-group-content="' + grp + '"]');
+                              var b = document.querySelector('.toc-collapsible-btn[data-target-group="' + grp + '"]');
+                              var ch = b ? b.querySelector('.toc-collapsible-chevron') : null;
+                              if (c) c.classList.remove('hidden');
+                              if (ch) ch.classList.remove('-rotate-90');
+                              if (b) b.setAttribute('aria-expanded', 'true');
+                            }
+                          });
+                        }
+                      } catch(e) {}
+                    </script>
                   </div>
                 ) : (
                   <div class="space-y-1.5" id="sidebar-toc-direct">
@@ -566,7 +585,8 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       data-question-tags={(q.tags || []).join(',')}
                       data-is-other={isOther ? 'true' : 'false'}
                       class:list={[
-                        "sidebar-question-item sans-ui block text-xs p-2 rounded-md border transition-all",
+                        "sidebar-question-item will-change-transform sans-ui block text-xs p-2 rounded-md border transition-all",
+                        idx >= 5 ? "hidden" : "",
                         currentQuestionId === q.id
                           ? "bg-[var(--accent-subtle)] border-[var(--accent)]/40 text-[var(--accent)] font-semibold"
                           : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border-transparent hover:border-[var(--border-subtle)]"
@@ -757,6 +777,9 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               })();
               if (qId && qId !== 'questoes') {
                 recordVisitedQuestion(qId);
+                if (link.classList.contains('sidebar-question-item')) {
+                  updateSidebarUI(currentActiveTag);
+                }
               }
             }
           });
@@ -775,6 +798,50 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               return localStorage.getItem(storageKey);
             } catch(e) {
               return null;
+            }
+          }
+
+          function getGroupExpandedStorageKey(groupType) {
+            return 'study_toc_expanded_' + materiaSlug + '_' + groupType;
+          }
+
+          function isGroupExpanded(groupType) {
+            try {
+              const val = localStorage.getItem(getGroupExpandedStorageKey(groupType));
+              if (val !== null) {
+                return val === 'true';
+              }
+            } catch(e) {}
+
+            try {
+              const isQuestionPage = window.location.pathname.includes('/questoes');
+              if (groupType === 'questoes') return isQuestionPage;
+              if (groupType === 'materia') return !isQuestionPage;
+            } catch(e) {}
+
+            return false;
+          }
+
+          function setGroupExpanded(groupType, expanded) {
+            try {
+              localStorage.setItem(getGroupExpandedStorageKey(groupType), expanded ? 'true' : 'false');
+            } catch(e) {}
+          }
+
+          function applyGroupExpandedUI(groupType, expanded) {
+            const content = document.querySelector(`.toc-collapsible-content[data-group-content="${groupType}"]`);
+            const btn = document.querySelector(`.toc-collapsible-btn[data-target-group="${groupType}"]`);
+            const chevron = btn ? btn.querySelector('.toc-collapsible-chevron') : null;
+            if (!content) return;
+
+            if (expanded) {
+              content.classList.remove('hidden');
+              chevron?.classList.remove('-rotate-90');
+              btn?.setAttribute('aria-expanded', 'true');
+            } else {
+              content.classList.add('hidden');
+              chevron?.classList.add('-rotate-90');
+              btn?.setAttribute('aria-expanded', 'false');
             }
           }
 
@@ -913,12 +980,20 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             const groupQuestoes = document.querySelector('.toc-collapsible-group[data-group-type="questoes"]');
 
             if (groupMateria) {
-              if (visibleMateria > 0) groupMateria.classList.remove('hidden');
-              else groupMateria.classList.add('hidden');
+              if (visibleMateria > 0) {
+                groupMateria.classList.remove('hidden');
+                applyGroupExpandedUI('materia', isGroupExpanded('materia'));
+              } else {
+                groupMateria.classList.add('hidden');
+              }
             }
             if (groupQuestoes) {
-              if (visibleQuestoes > 0) groupQuestoes.classList.remove('hidden');
-              else groupQuestoes.classList.add('hidden');
+              if (visibleQuestoes > 0) {
+                groupQuestoes.classList.remove('hidden');
+                applyGroupExpandedUI('questoes', isGroupExpanded('questoes'));
+              } else {
+                groupQuestoes.classList.add('hidden');
+              }
             }
 
             if (visibleChapters > 0) {
@@ -927,6 +1002,22 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             } else {
               tocEmpty?.classList.remove('hidden');
               tocNav?.classList.add('hidden');
+            }
+
+            const MAX_SIDEBAR_QUESTIONS = 5;
+
+            // Coleta posições prévias (First) dos itens visíveis para animação fluida (FLIP)
+            const prevRects = new Map();
+            if (questionsList) {
+              const currentVisible = Array.from(questionsList.children).filter(
+                (el) => !el.classList.contains('hidden') && el.offsetParent !== null
+              );
+              currentVisible.forEach((item) => {
+                const rect = item.getBoundingClientRect();
+                if (rect.height > 0) {
+                  prevRects.set(item, rect);
+                }
+              });
             }
 
             // Ordena as questões correspondentes:
@@ -954,13 +1045,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               matchingItems.forEach(item => questionsList.appendChild(item));
             }
 
-            // Exibe apenas as primeiras 5 questões
-            const MAX_SIDEBAR_QUESTIONS = 5;
             let visibleQuestions = 0;
+            const newVisibleItems = [];
 
             matchingItems.forEach((item, index) => {
               if (index < MAX_SIDEBAR_QUESTIONS) {
                 item.classList.remove('hidden');
+                newVisibleItems.push(item);
                 visibleQuestions++;
               } else {
                 item.classList.add('hidden');
@@ -984,6 +1075,50 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             } else {
               questionsEmpty?.classList.remove('hidden');
               questionsList?.classList.add('hidden');
+            }
+
+            // Animação FLIP: interpolação suave caso itens visíveis tenham mudado de posição
+            if (prevRects.size > 0 && newVisibleItems.length > 0) {
+              const animatedElements = [];
+
+              newVisibleItems.forEach((item) => {
+                const newRect = item.getBoundingClientRect();
+                const oldRect = prevRects.get(item);
+
+                if (oldRect && newRect.height > 0) {
+                  const deltaY = oldRect.top - newRect.top;
+                  if (Math.abs(deltaY) > 1) {
+                    item.style.transform = `translateY(${deltaY}px)`;
+                    item.style.transition = 'none';
+                    animatedElements.push(item);
+                  }
+                } else if (!oldRect && newRect.height > 0) {
+                  item.style.opacity = '0';
+                  item.style.transform = 'translateY(14px)';
+                  item.style.transition = 'none';
+                  animatedElements.push(item);
+                }
+              });
+
+              if (animatedElements.length > 0) {
+                void questionsList?.offsetHeight;
+
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    animatedElements.forEach((item) => {
+                      item.style.transition = 'transform 360ms cubic-bezier(0.25, 1, 0.5, 1), opacity 360ms ease';
+                      item.style.transform = '';
+                      item.style.opacity = '';
+                    });
+
+                    setTimeout(() => {
+                      animatedElements.forEach((item) => {
+                        item.style.transition = '';
+                      });
+                    }, 380);
+                  });
+                });
+              }
             }
           }
 
@@ -1017,7 +1152,14 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
           window.selectStudyTag = selectStudyTag;
           window.getCurrentStudyTag = () => currentActiveTag;
 
+          let tagsInitialized = false;
           function initTags() {
+            if (tagsInitialized) {
+              updateSidebarUI(currentActiveTag);
+              return;
+            }
+            tagsInitialized = true;
+
             const trigger = document.getElementById('sidebar-tag-trigger');
             const menu = document.getElementById('sidebar-tag-menu');
             const chevron = document.getElementById('sidebar-tag-chevron');
@@ -1185,23 +1327,22 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             });
 
             function initCollapsibleTocGroups() {
+              ['materia', 'questoes'].forEach((groupType) => {
+                const expanded = isGroupExpanded(groupType);
+                applyGroupExpandedUI(groupType, expanded);
+              });
+
               document.querySelectorAll('.toc-collapsible-btn').forEach((btn) => {
+                if (btn.dataset.collapsibleBound === 'true') return;
+                btn.dataset.collapsibleBound = 'true';
+
                 btn.addEventListener('click', (e) => {
                   e.stopPropagation();
                   const targetGroup = btn.getAttribute('data-target-group');
-                  const content = document.querySelector(`.toc-collapsible-content[data-group-content="${targetGroup}"]`);
-                  const chevron = btn.querySelector('.toc-collapsible-chevron');
-                  if (content) {
-                    const isHidden = content.classList.contains('hidden');
-                    if (isHidden) {
-                      content.classList.remove('hidden');
-                      chevron?.classList.remove('-rotate-90');
-                      btn.setAttribute('aria-expanded', 'true');
-                    } else {
-                      content.classList.add('hidden');
-                      chevron?.classList.add('-rotate-90');
-                      btn.setAttribute('aria-expanded', 'false');
-                    }
+                  if (targetGroup) {
+                    const nextExpanded = !isGroupExpanded(targetGroup);
+                    setGroupExpanded(targetGroup, nextExpanded);
+                    applyGroupExpandedUI(targetGroup, nextExpanded);
                   }
                 });
               });
@@ -1213,10 +1354,9 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             selectStudyTag(initialTag, false);
           }
 
+          initTags();
           if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initTags);
-          } else {
-            initTags();
+            document.addEventListener('DOMContentLoaded', () => initTags());
           }
         })();
       </script>
