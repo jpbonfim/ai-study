@@ -189,39 +189,48 @@ const {
             )}
           </div>
 
-          <!-- Seletor Dropdown de Avaliações / Tags -->
+          <!-- Seletor Dropdown de Avaliações / Tags (Estilo Acadêmico Integrado) -->
           {availableTags && availableTags.length > 0 && (
             <div class="space-y-2 pb-4 border-b border-[var(--border-subtle)]" id="sidebar-tag-section">
-              <label for="sidebar-tag-select" class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] cursor-pointer">
-                <span class="flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <label for="sidebar-tag-select" class="flex items-center gap-1.5 cursor-pointer hover:text-[var(--accent)] transition-colors">
+                  <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                   <span>Avaliação / Tag</span>
-                </span>
-                <span class="text-[10px] font-normal lowercase opacity-80" id="sidebar-active-tag-hint">
+                </label>
+                <span class="text-[10px] font-mono lowercase tracking-tight text-[var(--text-muted)]" id="sidebar-active-tag-hint">
                   (selecione para ver)
                 </span>
-              </label>
+              </div>
 
-              <div class="relative">
+              <div class="relative group">
+                <!-- Ícone da Esquerda com Destaque de Hover -->
+                <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-hover:text-[var(--accent)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                </div>
+
+                <!-- Select Dropdown Estilizado com Tipografia Sans-UI e Hover Accent -->
                 <select
                   id="sidebar-tag-select"
-                  class="w-full appearance-none px-3 py-2 pr-8 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] hover:border-[var(--border-strong)] focus:border-[var(--accent)] text-[var(--text-primary)] font-serif font-semibold text-sm transition-all focus:outline-none cursor-pointer shadow-2xs"
+                  class="sans-ui w-full appearance-none pl-8 pr-8 py-2 text-xs sm:text-[13px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-secondary)] shadow-2xs hover:bg-[var(--bg-surface-hover)] hover:border-[var(--accent)] hover:text-[var(--accent)] focus:text-[var(--text-primary)] focus:bg-[var(--bg-surface)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none cursor-pointer transition-all duration-200"
                   aria-label="Selecionar avaliação ou tag"
                 >
-                  <option value="" class="font-sans text-xs text-[var(--text-muted)]">
-                    -- Selecione uma Avaliação --
+                  <option value="" class="font-sans text-xs text-[var(--text-muted)] bg-[var(--bg-surface)]">
+                    -- Todas as Avaliações / Início --
                   </option>
                   {availableTags.map((tag) => (
-                    <option value={tag.id} class="font-sans text-sm py-1">
+                    <option value={tag.id} class="font-sans text-xs sm:text-sm text-[var(--text-primary)] bg-[var(--bg-surface)] py-1.5">
                       {tag.label} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
                     </option>
                   ))}
                 </select>
-                <!-- Seta Customizada do Dropdown -->
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-[var(--text-secondary)]">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <!-- Chevron com Microinteração no Hover -->
+                <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-hover:text-[var(--accent)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
+                  <svg class="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -407,11 +416,11 @@ const {
 
             if (tagSelect) {
               if (tag) {
-                tagSelect.classList.add('border-[var(--accent)]', 'text-[var(--accent)]');
-                tagSelect.classList.remove('text-[var(--text-primary)]');
+                tagSelect.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                tagSelect.classList.remove('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
               } else {
-                tagSelect.classList.remove('border-[var(--accent)]', 'text-[var(--accent)]');
-                tagSelect.classList.add('text-[var(--text-primary)]');
+                tagSelect.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                tagSelect.classList.add('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
               }
             }
 
