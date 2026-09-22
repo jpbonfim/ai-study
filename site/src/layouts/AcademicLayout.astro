@@ -189,50 +189,98 @@ const {
             )}
           </div>
 
-          <!-- Seletor Dropdown de Avaliações / Tags (Estilo Acadêmico Integrado) -->
+          <!-- Seletor Dropdown Customizado de Avaliações / Tags (Estilo Acadêmico Integrado) -->
           {availableTags && availableTags.length > 0 && (
             <div class="space-y-2 pb-4 border-b border-[var(--border-subtle)]" id="sidebar-tag-section">
               <div class="sans-ui flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                <label for="sidebar-tag-select" class="flex items-center gap-1.5 cursor-pointer hover:text-[var(--accent)] transition-colors">
+                <button
+                  type="button"
+                  id="sidebar-tag-label-btn"
+                  class="flex items-center gap-1.5 cursor-pointer hover:text-[var(--accent)] transition-colors text-left"
+                  title="Clique para alternar opções de avaliação"
+                >
                   <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                   <span>Avaliação / Tag</span>
-                </label>
+                </button>
                 <span class="text-[10px] font-mono lowercase tracking-tight text-[var(--text-muted)]" id="sidebar-active-tag-hint">
                   (selecione para ver)
                 </span>
               </div>
 
-              <div class="relative group">
-                <!-- Ícone da Esquerda com Destaque de Hover -->
-                <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-hover:text-[var(--accent)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                  </svg>
-                </div>
-
-                <!-- Select Dropdown Estilizado com Tipografia Sans-UI e Hover Accent -->
-                <select
-                  id="sidebar-tag-select"
-                  class="sans-ui w-full appearance-none pl-8 pr-8 py-2 text-xs sm:text-[13px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-secondary)] shadow-2xs hover:bg-[var(--bg-surface-hover)] hover:border-[var(--accent)] hover:text-[var(--accent)] focus:text-[var(--text-primary)] focus:bg-[var(--bg-surface)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none cursor-pointer transition-all duration-200"
-                  aria-label="Selecionar avaliação ou tag"
-                >
-                  <option value="" class="font-sans text-xs text-[var(--text-muted)] bg-[var(--bg-surface)]">
-                    -- Todas as Avaliações / Início --
+              <!-- Select nativo oculto para compatibilidade com automações e scripts legados -->
+              <select id="sidebar-tag-select" class="sr-only" tabindex="-1" aria-hidden="true">
+                <option value="">-- Todas as Avaliações / Início --</option>
+                {availableTags.map((tag) => (
+                  <option value={tag.id}>
+                    {tag.label} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
                   </option>
-                  {availableTags.map((tag) => (
-                    <option value={tag.id} class="font-sans text-xs sm:text-sm text-[var(--text-primary)] bg-[var(--bg-surface)] py-1.5">
-                      {tag.label} {tag.questionsCount !== undefined && tag.questionsCount > 0 ? `(${tag.questionsCount} questões)` : ''}
-                    </option>
-                  ))}
-                </select>
+                ))}
+              </select>
 
-                <!-- Chevron com Microinteração no Hover -->
-                <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-hover:text-[var(--accent)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
-                  <svg class="w-4 h-4 transition-transform duration-200 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <!-- Componente de Dropdown Customizado (Totalmente Estilizado via Variáveis do Tema) -->
+              <div class="relative w-full" id="sidebar-tag-custom-dropdown">
+                <button
+                  type="button"
+                  id="sidebar-tag-trigger"
+                  class="sans-ui w-full flex items-center justify-between pl-3 pr-2.5 py-2 text-xs sm:text-[13px] font-medium rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] text-[var(--text-secondary)] shadow-2xs hover:bg-[var(--bg-surface-hover)] hover:border-[var(--accent)] hover:text-[var(--accent)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none cursor-pointer transition-all duration-200 group text-left"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                >
+                  <div class="flex items-center gap-2 min-w-0 truncate">
+                    <svg class="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    <span id="sidebar-tag-selected-label" class="truncate">
+                      -- Todas as Avaliações / Início --
+                    </span>
+                  </div>
+
+                  <svg
+                    id="sidebar-tag-chevron"
+                    class="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-transform duration-200 shrink-0 ml-1.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
+                </button>
+
+                <!-- Menu Dropdown Popover Customizado com Cores Harmoniosas -->
+                <div
+                  id="sidebar-tag-menu"
+                  class="hidden absolute left-0 right-0 top-full mt-1.5 z-50 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] p-1 shadow-xl shadow-black/15 text-xs sm:text-[13px] space-y-0.5 max-h-60 overflow-y-auto"
+                  role="listbox"
+                  tabindex="-1"
+                >
+                  <button
+                    type="button"
+                    data-tag-value=""
+                    data-tag-label="-- Todas as Avaliações / Início --"
+                    class="tag-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] focus:text-[var(--accent)] focus:bg-[var(--accent-subtle)] focus:outline-none transition-colors duration-150 cursor-pointer group"
+                    role="option"
+                  >
+                    <span class="truncate">-- Todas as Avaliações / Início --</span>
+                    <span class="tag-opt-check text-[var(--accent)] font-bold shrink-0 ml-1.5 hidden">✓</span>
+                  </button>
+
+                  {availableTags.map((tag) => {
+                    const displayLabel = `${tag.label}${tag.questionsCount !== undefined && tag.questionsCount > 0 ? ` (${tag.questionsCount} questões)` : ''}`;
+                    return (
+                      <button
+                        type="button"
+                        data-tag-value={tag.id}
+                        data-tag-label={displayLabel}
+                        class="tag-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)] focus:text-[var(--accent)] focus:bg-[var(--accent-subtle)] focus:outline-none transition-colors duration-150 cursor-pointer group"
+                        role="option"
+                      >
+                        <span class="truncate">{displayLabel}</span>
+                        <span class="tag-opt-check text-[var(--accent)] font-bold shrink-0 ml-1.5 hidden">✓</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -409,18 +457,44 @@ const {
             const questionsEmpty = document.getElementById('sidebar-questions-empty');
             const questionsList = document.getElementById('sidebar-questions-list');
             const bankLink = document.getElementById('sidebar-questions-bank-link');
+            const trigger = document.getElementById('sidebar-tag-trigger');
+            const selectedLabelEl = document.getElementById('sidebar-tag-selected-label');
 
             if (tagSelect && tagSelect.value !== (tag || '')) {
               tagSelect.value = tag || '';
             }
 
-            if (tagSelect) {
-              if (tag) {
-                tagSelect.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
-                tagSelect.classList.remove('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
+            // Sincroniza o estado das opções customizadas e o texto do botão
+            let activeLabel = '-- Todas as Avaliações / Início --';
+            document.querySelectorAll('.tag-opt-btn').forEach((btn) => {
+              const val = btn.getAttribute('data-tag-value') || '';
+              const check = btn.querySelector('.tag-opt-check');
+              const isMatch = (val === (tag || ''));
+              if (isMatch) {
+                activeLabel = btn.getAttribute('data-tag-label') || activeLabel;
+                btn.classList.add('font-semibold', 'text-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+                btn.classList.remove('text-[var(--text-secondary)]');
+                btn.setAttribute('aria-selected', 'true');
+                check?.classList.remove('hidden');
               } else {
-                tagSelect.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
-                tagSelect.classList.add('bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
+                btn.classList.remove('font-semibold', 'text-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+                btn.classList.add('text-[var(--text-secondary)]');
+                btn.setAttribute('aria-selected', 'false');
+                check?.classList.add('hidden');
+              }
+            });
+
+            if (selectedLabelEl) {
+              selectedLabelEl.textContent = activeLabel;
+            }
+
+            if (trigger) {
+              if (tag) {
+                trigger.classList.add('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                trigger.classList.remove('border-[var(--border-subtle)]', 'bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
+              } else {
+                trigger.classList.remove('border-[var(--accent)]', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                trigger.classList.add('border-[var(--border-subtle)]', 'bg-[var(--bg-page)]', 'text-[var(--text-secondary)]');
               }
             }
 
@@ -511,6 +585,84 @@ const {
           window.getCurrentStudyTag = () => currentActiveTag;
 
           function initTags() {
+            const trigger = document.getElementById('sidebar-tag-trigger');
+            const menu = document.getElementById('sidebar-tag-menu');
+            const chevron = document.getElementById('sidebar-tag-chevron');
+            const labelBtn = document.getElementById('sidebar-tag-label-btn');
+
+            function toggleMenu(show) {
+              const willShow = show !== undefined ? show : menu?.classList.contains('hidden');
+              if (willShow) {
+                document.querySelectorAll('.theme-dropdown-menu').forEach((m) => m.classList.add('hidden'));
+                menu?.classList.remove('hidden');
+                trigger?.setAttribute('aria-expanded', 'true');
+                chevron?.classList.add('rotate-180');
+              } else {
+                menu?.classList.add('hidden');
+                trigger?.setAttribute('aria-expanded', 'false');
+                chevron?.classList.remove('rotate-180');
+              }
+            }
+
+            trigger?.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleMenu();
+            });
+
+            labelBtn?.addEventListener('click', (e) => {
+              e.stopPropagation();
+              trigger?.focus();
+              toggleMenu();
+            });
+
+            trigger?.addEventListener('keydown', (e) => {
+              if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleMenu(true);
+                const activeOrFirst = (menu?.querySelector('.tag-opt-btn.font-semibold') || menu?.querySelector('.tag-opt-btn'));
+                activeOrFirst?.focus();
+              }
+            });
+
+            document.querySelectorAll('.tag-opt-btn').forEach((btn) => {
+              btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = btn.getAttribute('data-tag-value') || '';
+                toggleMenu(false);
+                selectStudyTag(val || null);
+              });
+
+              btn.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  const next = btn.nextElementSibling;
+                  if (next && next.classList.contains('tag-opt-btn')) next.focus();
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  const prev = btn.previousElementSibling;
+                  if (prev && prev.classList.contains('tag-opt-btn')) prev.focus();
+                  else trigger?.focus();
+                } else if (e.key === 'Escape') {
+                  e.preventDefault();
+                  toggleMenu(false);
+                  trigger?.focus();
+                }
+              });
+            });
+
+            document.addEventListener('click', (e) => {
+              const dropdownRoot = document.getElementById('sidebar-tag-custom-dropdown');
+              if (dropdownRoot && !dropdownRoot.contains(e.target)) {
+                toggleMenu(false);
+              }
+            });
+
+            document.addEventListener('keydown', (e) => {
+              if (e.key === 'Escape') {
+                toggleMenu(false);
+              }
+            });
+
             const tagSelect = document.getElementById('sidebar-tag-select');
             tagSelect?.addEventListener('change', (e) => {
               const val = e.target.value;
