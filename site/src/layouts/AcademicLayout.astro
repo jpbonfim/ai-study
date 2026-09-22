@@ -314,17 +314,19 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                     <div class="toc-collapsible-group space-y-1" data-group-type="materia">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)]/30 transition-colors cursor-pointer select-none group"
+                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
                         aria-expanded="true"
                         data-target-group="materia"
                       >
-                        <span class="flex items-center gap-1.5 truncate">
-                          <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                          </svg>
-                          <span class="truncate">Resumo da matéria</span>
+                        <span class="flex items-center gap-2 truncate">
+                          <span class="w-5 h-5 rounded-md flex items-center justify-center bg-[var(--accent-subtle)] text-[var(--accent)] shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                          </span>
+                          <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Resumo da matéria</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
@@ -367,17 +369,19 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                     <div class="toc-collapsible-group space-y-1 pt-3 border-t border-[var(--border-subtle)]" data-group-type="questoes">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-subtle)]/30 transition-colors cursor-pointer select-none group"
+                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
                         aria-expanded="true"
                         data-target-group="questoes"
                       >
-                        <span class="flex items-center gap-1.5 truncate">
-                          <svg class="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                          </svg>
-                          <span class="truncate">Estudo guiado por questões</span>
+                        <span class="flex items-center gap-2 truncate">
+                          <span class="w-5 h-5 rounded-md flex items-center justify-center bg-[var(--accent-subtle)] text-[var(--accent)] shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                          </span>
+                          <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Estudo guiado por questões</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
