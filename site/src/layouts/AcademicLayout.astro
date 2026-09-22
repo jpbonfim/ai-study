@@ -30,6 +30,7 @@ interface Props {
   materia?: Subject;
   availableTags?: TagOption[];
   activeTag?: string | null;
+  currentQuestionId?: string;
   toc?: TocItem[];
   questions?: QuestionLink[];
   activeSectionId?: string;
@@ -41,6 +42,7 @@ const {
   materia,
   availableTags = [],
   activeTag = null,
+  currentQuestionId,
   toc = [],
   questions = [],
   activeSectionId,
@@ -342,9 +344,9 @@ const {
                 <a
                   id="sidebar-questions-bank-link"
                   href={`/${materia.slug}/questoes`}
-                  class="text-[11px] font-normal text-[var(--accent)] hover:underline lowercase"
+                  class="text-[11px] font-normal text-[var(--accent)] hover:underline"
                 >
-                  ver banco
+                  Ver banco ({questions.length})
                 </a>
               </div>
 
@@ -354,13 +356,20 @@ const {
               </div>
 
               <div class="space-y-1.5" id="sidebar-questions-list">
-                {questions.map((q) => (
+                {questions.map((q, idx) => (
                   <a
                     href={`/${materia.slug}/questoes/${q.id}`}
+                    data-question-id={q.id}
+                    data-question-order={idx}
                     data-question-tags={(q.tags || []).join(',')}
-                    class="sidebar-question-item sans-ui block text-xs p-2 rounded-md hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    class:list={[
+                      "sidebar-question-item sans-ui block text-xs p-2 rounded-md border transition-all",
+                      currentQuestionId === q.id
+                        ? "bg-[var(--accent-subtle)] border-[var(--accent)]/40 text-[var(--accent)] font-semibold"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border-transparent hover:border-[var(--border-subtle)]"
+                    ]}
                   >
-                    <div class="font-semibold text-[var(--text-primary)] truncate">
+                    <div class="font-medium truncate">
                       {q.exam} ({q.year}) — {q.title}
                     </div>
                   </a>
@@ -493,10 +502,55 @@ const {
 
     <!-- Script de Gestão e Filtragem de Tags / Avaliações -->
     {materia && (
-      <script is:inline define:vars={{ materiaSlug: materia.slug, defaultInitialTag: activeTag }}>
+      <script is:inline define:vars={{ materiaSlug: materia.slug, defaultInitialTag: activeTag, currentQuestionId: currentQuestionId || null }}>
         (function() {
           const storageKey = 'study_selected_tag_' + materiaSlug;
+          const recentQuestionsStorageKey = 'study_recent_questions_' + materiaSlug;
           let currentActiveTag = null;
+
+          function getRecentQuestions() {
+            try {
+              const raw = localStorage.getItem(recentQuestionsStorageKey);
+              const parsed = JSON.parse(raw || '[]');
+              return Array.isArray(parsed) ? parsed : [];
+            } catch(e) {
+              return [];
+            }
+          }
+
+          function recordVisitedQuestion(qId) {
+            if (!qId || qId === 'questoes' || qId === 'index') return;
+            try {
+              let recents = getRecentQuestions();
+              recents = recents.filter(id => id && id !== qId);
+              recents.unshift(qId);
+              localStorage.setItem(recentQuestionsStorageKey, JSON.stringify(recents.slice(0, 50)));
+            } catch(e) {}
+          }
+
+          // Se estivermos em uma página de questão, registra imediatamente o acesso
+          const qPathMatch = window.location.pathname.match(new RegExp(`/${materiaSlug}/questoes/([^/?#]+)`));
+          const detectedQuestionId = currentQuestionId || (qPathMatch && qPathMatch[1] && qPathMatch[1] !== 'questoes' ? qPathMatch[1] : null);
+          if (detectedQuestionId) {
+            recordVisitedQuestion(detectedQuestionId);
+          }
+
+          // Rastreia cliques em links de questões no site para atualizar o histórico imediatamente
+          document.addEventListener('click', (e) => {
+            const link = e.target.closest('a[href*="/questoes/"], a[data-question-id]');
+            if (link) {
+              const qId = link.getAttribute('data-question-id') || (function() {
+                try {
+                  const href = link.getAttribute('href') || '';
+                  const m = href.match(/\/questoes\/([^/?#]+)/);
+                  return m ? m[1] : null;
+                } catch(err) { return null; }
+              })();
+              if (qId && qId !== 'questoes') {
+                recordVisitedQuestion(qId);
+              }
+            }
+          });
 
           function getParamTag() {
             try {
@@ -564,8 +618,30 @@ const {
               }
             }
 
+            // Filtra e organiza as questões do menu lateral
+            const allQuestionItems = Array.from(document.querySelectorAll('.sidebar-question-item'));
+            const recentIds = getRecentQuestions();
+
+            const matchingItems = [];
+            const nonMatchingItems = [];
+
+            allQuestionItems.forEach((item) => {
+              const itemTags = (item.getAttribute('data-question-tags') || '').split(',').map(s => s.trim());
+              const matches = !tag || itemTags.includes(tag);
+              if (matches) {
+                matchingItems.push(item);
+              } else {
+                nonMatchingItems.push(item);
+              }
+            });
+
+            // Oculta itens que não pertencem à tag ativa
+            nonMatchingItems.forEach(item => item.classList.add('hidden'));
+
+            // Atualiza o link "Ver banco (XX)" com a contagem total de questões no banco para esta tag
             if (bankLink) {
               bankLink.href = tag ? `/${materiaSlug}/questoes?tag=${tag}` : `/${materiaSlug}/questoes`;
+              bankLink.textContent = `Ver banco (${matchingItems.length})`;
             }
 
             if (!tag) {
@@ -599,15 +675,52 @@ const {
               tocNav?.classList.add('hidden');
             }
 
-            // Filtra as questões do menu lateral
+            // Ordena as questões correspondentes:
+            // 1. As mais recentemente acessadas vêm no topo (da mais recente para a mais antiga)
+            // 2. As demais mantêm a ordem padrão de cadastro
+            matchingItems.sort((a, b) => {
+              const idA = a.getAttribute('data-question-id') || '';
+              const idB = b.getAttribute('data-question-id') || '';
+              const posA = recentIds.indexOf(idA);
+              const posB = recentIds.indexOf(idB);
+
+              if (posA !== -1 && posB !== -1) {
+                return posA - posB; // Mais recente (índice 0) primeiro
+              }
+              if (posA !== -1) return -1;
+              if (posB !== -1) return 1;
+
+              const orderA = parseInt(a.getAttribute('data-question-order') || '0', 10);
+              const orderB = parseInt(b.getAttribute('data-question-order') || '0', 10);
+              return orderA - orderB;
+            });
+
+            // Reanexa os itens ordenados ao container para refletir a ordem visual correta no DOM
+            if (questionsList) {
+              matchingItems.forEach(item => questionsList.appendChild(item));
+            }
+
+            // Exibe apenas as primeiras 5 questões
+            const MAX_SIDEBAR_QUESTIONS = 5;
             let visibleQuestions = 0;
-            document.querySelectorAll('.sidebar-question-item').forEach(item => {
-              const itemTags = (item.getAttribute('data-question-tags') || '').split(',').map(s => s.trim());
-              if (itemTags.includes(tag)) {
+
+            matchingItems.forEach((item, index) => {
+              if (index < MAX_SIDEBAR_QUESTIONS) {
                 item.classList.remove('hidden');
                 visibleQuestions++;
               } else {
                 item.classList.add('hidden');
+              }
+
+              // Atualiza estilo se for a questão ativa na página
+              const qId = item.getAttribute('data-question-id');
+              const activeQId = currentQuestionId || detectedQuestionId;
+              if (activeQId && qId === activeQId) {
+                item.classList.add('bg-[var(--accent-subtle)]', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'font-semibold');
+                item.classList.remove('text-[var(--text-secondary)]', 'border-transparent');
+              } else {
+                item.classList.remove('bg-[var(--accent-subtle)]', 'border-[var(--accent)]/40', 'text-[var(--accent)]', 'font-semibold');
+                item.classList.add('text-[var(--text-secondary)]', 'border-transparent');
               }
             });
 
