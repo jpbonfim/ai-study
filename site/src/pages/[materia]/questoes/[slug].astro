@@ -89,10 +89,31 @@ if (canonicalCode) {
 
 const hasOtherUsersTags = otherSources.length > 0;
 
-// Localiza a questão: primeiro tenta no dono principal, depois nas outras fontes
-let questao: QuestionItem | undefined = primaryQuestoes.find((q) => q.id === slug);
+// Localiza a questão (respeitando q_owner caso venha especificado)
+const qOwnerParam = Astro.url.searchParams.get('q_owner');
+let questao: QuestionItem | undefined;
 let questionIsFromOther = false;
 let questionOwnerDisplayName = '';
+
+if (qOwnerParam) {
+  const parsedQOwner = parseInt(qOwnerParam, 10);
+  if (parsedQOwner === primaryOwnerId) {
+    questao = primaryQuestoes.find((q) => q.id === slug);
+  } else {
+    const targetSrc = otherSources.find((src) => src.ownerUserId === parsedQOwner);
+    if (targetSrc) {
+      questao = targetSrc.questions.find((q) => q.id === slug);
+      if (questao) {
+        questionIsFromOther = true;
+        questionOwnerDisplayName = targetSrc.ownerDisplayName;
+      }
+    }
+  }
+}
+
+if (!questao) {
+  questao = primaryQuestoes.find((q) => q.id === slug);
+}
 
 if (!questao) {
   for (const src of otherSources) {
@@ -110,7 +131,7 @@ if (!questao) {
   return Astro.redirect(`/${materiaSlug}/questoes?error=questao_nao_encontrada`);
 }
 
-// Coleta todas as tags únicas
+// Coleta todas as tags únicas do dono principal
 const ownRawTags = [
   ...new Set([
     ...primaryChapters.flatMap((c) => c.tags || []),
@@ -126,6 +147,7 @@ const availableTags: TagOption[] = ownRawTags.map((tagId) => ({
   isFromOtherUser: false,
 }));
 
+// Adiciona tags de outras fontes (com ID unívoco para não conflitar)
 for (const src of otherSources) {
   const srcTags = [
     ...new Set([
@@ -149,8 +171,13 @@ for (const src of otherSources) {
   }
 }
 
-const primaryRawTag = questao.tags?.[0] || 'teste-1';
-const activeTagKey = questionIsFromOther ? `user_${questao.ownerUserId}::${primaryRawTag}` : primaryRawTag;
+// Determina a tag ativa da questão
+const urlTag = Astro.url.searchParams.get('tag');
+let activeTagKey = urlTag;
+if (!activeTagKey) {
+  const primaryRawTag = questao.tags?.[0] || 'teste-1';
+  activeTagKey = questionIsFromOther ? `user_${questao.ownerUserId}::${primaryRawTag}` : primaryRawTag;
+}
 
 // Capítulos e Sumário
 const chaptersToRender = [
@@ -218,12 +245,27 @@ const questionsLinks = allQuestionsToRender.map((q) => ({
 
 // Navegação anterior e próxima dentro do escopo relevante (do mesmo dono da questão)
 const scopeQuestoes = questionIsFromOther
-  ? (otherSources.find(s => s.ownerUserId === questao!.ownerUserId)?.questions || [questao])
+  ? (otherSources.find((s) => s.ownerUserId === questao!.ownerUserId)?.questions || [questao])
   : primaryQuestoes;
 
 const currentIndex = scopeQuestoes.findIndex((q) => q.id === questao.id);
 const prevQ = currentIndex > 0 ? scopeQuestoes[currentIndex - 1] : null;
 const nextQ = currentIndex < scopeQuestoes.length - 1 ? scopeQuestoes[currentIndex + 1] : null;
+
+function buildQuestionUrl(targetQ: QuestionItem) {
+  const params = new URLSearchParams();
+  if (targetQ.ownerUserId && targetQ.ownerUserId !== primaryOwnerId) {
+    params.set('q_owner', String(targetQ.ownerUserId));
+  }
+  if (ownerParam) {
+    params.set('owner', ownerParam);
+  }
+  if (activeTagKey) {
+    params.set('tag', activeTagKey);
+  }
+  const qStr = params.toString();
+  return `/${materia.slug}/questoes/${targetQ.id}${qStr ? `?${qStr}` : ''}`;
+}
 
 const formattedImages = questao.images || [];
 ---
@@ -244,18 +286,18 @@ const formattedImages = questao.images || [];
     <!-- Navegação Superior Estilo Artigo -->
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 text-xs pb-4 border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
       <div class="flex items-center gap-2">
-        <a href={`/${materia.slug}/questoes?tag=${encodeURIComponent(activeTagKey)}`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}/questoes?tag=${encodeURIComponent(activeTagKey)}${ownerParam ? `&owner=${ownerParam}` : ''}`} class="hover:text-[var(--accent)] transition-colors">
           &larr; Banco de Questões
         </a>
         <span>•</span>
-        <a href={`/${materia.slug}?tag=${encodeURIComponent(activeTagKey)}#${questao.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
+        <a href={`/${materia.slug}?tag=${encodeURIComponent(activeTagKey)}${ownerParam ? `&owner=${ownerParam}` : ''}#${questao.topicSlug}`} class="hover:text-[var(--accent)] transition-colors">
           Ir para a Teoria do Capítulo &rarr;
         </a>
       </div>
       <div class="flex items-center gap-2 font-mono">
         {questionIsFromOther && (
           <span class="px-2 py-0.5 rounded text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
-            De: {questionOwnerDisplayName}
+            Compartilhada por: {questionOwnerDisplayName}
           </span>
         )}
         <span class="font-bold text-[var(--accent)]">
@@ -351,7 +393,7 @@ const formattedImages = questao.images || [];
     <nav class="flex items-center justify-between pt-6 border-t border-[var(--border-subtle)] sans-ui text-xs">
       {prevQ ? (
         <a
-          href={`/${materia.slug}/questoes/${prevQ.id}${questionIsFromOther && prevQ.ownerUserId ? `?owner=${prevQ.ownerUserId}` : ''}`}
+          href={buildQuestionUrl(prevQ)}
           class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
         >
           <span>&larr;</span>
@@ -361,7 +403,7 @@ const formattedImages = questao.images || [];
 
       {nextQ ? (
         <a
-          href={`/${materia.slug}/questoes/${nextQ.id}${questionIsFromOther && nextQ.ownerUserId ? `?owner=${nextQ.ownerUserId}` : ''}`}
+          href={buildQuestionUrl(nextQ)}
           class="flex items-center gap-1.5 p-2 rounded hover:bg-[var(--bg-subtle)] text-[var(--accent)] font-semibold transition-colors"
         >
           <span class="font-mono">Próxima: {nextQ.title}</span>

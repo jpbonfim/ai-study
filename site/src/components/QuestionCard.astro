@@ -23,7 +23,16 @@ const isDirectItem = !!item;
 const data = isDirectItem ? item : questao?.data;
 const questionId = isDirectItem ? item.id : questao?.id;
 const materiaSlug = data?.materia || 'pds';
-const ownerParam = isDirectItem && item.ownerUserId ? `?owner=${item.ownerUserId}` : '';
+
+const currentSubjectOwner = Astro.url.searchParams.get('owner');
+const params = new URLSearchParams();
+if (isDirectItem && (item as any)?.isFromOther && item.ownerUserId) {
+  params.set('q_owner', String(item.ownerUserId));
+}
+if (currentSubjectOwner) {
+  params.set('owner', currentSubjectOwner);
+}
+const queryString = params.toString() ? `?${params.toString()}` : '';
 ---
 
 {data ? (
@@ -49,7 +58,7 @@ const ownerParam = isDirectItem && item.ownerUserId ? `?owner=${item.ownerUserId
     </div>
 
     <h4 class="font-serif text-base font-bold text-[var(--text-primary)] mb-1.5 leading-snug">
-      <a href={`/${materiaSlug}/questoes/${questionId}${ownerParam}`} class="hover:text-[var(--accent)] transition-colors">
+      <a href={`/${materiaSlug}/questoes/${questionId}${queryString}`} class="hover:text-[var(--accent)] transition-colors">
         {data.title}
       </a>
     </h4>
@@ -63,7 +72,7 @@ const ownerParam = isDirectItem && item.ownerUserId ? `?owner=${item.ownerUserId
 
     <div class="sans-ui flex items-center justify-end pt-2 border-t border-[var(--border-subtle)] text-[11px]">
       <a
-        href={`/${materiaSlug}/questoes/${questionId}${ownerParam}`}
+        href={`/${materiaSlug}/questoes/${questionId}${queryString}`}
         class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 text-[11px] sm:text-xs"
       >
         <span>Consultar Resolução Passo a Passo</span>

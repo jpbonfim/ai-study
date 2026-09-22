@@ -538,9 +538,17 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               <div class="space-y-1.5" id="sidebar-questions-list">
                 {questions.map((q, idx) => {
                   const isOther = !!(q.ownerUserId && materia.ownerUserId && q.ownerUserId !== materia.ownerUserId);
+                  const qParams = new URLSearchParams();
+                  if (isOther && q.ownerUserId) {
+                    qParams.set('q_owner', String(q.ownerUserId));
+                  }
+                  if (materia.isShared && materia.ownerUserId) {
+                    qParams.set('owner', String(materia.ownerUserId));
+                  }
+                  const qQuery = qParams.toString() ? `?${qParams.toString()}` : '';
                   return (
                     <a
-                      href={`/${materia.slug}/questoes/${q.id}${isOther ? `?owner=${q.ownerUserId}` : ''}`}
+                      href={`/${materia.slug}/questoes/${q.id}${qQuery}`}
                       data-question-id={q.id}
                       data-question-order={idx}
                       data-question-tags={(q.tags || []).join(',')}
@@ -1018,6 +1026,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             try {
               showOtherTags = localStorage.getItem('study_show_other_tags') === 'true';
             } catch(e) {}
+
+            const initialCheckTag = getParamTag() || defaultInitialTag;
+            if (initialCheckTag && initialCheckTag.startsWith('user_')) {
+              showOtherTags = true;
+            }
 
             function updateOtherTagsVisibility(active) {
               showOtherTags = active;
