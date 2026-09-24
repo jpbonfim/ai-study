@@ -181,7 +181,13 @@ export function processChapterFile(
   const rawTags = frontmatter.tags || (frontmatter.tag ? [frontmatter.tag] : ['teste-1']);
   const tags = Array.isArray(rawTags) ? rawTags : [rawTags];
 
-  const htmlContent = renderMarkdownWithKatex(content, ownerUserId, materiaSlug, fileDir);
+  let htmlContent = renderMarkdownWithKatex(content, ownerUserId, materiaSlug, fileDir);
+
+  // Substitui qualquer tag <QuestionCard id="..." /> pelo HTML do card de preview
+  const questionCardRegex = /<[Qq]uestion[Cc]ard\s+id=["']([^"']+)["']\s*(?:\/>|>\s*<\/[Qq]uestion[Cc]ard>)/gi;
+  htmlContent = htmlContent.replace(questionCardRegex, (_, qId) => {
+    return renderQuestionCardHtml(qId.trim(), ownerUserId, materiaSlug);
+  });
 
   const id = path.basename(filePath, path.extname(filePath));
 
@@ -323,30 +329,40 @@ export function processQuestionFile(
  */
 export function loadUserChapters(userId: number, materiaSlug: string): ChapterItem[] {
   const dataDir = getDataDirectory();
-  const resumosDir = path.join(dataDir, 'archives', String(userId), materiaSlug, 'resumos');
-
-  if (!fs.existsSync(resumosDir)) return [];
+  const candidateDirs = [
+    path.join(dataDir, 'archives', String(userId), materiaSlug, 'resumos'),
+    path.resolve(process.cwd(), '../archive', materiaSlug, 'resumos'),
+    path.resolve(process.cwd(), 'archive', materiaSlug, 'resumos'),
+  ];
 
   const results: ChapterItem[] = [];
+  const seenIds = new Set<string>();
 
-  function walk(dir: string) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (/\.(md|mdx)$/i.test(entry.name)) {
-        try {
-          const chap = processChapterFile(fullPath, userId, materiaSlug);
-          results.push(chap);
-        } catch (err) {
-          console.error(`Erro ao carregar capítulo em ${fullPath}:`, err);
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    function walk(d: string) {
+      const entries = fs.readdirSync(d, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(d, entry.name);
+        if (entry.isDirectory()) {
+          walk(fullPath);
+        } else if (/\.(md|mdx)$/i.test(entry.name)) {
+          try {
+            const chap = processChapterFile(fullPath, userId, materiaSlug);
+            if (!seenIds.has(chap.id)) {
+              seenIds.add(chap.id);
+              results.push(chap);
+            }
+          } catch (err) {
+            console.error(`Erro ao carregar capítulo em ${fullPath}:`, err);
+          }
         }
       }
     }
-  }
 
-  walk(resumosDir);
+    walk(dir);
+  }
 
   return results.sort((a, b) => {
     const typeA = a.type === 'materia' ? 0 : 1;
@@ -361,33 +377,113 @@ export function loadUserChapters(userId: number, materiaSlug: string): ChapterIt
  */
 export function loadUserQuestions(userId: number, materiaSlug: string): QuestionItem[] {
   const dataDir = getDataDirectory();
-  const questoesDir = path.join(dataDir, 'archives', String(userId), materiaSlug, 'questoes');
-
-  if (!fs.existsSync(questoesDir)) return [];
+  const candidateDirs = [
+    path.join(dataDir, 'archives', String(userId), materiaSlug, 'questoes'),
+    path.resolve(process.cwd(), '../archive', materiaSlug, 'questoes'),
+    path.resolve(process.cwd(), 'archive', materiaSlug, 'questoes'),
+  ];
 
   const results: QuestionItem[] = [];
+  const seenIds = new Set<string>();
 
-  function walk(dir: string) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (/\.(md|mdx)$/i.test(entry.name)) {
-        try {
-          const q = processQuestionFile(fullPath, userId, materiaSlug);
-          results.push(q);
-        } catch (err) {
-          console.error(`Erro ao carregar questão em ${fullPath}:`, err);
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    function walk(d: string) {
+      const entries = fs.readdirSync(d, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(d, entry.name);
+        if (entry.isDirectory()) {
+          walk(fullPath);
+        } else if (/\.(md|mdx)$/i.test(entry.name)) {
+          try {
+            const q = processQuestionFile(fullPath, userId, materiaSlug);
+            if (!seenIds.has(q.id)) {
+              seenIds.add(q.id);
+              results.push(q);
+            }
+          } catch (err) {
+            console.error(`Erro ao carregar questão em ${fullPath}:`, err);
+          }
         }
       }
     }
-  }
 
-  walk(questoesDir);
+    walk(dir);
+  }
 
   return results.sort((a, b) => {
     if (a.year !== b.year) return b.year - a.year;
     return a.title.localeCompare(b.title);
   });
+}
+
+/**
+ * Renderiza o HTML visual com preview para a tag <QuestionCard id="..." />
+ */
+export function renderQuestionCardHtml(
+  questionId: string,
+  ownerUserId: number,
+  materiaSlug: string
+): string {
+  try {
+    const questions = loadUserQuestions(ownerUserId, materiaSlug);
+    let q = questions.find((item) => item.id === questionId);
+
+    if (!q) {
+      return `<div class="my-4 p-3.5 rounded-lg border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] not-prose">[Questão <code>${questionId}</code> não encontrada no acervo]</div>`;
+    }
+
+  const statementPreview = q.renderedStatement || renderMath(q.statement || '');
+  const badgeType = q.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha';
+
+    return `
+<div class="question-card-preview my-6 p-4 sm:p-5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-subtle)] not-prose shadow-sm hover:border-[var(--accent)] transition-all">
+  <div class="sans-ui flex items-center justify-between gap-2 pb-2 mb-2.5 border-b border-[var(--border-subtle)] text-[11px]">
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <span class="font-bold text-[var(--accent)] uppercase tracking-wider">
+        Exercício • ${q.exam} (${q.year})
+      </span>
+      <span class="text-[var(--text-muted)]">•</span>
+      <span class="text-[var(--text-secondary)] font-medium">
+        ${q.topic}
+      </span>
+    </div>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <span class="rounded px-2 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] uppercase font-semibold text-[var(--text-muted)]">
+        ${badgeType}
+      </span>
+      <span class="text-[var(--text-muted)] italic text-[10px]">
+        ${q.difficulty}
+      </span>
+    </div>
+  </div>
+
+  <h4 class="font-serif text-lg font-bold text-[var(--text-primary)] mb-2 leading-snug">
+    <a href="/${materiaSlug}/questoes/${q.id}" class="hover:text-[var(--accent)] transition-colors">
+      ${q.title}
+    </a>
+  </h4>
+
+  ${
+    statementPreview
+      ? `<div class="font-serif text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-3 mb-3 leading-relaxed">${statementPreview}</div>`
+      : ''
+  }
+
+  <div class="sans-ui flex items-center justify-end pt-2 border-t border-[var(--border-subtle)] text-xs">
+    <a
+      href="/${materiaSlug}/questoes/${q.id}"
+      class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1.5"
+    >
+      <span>Consultar Resolução Passo a Passo</span>
+      <span>&rarr;</span>
+    </a>
+  </div>
+</div>
+`.trim();
+  } catch (err) {
+    console.error(`Erro ao renderizar QuestionCard ${questionId}:`, err);
+    return `<div class="my-4 p-3.5 rounded-lg border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] not-prose">[Questão <code>${questionId}</code> não pôde ser renderizada]</div>`;
+  }
 }

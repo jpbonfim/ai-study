@@ -96,10 +96,11 @@ O agente orquestrador principal lança múltiplos subagentes concorrentes utiliz
 3. **Higiene e Limpeza Obrigatória de Workspace:**
    * É terminantemente proibido deixar scripts temporários (`crop_*.py`, etc.), dumps `.json` ou rascunhos de imagens na raiz do projeto.
    * O orquestrador deve instruir explicitamente os subagentes no prompt a utilizarem o utilitário oficial `.agents/skills/explain-question/scripts/extract_question.py` e a deletarem qualquer script temporário antes de finalizar.
-4. **Consolidação pelo Orquestrador Principal:**
-   * Assim que os subagentes retornarem, o agente principal colhe os tópicos cobrados e os IDs gerados.
+4. **Consolidação e Vinculação Contextual pelo Orquestrador Principal:**
+   * Assim que os subagentes retornarem, o agente principal colhe todos os tópicos cobrados e os IDs gerados.
    * Em seguida, redige ou aprimora o caderno teórico contínuo (`archive/<materia>/resumos/<slug>.mdx`), garantindo que a teoria cubra integralmente todos os pontos demandados pelas questões recém-resolvidas e contenha `tags: ["<tag>"]`.
-   * Adiciona os IDs em `relatedQuestions` no frontmatter e insere os cartões `<QuestionCard id="..." />` nos pontos estratégicos do caderno.
+   * **Inserção Contextual Obrigatória no Meio da Teoria:** Cada cartão `<QuestionCard id="..." />` DEVE ser inserido **diretamente dentro da subseção correspondente**, logo após a explicação teórica do conceito que a resolve
+   * Adiciona todos os IDs em `relatedQuestions` no frontmatter. O runtime SSR da plataforma substitui automaticamente cada tag `<QuestionCard id="..." />` pelo card interativo visual completo com preview do enunciado em KaTeX, badges de avaliação/dificuldade e botão de acesso direto à resolução.
    * Se forem necessárias figuras adicionais no caderno teórico, salve-as em `archive/<materia>/resumos/<imagem>.png` e referencie no MDX por `![Legenda](./<imagem>.png)`. O Astro compila e otimiza imagens relativas em `archive/` automaticamente em tempo de build.
 
 ---
