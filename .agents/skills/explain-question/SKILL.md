@@ -142,56 +142,12 @@ python3 .agents/skills/explain-question/scripts/extract_question.py scaffold mat
 - [ ] Nenhum valor numérico específico da questão aparece?
 - [ ] O estudante conseguiria resolver a questão sozinho após ler apenas esta teoria?
 
-### Exemplos: Teoria Sem Spoiler vs Com Spoiler
-
-**❌ RUIM — Teoria com spoiler e valores da questão:**
-```mdx
-<Theory>
-### Fundamentação Teórica Necessária
-Para esta questão onde a amostragem é de $T = 0{,}01\text{ s}$ e a entrada é $x_c(t) = 2\cos(30\pi t)$:
-A frequência angular de amostragem é $\omega_s = 2\pi / 0{,}01 = 200\pi\text{ rad/s}$.
-Como $30\pi < 100\pi$, não há aliasing e a saída recuperada será exatamente a mesma.
-</Theory>
-```
-
-**✅ BOM — Teoria conceitual, geral e formal (estudo ativo real):**
-```mdx
-<Theory>
-### Fundamentação Teórica Necessária
-
-#### 1. Relações de Frequência na Amostragem Periódica
-Dado um período de amostragem $T$, a frequência angular de amostragem é:
-$$
-\omega_s = \frac{2\pi}{T} \quad [\text{rad/s}]
-$$
-A frequência de Nyquist (frequência de corte do filtro de reconstrução ideal) é dada por:
-$$
-\omega_N = \frac{\omega_s}{2} = \frac{\pi}{T}
-$$
-
-#### 2. Condição de Reconstrução sem Aliasing
-Para um sinal senoidal puro $x_c(t) = A\cos(\Omega_0 t)$, a amostragem ideal produz réplicas espectrais em $\pm \Omega_0 + k\omega_s$, com $k \in \mathbb{Z}$.
-Se $\Omega_0 < \omega_N$, a componente fundamental cai dentro da banda passante do filtro passa-baixas ideal de reconstrução (ganho $T$ e frequência de corte $\omega_c = \omega_s/2$), recuperando $y_r(t) = x_c(t)$ sem distorção.
-Caso $\Omega_0 \ge \omega_N$, ocorrerá rebatimento (*aliasing*), e a componente recuperada terá frequência aparente $|\Omega_0 - k\omega_s| < \omega_N$.
-</Theory>
-```
-
 ### Na Seção `<Resolution>`:
 - Inicie identificando formalmente os dados e variáveis do enunciado.
 - Apresente todas as passagens matemáticas intermediárias (sem saltos abruptos).
 - **Múltipla escolha:** Analise por que a correta é verdadeira e por que as distratoras mais atraentes são falsas. Conclua obrigatoriamente com: `Portanto, a alternativa correta é a **(X)**.`
 - **Dissertativa:** Estruture em itens `#### Item (a)`, `#### Item (b)`, destacando a resposta final de forma clara e inequívoca.
 
-## 6. Erros Frequentes que Agentes Cometem (e como evitar)
-
-| O que o agente erra | Como fazer corretamente |
-| :--- | :--- |
-| **Colocar spoilers na `<Theory>`** | ❌ Inserir os números do enunciado ou já resolver o problema na teoria.<br>✅ A teoria deve conter apenas fórmulas gerais, definições e teoremas. |
-| **Pular passagens algébricas na `<Resolution>`** | ❌ "Substituindo na fórmula, temos $Y(s) = \frac{2}{s+3}$, portanto alternativa B."<br>✅ Mostre todas as manipulações intermediárias, frações parciais e justifique por que as alternativas distratoras estão erradas. |
-| **Usar `<ToggleBlock>` em vez de `<Theory>` e `<Resolution>`** | ❌ Inserir `<ToggleBlock title="...">`.<br>✅ Use os componentes nativos `<Theory>` e `<Resolution>`. Eles já são tratados pelo Astro. |
-| **Recortar imagem cortando a equação superior** | ❌ Recortar rente ao desenho, perdendo fórmulas de definição posicionadas acima.<br>✅ Enquadre sempre a fórmula definidora e a legenda inferior com `--padding 25`. |
-| **Salvar imagem fora de `archive/<materia>/questoes/`** | ❌ Salvar em `site/public/` ou na raiz.<br>✅ Salve sempre em `archive/<materia>/questoes/<nome>.png` e aponte no frontmatter como `image: "./<nome>.png"`. |
-
-## 7. Referência a Regras Comuns
+## 6. Referência a Regras Comuns
 
 > Leia e siga `.agents/skills/_shared/references/common-rules.md` para regras de KaTeX, destino de arquivos e higiene.

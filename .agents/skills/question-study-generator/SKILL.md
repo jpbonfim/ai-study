@@ -32,48 +32,6 @@ Ao redigir os cadernos teóricos, siga rigorosamente esta diretriz:
 >
 > **Faça um texto detalhado explicando todos os tópicos, não tenha medo de textos longos, o importante é passar todos os conteúdos de maneira compreensível!"**
 
-### Exemplos
-
-**❌ RUIM — Superficial e com introdução clichê:**
-```
-## Amostragem de Sinais
-
-A amostragem é um conceito fundamental no processamento digital de sinais que permite
-converter sinais analógicos em digitais. Neste capítulo, veremos como esse processo
-fascinante funciona e sua importância na engenharia moderna.
-
-A taxa de amostragem deve respeitar o teorema de Nyquist.
-```
-
-**✅ BOM — Direto, completo e auto-contido:**
-```
-## Amostragem de Sinais
-
-Dado um sinal contínuo $x_c(t)$ e um período de amostragem $T$ (em segundos), a taxa
-de amostragem é $f_s = 1/T$ Hz e a frequência angular de amostragem é:
-
-$$
-\omega_s = \frac{2\pi}{T} \quad [\text{rad/s}]
-$$
-
-O sinal amostrado é modelado como a multiplicação de $x_c(t)$ por um trem de impulsos:
-
-$$
-x_p(t) = x_c(t) \cdot \sum_{n=-\infty}^{+\infty} \delta(t - nT)
-  = \sum_{n=-\infty}^{+\infty} x_c(nT)\,\delta(t - nT)
-$$
-
-No domínio da frequência, isso produz cópias periódicas do espectro original:
-
-$$
-X_p(j\Omega) = \frac{1}{T} \sum_{k=-\infty}^{+\infty} X_c(j(\Omega - k\omega_s))
-$$
-
-**Critério de Nyquist:** Para reconstruir $x_c(t)$ sem aliasing, a frequência máxima
-do sinal deve satisfazer $\Omega_{\max} < \omega_s / 2$, ou equivalentemente,
-$f_s > 2 f_{\max}$.
-```
-
 ## 3. Workflow
 
 Siga rigorosamente estes passos ao usar a skill:
@@ -155,15 +113,6 @@ sections:
 <QuestionCard id="<id-questao-2>" />
 ```
 
-## 6. Erros Frequentes que Agentes Cometem (e como evitar)
-
-| O que o agente erra | Como fazer corretamente |
-| :--- | :--- |
-| **Agrupar todos os `<QuestionCard />` no fim do arquivo** | ❌ Nunca coloque todos os cards acumulados no final.<br>✅ Insira cada `<QuestionCard id="..." />` **imediatamente após** a teoria específica que dá suporte à resolução daquela questão. |
-| **Esquecer de listar os IDs em `relatedQuestions`** | ❌ Inserir `<QuestionCard id="p1-q1" />` no texto mas deixar `relatedQuestions: []` vazio no frontmatter.<br>✅ Todo ID usado em `<QuestionCard>` **deve constar** na lista `relatedQuestions` do frontmatter. |
-| **Esquecer os divs de âncora `<div id="..."></div>`** | ❌ Colocar apenas `## 1.1 Título` sem o elemento de âncora.<br>✅ Coloque sempre `<div id="slug-da-secao"></div>` imediatamente antes de cada título `##`, correspondendo aos IDs declarados em `sections` no frontmatter. |
-| **Inserir introduções ou contextualizações vazias** | ❌ "Neste capítulo abordaremos a relevância de..."<br>✅ Vá direto à definição formal, equações e parâmetros físicos operacionais. |
-
-## 7. Referência a Regras Comuns
+## 6. Referência a Regras Comuns
 
 > Leia e siga `.agents/skills/_shared/references/common-rules.md` para diretrizes de ouro sobre redação teórica, uso de KaTeX, destino correto de arquivos e higiene obrigatória do workspace.

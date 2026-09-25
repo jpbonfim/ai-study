@@ -199,15 +199,6 @@ python3 .agents/skills/block-diagram-generator/scripts/generate_diagram.py snipp
 python3 .agents/skills/block-diagram-generator/scripts/generate_diagram.py template-custom --title "Meu Diagrama"
 ```
 
-## 6. Erros Frequentes que Agentes Cometem (e como evitar)
-
-| O que o agente erra | Como fazer corretamente |
-| :--- | :--- |
-| **Gerar arquivos de imagem ou SVG separados** | ❌ Tentar salvar um arquivo `.svg` ou `.png` em disco.<br>✅ `<BlockDiagram />` é um componente **100% inline no MDX**. O SVG é gerado pelo Astro em tempo de compilação. |
-| **Erros de escape em KaTeX nas props** | ❌ Passar `integratorLabel="\frac{1}{s}"` em contextos onde o parser engole a barra.<br>✅ Em props strings normais passe `integratorLabel="\frac{1}{s}"`, mas dentro de arrays JSX use barra dupla se necessário: `zeros={["\\frac{1}{3}"]}`. |
-| **Omitir o título do diagrama** | ❌ Não especificar `title`.<br>✅ Forneça sempre um título descritivo e claro para identificação do diagrama no sumário. |
-| **Em SVG customizado, usar largura fixa sem viewBox** | ❌ Definir `width="800"` fixo no `<svg>`.<br>✅ Use sempre `viewBox="0 0 760 180"` e a classe `class="system-diagram-svg"` para adaptação responsiva no desktop e mobile. |
-
-## 7. Referências
+## 6. Referências
 
 > Leia e siga `.agents/skills/_shared/references/common-rules.md` para regras de KaTeX, destino de arquivos e higiene.
