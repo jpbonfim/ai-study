@@ -6,6 +6,7 @@ import katex from 'katex';
 import { getDataDirectory } from './db.ts';
 import { renderMath } from '../utils/katex.ts';
 import { isDevMode, getLocalArchiveDirectory } from './dev-archive.ts';
+import { renderBlockDiagramHtml } from './block-diagram-runtime.ts';
 
 export interface SectionItem {
   id: string;
@@ -226,6 +227,12 @@ export function renderMarkdownWithKatex(
 
   // 6. Reescreve URLs de imagens
   html = rewriteImageUrls(html, ownerUserId, materiaSlug, sourceDir);
+
+  // 7. Renderiza componentes <BlockDiagram ... /> em HTML/SVG vetorial
+  const blockDiagramRegex = /(?:<p>\s*)?<[Bb]lock[Dd]iagram\b([^>]*?)(?:\/>|>(.*?)<\/[Bb]lock[Dd]iagram>)(?:\s*<\/p>)?/gis;
+  html = html.replace(blockDiagramRegex, (_, attrs, slot) => {
+    return renderBlockDiagramHtml(attrs, slot || '');
+  });
 
   return html;
 }
