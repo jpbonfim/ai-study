@@ -155,10 +155,9 @@ table.academic-table td {
   -webkit-overflow-scrolling: touch;
   padding: 0.85rem 1rem !important;
   margin: 1.5rem 0 !important;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   background-color: var(--bg-subtle);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .katex-display > .katex {
@@ -166,6 +165,73 @@ table.academic-table td {
   white-space: nowrap !important;
   min-width: min-content;
   text-align: center;
+}
+
+/* Reseta elementos KaTeX aninhados dentro de um container ou grupo para evitar bordas, margens e padding duplicados */
+.katex-display .katex-display {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* Agrupamento sequencial de equações em um único bloco visual */
+.katex-display.katex-display-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+  padding: 1.15rem 1rem !important;
+}
+
+.katex-display-group > .katex-display-item {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-width: min-content !important;
+  box-sizing: border-box !important;
+}
+
+.katex-display-group > .katex-display-item > .katex-display {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+}
+
+.katex-display-group > .katex-display-item > .katex-display > .katex {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  min-width: min-content;
+  text-align: center;
+}
+
+/* Fallback de continuidade visual caso blocos .katex-display apareçam contíguos no DOM */
+.katex-display + .katex-display {
+  margin-top: -1.5rem !important;
+  border-top: none !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 6px !important;
+  border-bottom-right-radius: 6px !important;
+  padding-top: 0.4rem !important;
+}
+
+.katex-display:has(+ .katex-display) {
+  margin-bottom: 0 !important;
+  border-top-left-radius: 6px !important;
+  border-top-right-radius: 6px !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  padding-bottom: 0.4rem !important;
 }
 
 /* Equações inline continuam no fluxo normal sem quebrar */

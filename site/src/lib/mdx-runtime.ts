@@ -107,32 +107,90 @@ export function renderMarkdownWithKatex(
   let text = content.replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
   text = text.replace(/<!--[\s\S]*?-->/g, '');
 
-  const mathBlocks: string[] = [];
+  // 1. Localiza todos os blocos display math $$ ... $$ e agrupa os contíguos (sequenciais)
+  const mathBlockRegex = /\$\$([\s\S]+?)\$\$/g;
+  const blocks: { start: number; end: number; math: string }[] = [];
+  let match: RegExpExecArray | null;
 
-  // 1. Display math $$ ... $$
-  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
-    try {
-      const rendered = katex.renderToString(math.trim(), {
-        displayMode: true,
-        throwOnError: false,
-      });
-      const idx = mathBlocks.length;
-      mathBlocks.push(rendered);
-      return `@@MATH_DISPLAY_${idx}@@`;
-    } catch {
-      return `$$${math}$$`;
+  while ((match = mathBlockRegex.exec(text)) !== null) {
+    blocks.push({
+      start: match.index,
+      end: mathBlockRegex.lastIndex,
+      math: match[1],
+    });
+  }
+
+  // Agrupa blocos de equações contíguos (separados apenas por espaços e quebras de linha)
+  const groups: { start: number; end: number; equations: string[] }[] = [];
+  let currentGroup: { start: number; end: number; equations: string[] } | null = null;
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (!currentGroup) {
+      currentGroup = {
+        start: block.start,
+        end: block.end,
+        equations: [block.math],
+      };
+    } else {
+      const between = text.slice(currentGroup.end, block.start);
+      if (between.trim() === '') {
+        currentGroup.end = block.end;
+        currentGroup.equations.push(block.math);
+      } else {
+        groups.push(currentGroup);
+        currentGroup = {
+          start: block.start,
+          end: block.end,
+          equations: [block.math],
+        };
+      }
     }
-  });
+  }
+  if (currentGroup) {
+    groups.push(currentGroup);
+  }
+
+  const groupHtmlMap = new Map<number, string>();
+
+  // Substitui cada grupo de equações de trás para frente no texto
+  for (let i = groups.length - 1; i >= 0; i--) {
+    const group = groups[i];
+    const renderedList = group.equations.map((eq) => {
+      try {
+        return katex.renderToString(eq.trim(), {
+          displayMode: true,
+          throwOnError: false,
+        });
+      } catch {
+        return `$$${eq}$$`;
+      }
+    });
+
+    let groupHtml = '';
+    if (renderedList.length === 1) {
+      groupHtml = `<div class="katex-display my-4 overflow-x-auto">${renderedList[0]}</div>`;
+    } else {
+      const items = renderedList
+        .map((r) => `<div class="katex-display-item">${r}</div>`)
+        .join('');
+      groupHtml = `<div class="katex-display katex-display-group my-4 overflow-x-auto">${items}</div>`;
+    }
+
+    groupHtmlMap.set(i, groupHtml);
+    text = text.slice(0, group.start) + `\n\n@@MATH_GROUP_${i}@@\n\n` + text.slice(group.end);
+  }
 
   // 2. Inline math $ ... $
+  const mathInlineBlocks: string[] = [];
   text = text.replace(/(?<!\\)\$([^\$\n]+?)(?<!\\)\$/g, (_, math) => {
     try {
       const rendered = katex.renderToString(math.trim(), {
         displayMode: false,
         throwOnError: false,
       });
-      const idx = mathBlocks.length;
-      mathBlocks.push(rendered);
+      const idx = mathInlineBlocks.length;
+      mathInlineBlocks.push(rendered);
       return `@@MATH_INLINE_${idx}@@`;
     } catch {
       return `$${math}$`;
@@ -142,17 +200,31 @@ export function renderMarkdownWithKatex(
   // 3. Renderiza o markdown
   let html = marked.parse(text) as string;
 
-  // 4. Restaura blocos matemáticos
-  html = html.replace(/@@MATH_DISPLAY_(\d+)@@/g, (_, idx) => {
-    const rendered = mathBlocks[parseInt(idx, 10)] || '';
-    return `<div class="katex-display my-4 overflow-x-auto">${rendered}</div>`;
+  // 4. Limpa tags <p> que envolvam blocos matemáticos display
+  html = html.replace(/<p>([\s\S]*?)<\/p>/g, (fullMatch, pContent) => {
+    if (!pContent.includes('@@MATH_GROUP_')) return fullMatch;
+
+    const parts = pContent.split(/(@@MATH_GROUP_\d+@@)/g);
+    return parts
+      .map((part) => {
+        if (part.startsWith('@@MATH_GROUP_')) return part;
+        const trimmed = part.trim();
+        return trimmed ? `<p>${trimmed}</p>` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  });
+
+  // 5. Restaura blocos matemáticos display e inline
+  html = html.replace(/@@MATH_GROUP_(\d+)@@/g, (_, idx) => {
+    return groupHtmlMap.get(parseInt(idx, 10)) || '';
   });
 
   html = html.replace(/@@MATH_INLINE_(\d+)@@/g, (_, idx) => {
-    return mathBlocks[parseInt(idx, 10)] || '';
+    return mathInlineBlocks[parseInt(idx, 10)] || '';
   });
 
-  // 5. Reescreve URLs de imagens
+  // 6. Reescreve URLs de imagens
   html = rewriteImageUrls(html, ownerUserId, materiaSlug, sourceDir);
 
   return html;

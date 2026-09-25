@@ -468,6 +468,81 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             outline: 2px solid var(--accent);
             background: var(--bg-surface);
         }
+
+        .katex-display {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.85rem 1rem !important;
+            margin: 1.5rem 0 !important;
+            border: 1px solid var(--border-subtle);
+            background-color: var(--bg-subtle);
+            border-radius: 6px;
+        }
+
+        .katex-display .katex-display {
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+
+        .katex-display.katex-display-group {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.85rem !important;
+            padding: 1.15rem 1rem !important;
+        }
+
+        .katex-display-group > .katex-display-item {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            min-width: min-content !important;
+            box-sizing: border-box !important;
+        }
+
+        .katex-display-group > .katex-display-item > .katex-display {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            text-align: center !important;
+        }
+
+        .katex-display-group > .katex-display-item > .katex-display > .katex {
+            display: inline-block !important;
+            white-space: nowrap !important;
+            min-width: min-content;
+            text-align: center;
+        }
+
+        .katex-display + .katex-display {
+            margin-top: -1.5rem !important;
+            border-top: none !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-left-radius: 6px !important;
+            border-bottom-right-radius: 6px !important;
+            padding-top: 0.4rem !important;
+        }
+
+        .katex-display:has(+ .katex-display) {
+            margin-bottom: 0 !important;
+            border-top-left-radius: 6px !important;
+            border-top-right-radius: 6px !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            padding-bottom: 0.4rem !important;
+        }
     </style>
 </head>
 <body>
@@ -544,6 +619,109 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             setTheme(saved);
         })();
         
+        function groupAdjacentEquations(root = document.body) {
+            const displays = Array.from(root.querySelectorAll('.katex-display')).filter(el => {
+                if (el.dataset.equationGrouped === 'true') return false;
+                if (el.classList.contains('katex-display-group')) return false;
+                if (el.parentElement?.closest('.katex-display')) return false;
+                return true;
+            });
+
+            if (displays.length < 2) return;
+
+            function getEffectiveBlock(el) {
+                const parent = el.parentElement;
+                if (parent && parent.tagName === 'P') {
+                    const remaining = Array.from(parent.childNodes).filter(n => {
+                        if (n === el) return false;
+                        if (n.nodeType === Node.TEXT_NODE) return (n.textContent || '').trim().length > 0;
+                        if (n.nodeType === Node.ELEMENT_NODE) {
+                            return n.tagName !== 'BR' && (n.textContent || '').trim().length !== 0;
+                        }
+                        return true;
+                    });
+                    if (remaining.length === 0) return parent;
+                }
+                return el;
+            }
+
+            const groups = [];
+            let currentGroup = [];
+
+            for (let i = 0; i < displays.length; i++) {
+                const el = displays[i];
+                if (currentGroup.length === 0) {
+                    currentGroup.push(el);
+                } else {
+                    const prev = currentGroup[currentGroup.length - 1];
+                    const prevBlock = getEffectiveBlock(prev);
+                    const currBlock = getEffectiveBlock(el);
+
+                    if (prevBlock.parentElement === currBlock.parentElement) {
+                        let isAdjacent = false;
+                        let sib = prevBlock.nextSibling;
+                        while (sib) {
+                            if (sib === currBlock) {
+                                isAdjacent = true;
+                                break;
+                            }
+                            if (sib.nodeType === Node.TEXT_NODE && !(sib.textContent || '').trim()) {
+                                sib = sib.nextSibling;
+                            } else if (sib.nodeType === Node.ELEMENT_NODE && sib.tagName === 'P' && !(sib.textContent || '').trim()) {
+                                sib = sib.nextSibling;
+                            } else if (sib.nodeType === Node.ELEMENT_NODE && sib.tagName === 'BR') {
+                                sib = sib.nextSibling;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (isAdjacent) {
+                            currentGroup.push(el);
+                        } else {
+                            if (currentGroup.length > 1) groups.push(currentGroup);
+                            currentGroup = [el];
+                        }
+                    } else {
+                        if (currentGroup.length > 1) groups.push(currentGroup);
+                        currentGroup = [el];
+                    }
+                }
+            }
+
+            if (currentGroup.length > 1) groups.push(currentGroup);
+
+            groups.forEach(group => {
+                const firstEl = group[0];
+                const firstBlock = getEffectiveBlock(firstEl);
+                const parent = firstBlock.parentNode;
+                if (!parent) return;
+
+                const groupContainer = document.createElement('div');
+                groupContainer.className = 'katex-display katex-display-group my-4 overflow-x-auto';
+                groupContainer.dataset.equationGrouped = 'true';
+
+                group.forEach(item => {
+                    item.dataset.equationGrouped = 'true';
+                    const block = getEffectiveBlock(item);
+                    const itemWrapper = document.createElement('div');
+                    itemWrapper.className = 'katex-display-item';
+                    itemWrapper.appendChild(item);
+                    groupContainer.appendChild(itemWrapper);
+                    if (block !== item && block.parentNode) {
+                        block.parentNode.removeChild(block);
+                    }
+                });
+
+                parent.insertBefore(groupContainer, firstBlock);
+                if (firstBlock.parentNode && firstBlock.parentNode === parent) {
+                    if (firstBlock.childNodes.length === 0) {
+                        parent.removeChild(firstBlock);
+                    }
+                }
+            });
+        }
+
         function renderMath() {
             renderMathInElement(document.body, {
                 delimiters: [
@@ -552,6 +730,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
                 ],
                 throwOnError: false
             });
+            groupAdjacentEquations();
         }
 
         function resolveImage(path) {
