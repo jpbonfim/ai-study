@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
-import { getSessionUser } from './lib/auth';
+import { getSessionUser, authenticateUser } from './lib/auth';
+import type { SafeUser } from './lib/db';
 import { logActivity } from './lib/log';
 
 // Rotas públicas que não exigem autenticação
@@ -40,35 +41,61 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 2. Validação da Sessão
-  const sessionId = context.cookies.get('session_id')?.value;
+  // 2. Validação da Sessão / Credenciais
+  let sessionId = context.cookies.get('session_id')?.value;
+  let user: SafeUser | null = null;
 
-  if (!sessionId) {
+  // Se houver cabeçalho Authorization (Bearer ou Basic), processa para chamadas de API
+  const authHeader = context.request.headers.get('authorization');
+  if (authHeader) {
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7).trim();
+      if (token) {
+        user = getSessionUser(token);
+        if (user) {
+          sessionId = token;
+        }
+      }
+    } else if (authHeader.startsWith('Basic ')) {
+      try {
+        const credentials = Buffer.from(authHeader.slice(6).trim(), 'base64').toString('utf-8');
+        const colonIdx = credentials.indexOf(':');
+        if (colonIdx !== -1) {
+          const username = credentials.slice(0, colonIdx);
+          const password = credentials.slice(colonIdx + 1);
+          user = authenticateUser(username, password);
+        }
+      } catch {}
+    }
+  }
+
+  // Fallback para cookie de sessão
+  if (!user && sessionId) {
+    user = getSessionUser(sessionId);
+    if (!user) {
+      context.cookies.delete('session_id', { path: '/' });
+    }
+  }
+
+  if (!user) {
     if (pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify({ error: 'Não autorizado. Faça login primeiro.' }), {
+      return new Response(JSON.stringify({ error: 'Não autorizado. Credenciais inválidas ou ausentes.' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'WWW-Authenticate': 'Basic realm="Academic Study Platform"',
+        },
       });
     }
     const redirectUrl = pathname !== '/' ? `/login?redirect=${encodeURIComponent(pathname + search)}` : '/login';
     return context.redirect(redirectUrl);
   }
 
-  const user = getSessionUser(sessionId);
-  if (!user) {
-    context.cookies.delete('session_id', { path: '/' });
-    if (pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify({ error: 'Sessão expirada. Faça login novamente.' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    return context.redirect('/login');
-  }
-
   // Injeta usuário no contexto do Astro
   context.locals.user = user;
-  context.locals.sessionId = sessionId;
+  if (sessionId) {
+    context.locals.sessionId = sessionId;
+  }
 
   // 3. Controle de Acesso para Rotas de Administrador
   if (pathname.startsWith('/admin') && user.role !== 'admin') {
