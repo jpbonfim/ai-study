@@ -1667,10 +1667,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       import { initQuestionSequences } from '../scripts/questionSequenceManager';
       import { initEquationGroups } from '../scripts/equationGroupManager';
 
-      function setupOptimizers() {
+      async function setupOptimizers() {
         initTableOptimizer();
+        await initDiagrams();
         initCodeBlocks();
-        initDiagrams();
         initQuestionSequences();
         initEquationGroups();
       }

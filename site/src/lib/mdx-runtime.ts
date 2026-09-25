@@ -67,10 +67,22 @@ export interface QuestionItem {
   ownerUserId: number;
 }
 
-// Configuração do marked
+// Configuração do marked com renderizador customizado de blocos de código e diagramas
 marked.setOptions({
   gfm: true,
   breaks: false,
+});
+
+marked.use({
+  renderer: {
+    code({ text, lang }: { text: string; lang?: string }) {
+      const language = (lang || '').trim();
+      if (language === 'mermaid') {
+        return `<pre class="mermaid diagram-block" data-language="mermaid"><code class="language-mermaid">${text}</code></pre>\n`;
+      }
+      return `<pre data-language="${language}"><code class="language-${language}">${text}</code></pre>\n`;
+    },
+  },
 });
 
 // Cache em memória de itens processados: chave = filePath + mtimeMs

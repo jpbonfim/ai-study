@@ -1068,9 +1068,15 @@ h4[id] {
   border: 1px solid var(--code-card-border);
   border-radius: 8px;
   background-color: var(--code-card-bg);
+  color: var(--code-card-text);
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   margin: 1.5rem 0;
+}
+
+.code-block-card pre,
+.code-block-card pre code {
+  color: var(--code-card-text) !important;
 }
 
 /* ============================================================
@@ -1087,6 +1093,7 @@ html:not([data-code-theme]) .code-block-card,
   --code-card-border: #313244;
   --code-card-text: #cdd6f4;
   --code-badge-color: #cba6f7;
+  color: var(--code-card-text);
 }
 
 html[data-code-theme="mocha"] .astro-code,
@@ -1101,13 +1108,16 @@ html:not([data-code-theme]) .shiki span,
 .code-block-card[data-code-theme="mocha"] .astro-code span,
 .code-block-card[data-code-theme="mocha"] .shiki,
 .code-block-card[data-code-theme="mocha"] .shiki span {
-  color: var(--shiki-mocha, inherit) !important;
+  color: var(--shiki-mocha, var(--code-card-text, #cdd6f4)) !important;
   font-style: var(--shiki-mocha-font-style, inherit);
 }
 
 html[data-code-theme="mocha"] pre.astro-code,
-html:not([data-code-theme]) pre.astro-code {
+html:not([data-code-theme]) pre.astro-code,
+html[data-code-theme="mocha"] .code-block-card pre,
+html:not([data-code-theme]) .code-block-card pre {
   background-color: var(--shiki-mocha-bg, #1e1e2e) !important;
+  color: var(--code-card-text, #cdd6f4) !important;
 }
 
 /* 2. Tokyo Night */
@@ -1118,6 +1128,7 @@ html[data-code-theme="tokyo"] .code-block-card,
   --code-card-border: #292e42;
   --code-card-text: #c0caf5;
   --code-badge-color: #7aa2f7;
+  color: var(--code-card-text);
 }
 
 html[data-code-theme="tokyo"] .astro-code,
@@ -1128,12 +1139,14 @@ html[data-code-theme="tokyo"] .shiki span,
 .code-block-card[data-code-theme="tokyo"] .astro-code span,
 .code-block-card[data-code-theme="tokyo"] .shiki,
 .code-block-card[data-code-theme="tokyo"] .shiki span {
-  color: var(--shiki-tokyo, inherit) !important;
+  color: var(--shiki-tokyo, var(--code-card-text, #c0caf5)) !important;
   font-style: var(--shiki-tokyo-font-style, inherit);
 }
 
-html[data-code-theme="tokyo"] pre.astro-code {
+html[data-code-theme="tokyo"] pre.astro-code,
+html[data-code-theme="tokyo"] .code-block-card pre {
   background-color: var(--shiki-tokyo-bg, #1a1b26) !important;
+  color: var(--code-card-text, #c0caf5) !important;
 }
 
 /* 3. Dracula */
@@ -1144,6 +1157,7 @@ html[data-code-theme="dracula"] .code-block-card,
   --code-card-border: #44475a;
   --code-card-text: #f8f8f2;
   --code-badge-color: #bd93f9;
+  color: var(--code-card-text);
 }
 
 html[data-code-theme="dracula"] .astro-code,
@@ -1154,12 +1168,14 @@ html[data-code-theme="dracula"] .shiki span,
 .code-block-card[data-code-theme="dracula"] .astro-code span,
 .code-block-card[data-code-theme="dracula"] .shiki,
 .code-block-card[data-code-theme="dracula"] .shiki span {
-  color: var(--shiki-dracula, inherit) !important;
+  color: var(--shiki-dracula, var(--code-card-text, #f8f8f2)) !important;
   font-style: var(--shiki-dracula-font-style, inherit);
 }
 
-html[data-code-theme="dracula"] pre.astro-code {
+html[data-code-theme="dracula"] pre.astro-code,
+html[data-code-theme="dracula"] .code-block-card pre {
   background-color: var(--shiki-dracula-bg, #282a36) !important;
+  color: var(--code-card-text, #f8f8f2) !important;
 }
 
 /* 4. Atom One Dark */
@@ -1170,6 +1186,7 @@ html[data-code-theme="onedark"] .code-block-card,
   --code-card-border: #3b4048;
   --code-card-text: #abb2bf;
   --code-badge-color: #61afef;
+  color: var(--code-card-text);
 }
 
 html[data-code-theme="onedark"] .astro-code,
@@ -1180,12 +1197,14 @@ html[data-code-theme="onedark"] .shiki span,
 .code-block-card[data-code-theme="onedark"] .astro-code span,
 .code-block-card[data-code-theme="onedark"] .shiki,
 .code-block-card[data-code-theme="onedark"] .shiki span {
-  color: var(--shiki-onedark, inherit) !important;
+  color: var(--shiki-onedark, var(--code-card-text, #abb2bf)) !important;
   font-style: var(--shiki-onedark-font-style, inherit);
 }
 
-html[data-code-theme="onedark"] pre.astro-code {
+html[data-code-theme="onedark"] pre.astro-code,
+html[data-code-theme="onedark"] .code-block-card pre {
   background-color: var(--shiki-onedark-bg, #282c34) !important;
+  color: var(--code-card-text, #abb2bf) !important;
 }
 
 /* 5. Monokai */
@@ -1196,6 +1215,7 @@ html[data-code-theme="monokai"] .code-block-card,
   --code-card-border: #3e3d32;
   --code-card-text: #f8f8f2;
   --code-badge-color: #a6e22e;
+  color: var(--code-card-text);
 }
 
 html[data-code-theme="monokai"] .astro-code,
@@ -1206,12 +1226,14 @@ html[data-code-theme="monokai"] .shiki span,
 .code-block-card[data-code-theme="monokai"] .astro-code span,
 .code-block-card[data-code-theme="monokai"] .shiki,
 .code-block-card[data-code-theme="monokai"] .shiki span {
-  color: var(--shiki-monokai, inherit) !important;
+  color: var(--shiki-monokai, var(--code-card-text, #f8f8f2)) !important;
   font-style: var(--shiki-monokai-font-style, inherit);
 }
 
-html[data-code-theme="monokai"] pre.astro-code {
+html[data-code-theme="monokai"] pre.astro-code,
+html[data-code-theme="monokai"] .code-block-card pre {
   background-color: var(--shiki-monokai-bg, #272822) !important;
+  color: var(--code-card-text, #f8f8f2) !important;
 }
 
 /* Regras com especificidade de ID para a prévia interativa nas configurações */
