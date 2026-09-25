@@ -14,7 +14,7 @@ const resumos = defineCollection({
   loader: glob({
     pattern: '**/resumos/**/*.{md,mdx}',
     base: '../archive',
-    generateId: ({ entry }) => entry.replace(/^.*\/resumos\//, '').replace(/\.(md|mdx)$/, ''),
+    generateId: ({ entry }) => entry.replace(/\.(md|mdx)$/, '').replace(/\//g, '-'),
   }),
   schema: z
     .object({
@@ -56,7 +56,7 @@ const questoes = defineCollection({
   loader: glob({
     pattern: '**/questoes/**/*.{md,mdx}',
     base: '../archive',
-    generateId: ({ entry }) => entry.replace(/^.*\/questoes\//, '').replace(/\.(md|mdx)$/, ''),
+    generateId: ({ entry }) => entry.replace(/\.(md|mdx)$/, '').replace(/\//g, '-'),
   }),
   schema: ({ image }) =>
     z

@@ -102,10 +102,14 @@ export function renderMarkdownWithKatex(
 ): string {
   if (!content || !content.trim()) return '';
 
+  // 0. Limpa comentários JSX/MDX e HTML para evitar vazamento como texto na página
+  let text = content.replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+  text = text.replace(/<!--[\s\S]*?-->/g, '');
+
   const mathBlocks: string[] = [];
 
   // 1. Display math $$ ... $$
-  let text = content.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, (_, math) => {
     try {
       const rendered = katex.renderToString(math.trim(), {
         displayMode: true,
@@ -183,8 +187,8 @@ export function processChapterFile(
 
   let htmlContent = renderMarkdownWithKatex(content, ownerUserId, materiaSlug, fileDir);
 
-  // Substitui qualquer tag <QuestionCard id="..." /> pelo HTML do card de preview
-  const questionCardRegex = /<[Qq]uestion[Cc]ard\s+id=["']([^"']+)["']\s*(?:\/>|>\s*<\/[Qq]uestion[Cc]ard>)/gi;
+  // Substitui qualquer tag <QuestionCard id="..." /> pelo HTML do card de preview (removendo tags <p> envolventes se geradas pelo Markdown)
+  const questionCardRegex = /(?:<p>\s*)?<[Qq]uestion[Cc]ard\s+id=["']([^"']+)["']\s*(?:\/>|>\s*<\/[Qq]uestion[Cc]ard>)(?:\s*<\/p>)?/gi;
   htmlContent = htmlContent.replace(questionCardRegex, (_, qId) => {
     return renderQuestionCardHtml(qId.trim(), ownerUserId, materiaSlug);
   });

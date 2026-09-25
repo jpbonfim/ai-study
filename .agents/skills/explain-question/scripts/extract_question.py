@@ -194,7 +194,7 @@ def parse_questions(text: str, force_type: str = "auto") -> list[dict]:
             
         questions.append({
             "number": q_num,
-            "points": q_points,
+            "points": pts,
             "type": q_type,
             "statement": " ".join(stmt_clean.split()),
             "options": options
