@@ -127,6 +127,31 @@ def make_request(req: urllib.request.Request, ssl_verify: bool = True):
         return opener.open(req, timeout=60)
     return urllib.request.urlopen(req, timeout=60)
 
+def login_session(site_url: str, username: str, password: str, ssl_verify: bool = True) -> tuple[str | None, str | None]:
+    """Tenta autenticar via POST /api/login para obter cookie de sessão."""
+    login_url = f"{site_url}/api/login"
+    payload = json.dumps({"username": username, "password": password}).encode("utf-8")
+    req = build_http_request(
+        login_url,
+        method="POST",
+        headers={"Content-Type": "application/json", "User-Agent": "ai-study-sync-cli/1.0"},
+        data=payload,
+    )
+    try:
+        with make_request(req, ssl_verify=ssl_verify) as resp:
+            set_cookie_header = resp.headers.get("Set-Cookie", "")
+            for part in set_cookie_header.split(";"):
+                part = part.strip()
+                if part.startswith("session_id="):
+                    return part, None
+            return None, "Cookie de sessão não retornado pelo servidor."
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            return None, "Credenciais inválidas: usuário ou senha incorretos."
+        return None, f"HTTP {e.code}: {e.reason}"
+    except Exception as e:
+        return None, str(e)
+
 def main():
     parser = argparse.ArgumentParser(
         description="Sincronização bidirecional do archive local com o servidor VPS."
@@ -210,10 +235,18 @@ def main():
     auth_str = f"{username}:{password}"
     auth_header = f"Basic {base64.b64encode(auth_str.encode('utf-8')).decode('ascii')}"
 
+    # Tenta autenticar na sessão via /api/login para suporte híbrido (Basic Auth + Cookie)
+    session_cookie, login_err = login_session(site_url, username, password, ssl_verify=not insecure)
+    if login_err and "Credenciais inválidas" in login_err:
+        print(colorize(f"Erro: Credenciais inválidas para o usuário '{username}' no servidor {site_url}.", Colors.RED), file=sys.stderr)
+        sys.exit(1)
+
     headers = {
         "Authorization": auth_header,
         "User-Agent": "ai-study-sync-cli/1.0",
     }
+    if session_cookie:
+        headers["Cookie"] = session_cookie
 
     print(colorize("\n" + "=" * 60, Colors.BOLD))
     print(colorize(" Sincronização do Archive (ai-study)", Colors.BOLD))
@@ -241,8 +274,14 @@ def main():
             print(colorize(f"    Conectado com sucesso! Usuário remoto autenticado: {remote_user}", Colors.GREEN))
             print(f"    Arquivos no servidor: {len(remote_files)}")
     except urllib.error.HTTPError as e:
-        if e.code == 401:
-            print(colorize("Erro 401: Credenciais inválidas (usuário ou senha incorretos).", Colors.RED), file=sys.stderr)
+        if e.code == 404:
+            print(colorize(f"\n[!] Erro 404: O endpoint {status_url} não foi encontrado.", Colors.RED), file=sys.stderr)
+            print(colorize("    O servidor VPS ainda não possui o código de sincronização deployado!", Colors.YELLOW), file=sys.stderr)
+            print(colorize("    (Suas credenciais foram validadas com sucesso via /api/login, mas os endpoints /api/sync/ precisam ser atualizados no VPS).", Colors.GRAY), file=sys.stderr)
+            print(colorize("\nPara atualizar o VPS, execute no servidor:", Colors.CYAN), file=sys.stderr)
+            print(colorize("    ./scripts/deploy.sh\n", Colors.BOLD), file=sys.stderr)
+        elif e.code == 401:
+            print(colorize("Erro 401: Não autorizado pelo servidor. Credenciais inválidas ou permissão insuficiente.", Colors.RED), file=sys.stderr)
         else:
             print(colorize(f"Erro HTTP {e.code}: {e.reason}", Colors.RED), file=sys.stderr)
         sys.exit(1)
