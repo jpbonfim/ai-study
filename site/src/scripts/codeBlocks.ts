@@ -30,17 +30,42 @@ export function initCodeBlocks(): void {
 
   const preBlocks = Array.from(
     document.querySelectorAll<HTMLPreElement>(
-      '.academic-prose pre:not([data-language="mermaid"]), .reader-content pre:not([data-language="mermaid"]), .resolution-content pre:not([data-language="mermaid"])'
+      '.academic-prose pre, .reader-content pre, .resolution-content pre'
     )
   );
 
   preBlocks.forEach((pre) => {
-    // Evita reprocessar blocos já empacotados
+    // Evita reprocessar blocos já empacotados ou diagramas
     if (pre.dataset.codeBlockProcessed === 'true') return;
-    if (pre.closest('.code-block-card')) return;
+    if (pre.closest('.code-block-card') || pre.closest('.diagram-card')) return;
 
-    const rawLang = pre.getAttribute('data-language') || 'código';
-    const langDisplay = LANGUAGE_MAP[rawLang.toLowerCase()] || rawLang.toUpperCase();
+    const codeEl = pre.querySelector('code');
+    const rawLang = (
+      pre.getAttribute('data-language') ||
+      codeEl?.className?.match(/language-([a-zA-Z0-9_-]+)/)?.[1] ||
+      ''
+    ).toLowerCase();
+
+    // Se for diagrama mermaid, classe mermaid ou componente diagram-block, NUNCA empacota como bloco de código
+    if (
+      rawLang === 'mermaid' ||
+      pre.classList.contains('mermaid') ||
+      pre.classList.contains('diagram-block') ||
+      codeEl?.classList.contains('language-mermaid') ||
+      codeEl?.classList.contains('mermaid')
+    ) {
+      return;
+    }
+
+    // Heurística de proteção: se o conteúdo de texto for sintaxe Mermaid
+    const codeText = (codeEl?.textContent || pre.textContent || '').trim();
+    if (
+      /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(codeText)
+    ) {
+      return;
+    }
+
+    const langDisplay = LANGUAGE_MAP[rawLang] || (rawLang ? rawLang.toUpperCase() : 'CÓDIGO');
 
     // Cria o cartão de código
     const card = document.createElement('div');

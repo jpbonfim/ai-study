@@ -573,13 +573,21 @@ export async function initDiagrams(): Promise<void> {
 
   // 4. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
   const mermaidCodeBlocks = Array.from(
-    document.querySelectorAll<HTMLElement>('.academic-prose pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"]')
-  );
-  const customDiagramBlocks = Array.from(
-    document.querySelectorAll<HTMLElement>('.diagram-block')
-  );
+    document.querySelectorAll<HTMLElement>(
+      'pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"], pre.mermaid, pre code.language-mermaid, pre code[class*="mermaid"], .academic-prose pre code[class*="language-mermaid"], .diagram-block'
+    )
+  ).map((el) => (el.tagName.toLowerCase() === 'code' ? el.parentElement! : el) as HTMLElement);
 
-  const targets = [...mermaidCodeBlocks, ...customDiagramBlocks];
+  // Também detecta blocos cujo conteúdo textual seja sintaxe Mermaid
+  const potentialMermaidPres = Array.from(
+    document.querySelectorAll<HTMLElement>('.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre')
+  ).filter((pre) => {
+    if (pre.dataset.diagramProcessed === 'true') return false;
+    const txt = (pre.textContent || '').trim();
+    return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(txt);
+  });
+
+  const targets = Array.from(new Set([...mermaidCodeBlocks, ...potentialMermaidPres]));
   if (targets.length === 0) return;
 
   for (let i = 0; i < targets.length; i++) {
@@ -662,7 +670,9 @@ export async function initDiagrams(): Promise<void> {
         });
       }
 
-      el.parentNode?.replaceChild(card, el);
+      const codeBlockCard = el.closest('.code-block-card');
+      const targetToReplace = codeBlockCard || el;
+      targetToReplace.parentNode?.replaceChild(card, targetToReplace);
       card.setAttribute('data-diagram-processed', 'true');
     } catch (err) {
       console.warn('[DiagramManager] Erro ao renderizar diagrama mermaid:', err);
