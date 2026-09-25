@@ -83,6 +83,7 @@ export function renderMath(content?: string | null): string {
   }
 
   // 2. Processa inline math $ ... $
+  const mathBlocks: string[] = [];
   text = text.replace(/(?<!\\)\$([^\$\n]+?)(?<!\\)\$/g, (_, math) => {
     try {
       const rendered = katex.renderToString(math.trim(), {
@@ -103,8 +104,10 @@ export function renderMath(content?: string | null): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  // 4. Suporte a negrito markdown simples **texto** e quebras de linha
+  // 4. Suporte a negrito, itálico, código inline e quebras de linha
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  text = text.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-[var(--bg-subtle)] text-xs font-mono text-[var(--accent)]">$1</code>');
   text = text.replace(/\n/g, '<br />');
 
   // 5. Restaura os blocos matemáticos compilados em HTML pelo KaTeX
