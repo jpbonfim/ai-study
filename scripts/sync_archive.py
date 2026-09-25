@@ -52,7 +52,13 @@ def load_dotenv(env_path: Path) -> dict:
                     continue
                 k, v = line.split('=', 1)
                 k = k.strip()
-                v = v.strip().strip('"').strip("'")
+                v = v.strip()
+                if len(v) >= 2 and ((v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'"))):
+                    v = v[1:-1]
+                elif ' #' in v:
+                    v = v.split(' #', 1)[0].strip()
+                elif '\t#' in v:
+                    v = v.split('\t#', 1)[0].strip()
                 env[k] = v
     except Exception as e:
         print(colorize(f"Aviso ao ler {env_path}: {e}", Colors.YELLOW))
@@ -142,7 +148,12 @@ def main():
     repo_root = script_dir.parent
 
     # Carrega .env
-    dotenv_vars = load_dotenv(repo_root / ".env")
+    dotenv_vars = {}
+    if (repo_root / ".env").is_file():
+        dotenv_vars.update(load_dotenv(repo_root / ".env"))
+    cwd_env = Path.cwd() / ".env"
+    if cwd_env.is_file() and cwd_env.resolve() != (repo_root / ".env").resolve():
+        dotenv_vars.update(load_dotenv(cwd_env))
 
     # Determina configurações
     site_url = (
