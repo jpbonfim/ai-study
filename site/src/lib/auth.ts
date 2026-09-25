@@ -18,6 +18,16 @@ export function verifyPassword(password: string, hash: string): boolean {
   return bcrypt.compareSync(password, hash);
 }
 
+export function authenticateUser(username: string, password: string): SafeUser | null {
+  const cleanUsername = username.trim();
+  if (!cleanUsername || !password) return null;
+  const user = getUserByUsername(cleanUsername);
+  if (!user || !verifyPassword(password, user.password_hash)) {
+    return null;
+  }
+  return toSafeUser(user);
+}
+
 // ============================================================
 // GERENCIAMENTO DE SESSÕES
 // ============================================================
