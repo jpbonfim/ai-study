@@ -438,9 +438,12 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
 
         code {
             background: var(--bg-subtle);
-            padding: 2px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
+            font-size: 0.75em;
+            border: 1px solid var(--border-subtle);
+            color: var(--accent);
         }
 
         .banco-header {

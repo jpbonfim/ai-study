@@ -1233,15 +1233,17 @@ html[data-code-theme="monokai"] pre.astro-code {
   letter-spacing: normal !important;
 }
 
-/* Código Inline (`variavel`) */
+/* Código Inline (`variavel`) - Proporção harmônica com a tipografia acadêmica */
 :not(pre) > code {
   font-family: var(--code-font-family) !important;
-  font-size: 0.84em !important;
-  padding: 0.15em 0.38em !important;
+  font-size: 0.75em !important;
+  padding: 0.1em 0.32em !important;
   border-radius: 4px !important;
   background-color: var(--code-bg) !important;
   border: 1px solid var(--border-subtle) !important;
   color: var(--accent) !important;
+  vertical-align: 0.04em !important;
+  word-break: break-word !important;
 }
 
 /* Customização dos Nós e Arestas do Mermaid no estilo acadêmico */
