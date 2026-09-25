@@ -52,6 +52,7 @@ Thumbs.db
 # Conteúdo Acadêmico e Materiais Locais (Privados)
 # ============================================================
 archive/*
+/archive
 !archive/.gitkeep
 material/
 export/
