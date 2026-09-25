@@ -142,7 +142,35 @@ Este script verifica frontmatter, KaTeX balanceado, presença de `<Theory>`/`<Re
 
 ## 6. Diretriz de Qualidade para Texto Teórico
 
-Ao redigir qualquer texto teórico (resumos ou seções `<Theory>`), siga estes 6 pilares:
+Ao redigir qualquer texto teórico (resumos contínuos ou seções `<Theory>`), siga o princípio fundamental correspondente:
+
+### Para Cadernos Teóricos de Provas (`question-study-generator`):
+> **"Faça uma explicação teórica completa que aborde todo o conteúdo cobrado pelas provas. O conteúdo deve ser o suficiente para resolver todas as questões das provas sem conhecimento prévio dos tópicos abordados.**
+>
+> **A explicação deve ser direta ao ponto e de fácil entendimento, use linguagem simples e precisa (mantenha as explicações e termos corretos, não faça simplificações que prejudiquem a precisão do conteúdo).**
+>
+> **Pule demonstrações, foque em resultados práticos.**
+>
+> **Organize a estrutura do texto de forma lógica e sequencial, os assuntos que se estudam antes devem ser explicados antes.**
+>
+> **Não perca tempo com introduções, vá direto para a teoria.**
+>
+> **Faça um texto detalhado explicando todos os tópicos, não tenha medo de textos longos, o importante é passar todos os conteúdos de maneira compreensível!"**
+
+### Para Resumos de Matéria a partir de Slides/Livros (`summary-study-generator`):
+> **"Faça uma explicação teórica completa que abranja todo o conteúdo abordado pelo material. O conteúdo deve ser o suficiente para aprender toda a matéria, não presuma que o leitor já sabe partes do conteúdo.**
+>
+> **A explicação deve ser direta ao ponto e de fácil entendimento, use linguagem simples e precisa (mantenha as explicações e termos corretos, não faça simplificações que prejudiquem a precisão do conteúdo).**
+>
+> **Pule demonstrações, foque em resultados práticos.**
+>
+> **Organize a estrutura do texto de forma lógica e sequencial, os assuntos que se estudam antes devem ser explicados antes.**
+>
+> **Não perca tempo com introduções, vá direto para a teoria.**
+>
+> **Faça um texto detalhado explicando todos os tópicos, não tenha medo de textos longos, o importante é passar todos os conteúdos de maneira compreensível!"**
+
+### Desdobramento Operacional dos 6 Pilares
 
 | Pilar | Faça | Nunca faça |
 |---|---|---|
