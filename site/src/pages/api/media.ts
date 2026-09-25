@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getDataDirectory } from '../../lib/db';
 import { hasPermissionToSubject } from '../../lib/permissions';
+import { isDevMode, getLocalArchiveDirectory } from '../../lib/dev-archive';
 
 export const prerender = false;
 
@@ -31,8 +32,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return new Response('Parâmetros ausentes', { status: 400 });
   }
 
-  // Validação de Permissão
+  // Validação de Permissão (em dev mode local, permite acesso imediato a arquivos locais)
   const hasAccess =
+    isDevMode() ||
     user.id === ownerUserId ||
     user.role === 'admin' ||
     hasPermissionToSubject(user.id, ownerUserId, materiaSlug);
@@ -49,20 +51,38 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const dataDir = getDataDirectory();
   const materiaBase = path.resolve(dataDir, 'archives', String(ownerUserId), materiaSlug);
 
-  // Candidatos de caminho para o arquivo de mídia
-  const candidatePaths = [
-    path.resolve(materiaBase, subpath),
-    path.resolve(materiaBase, 'questoes', subpath),
-    path.resolve(materiaBase, 'resumos', subpath),
-    path.resolve(materiaBase, 'resumos', 'materia', subpath),
-  ];
+  // Bases candidatas (em dev mode, prioriza archive/ local da raiz)
+  const candidateBases: string[] = [];
+  if (isDevMode()) {
+    const localArchive = getLocalArchiveDirectory();
+    if (localArchive) {
+      candidateBases.push(path.resolve(localArchive, materiaSlug));
+    }
+  }
+  candidateBases.push(materiaBase);
+  if (!isDevMode()) {
+    const localArchive = getLocalArchiveDirectory();
+    if (localArchive) {
+      candidateBases.push(path.resolve(localArchive, materiaSlug));
+    }
+  }
 
   let targetFile: string | null = null;
-  for (const p of candidatePaths) {
-    if (p.startsWith(materiaBase) && fs.existsSync(p) && fs.statSync(p).isFile()) {
-      targetFile = p;
-      break;
+  for (const base of candidateBases) {
+    if (!fs.existsSync(base)) continue;
+    const candidatePaths = [
+      path.resolve(base, subpath),
+      path.resolve(base, 'questoes', subpath),
+      path.resolve(base, 'resumos', subpath),
+      path.resolve(base, 'resumos', 'materia', subpath),
+    ];
+    for (const p of candidatePaths) {
+      if (p.startsWith(base) && fs.existsSync(p) && fs.statSync(p).isFile()) {
+        targetFile = p;
+        break;
+      }
     }
+    if (targetFile) break;
   }
 
   if (!targetFile) {

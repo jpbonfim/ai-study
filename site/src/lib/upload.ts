@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { getDataDirectory } from './db.ts';
 import { logActivity } from './log.ts';
+import { isDevMode, getLocalArchiveDirectory, getLocalMateriaDirectory } from './dev-archive.ts';
 
 const require = createRequire(import.meta.url);
 const AdmZip = require('adm-zip');
@@ -245,13 +246,25 @@ export function createArchiveZipBuffer(userId: number, materiaSlug?: string): Bu
   const zip = new AdmZip();
 
   if (materiaSlug) {
-    const materiaDir = path.join(dataDir, 'archives', String(userId), materiaSlug);
+    let materiaDir = path.join(dataDir, 'archives', String(userId), materiaSlug);
+    if (!fs.existsSync(materiaDir) && isDevMode()) {
+      const localMateria = getLocalMateriaDirectory(materiaSlug);
+      if (localMateria) {
+        materiaDir = localMateria;
+      }
+    }
     if (!fs.existsSync(materiaDir)) {
       throw new Error(`Matéria "${materiaSlug}" não encontrada para download.`);
     }
     zip.addLocalFolder(materiaDir, materiaSlug);
   } else {
-    const userArchiveDir = path.join(dataDir, 'archives', String(userId));
+    let userArchiveDir = path.join(dataDir, 'archives', String(userId));
+    if (!fs.existsSync(userArchiveDir) && isDevMode()) {
+      const localArchive = getLocalArchiveDirectory();
+      if (localArchive) {
+        userArchiveDir = localArchive;
+      }
+    }
     if (!fs.existsSync(userArchiveDir)) {
       throw new Error('Archive do usuário não encontrado para download.');
     }

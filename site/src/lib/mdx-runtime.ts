@@ -5,6 +5,7 @@ import { marked } from 'marked';
 import katex from 'katex';
 import { getDataDirectory } from './db.ts';
 import { renderMath } from '../utils/katex.ts';
+import { isDevMode, getLocalArchiveDirectory } from './dev-archive.ts';
 
 export interface SectionItem {
   id: string;
@@ -333,11 +334,18 @@ export function processQuestionFile(
  */
 export function loadUserChapters(userId: number, materiaSlug: string): ChapterItem[] {
   const dataDir = getDataDirectory();
-  const candidateDirs = [
-    path.join(dataDir, 'archives', String(userId), materiaSlug, 'resumos'),
-    path.resolve(process.cwd(), '../archive', materiaSlug, 'resumos'),
-    path.resolve(process.cwd(), 'archive', materiaSlug, 'resumos'),
-  ];
+  const localArchive = getLocalArchiveDirectory();
+  const localResumos = localArchive ? path.join(localArchive, materiaSlug, 'resumos') : null;
+  const userResumos = path.join(dataDir, 'archives', String(userId), materiaSlug, 'resumos');
+
+  const candidateDirs: string[] = [];
+  if (isDevMode()) {
+    if (localResumos) candidateDirs.push(localResumos);
+    candidateDirs.push(userResumos);
+  } else {
+    candidateDirs.push(userResumos);
+    if (localResumos) candidateDirs.push(localResumos);
+  }
 
   const results: ChapterItem[] = [];
   const seenIds = new Set<string>();
@@ -381,11 +389,18 @@ export function loadUserChapters(userId: number, materiaSlug: string): ChapterIt
  */
 export function loadUserQuestions(userId: number, materiaSlug: string): QuestionItem[] {
   const dataDir = getDataDirectory();
-  const candidateDirs = [
-    path.join(dataDir, 'archives', String(userId), materiaSlug, 'questoes'),
-    path.resolve(process.cwd(), '../archive', materiaSlug, 'questoes'),
-    path.resolve(process.cwd(), 'archive', materiaSlug, 'questoes'),
-  ];
+  const localArchive = getLocalArchiveDirectory();
+  const localQuestoes = localArchive ? path.join(localArchive, materiaSlug, 'questoes') : null;
+  const userQuestoes = path.join(dataDir, 'archives', String(userId), materiaSlug, 'questoes');
+
+  const candidateDirs: string[] = [];
+  if (isDevMode()) {
+    if (localQuestoes) candidateDirs.push(localQuestoes);
+    candidateDirs.push(userQuestoes);
+  } else {
+    candidateDirs.push(userQuestoes);
+    if (localQuestoes) candidateDirs.push(localQuestoes);
+  }
 
   const results: QuestionItem[] = [];
   const seenIds = new Set<string>();

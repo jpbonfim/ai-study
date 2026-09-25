@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getDataDirectory } from '../lib/db.ts';
 import { getPermissionsGrantedToUser } from '../lib/permissions.ts';
+import { isDevMode, getLocalArchiveDirectory } from '../lib/dev-archive.ts';
 
 export interface Subject {
   slug: string;
@@ -79,26 +80,56 @@ function readMateriaFromDir(
 
 /**
  * Carrega as matérias do próprio usuário a partir de data/archives/<userId>/
+ * e também da pasta archive/ local quando em modo desenvolvimento.
  */
 export function loadUserMaterias(userId: number): Subject[] {
   const dataDir = getDataDirectory();
   const userDir = path.join(dataDir, 'archives', String(userId));
+  const materias: Subject[] = [];
+  const seenSlugs = new Set<string>();
 
-  if (!fs.existsSync(userDir)) {
-    return [];
+  // Em modo desenvolvimento (ou com flag ativa), lê diretamente da pasta 'archive/' local
+  if (isDevMode()) {
+    const localArchiveDir = getLocalArchiveDirectory();
+    if (localArchiveDir && fs.existsSync(localArchiveDir)) {
+      try {
+        const localEntries = fs.readdirSync(localArchiveDir, { withFileTypes: true });
+        for (const entry of localEntries) {
+          if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name.startsWith('_')) continue;
+          const matSlug = entry.name;
+          const mat = readMateriaFromDir(path.join(localArchiveDir, matSlug), matSlug, userId, {
+            isShared: false,
+          });
+          if (mat) {
+            materias.push(mat);
+            seenSlugs.add(mat.slug);
+          }
+        }
+      } catch (err) {
+        console.error('[DEV-ARCHIVE] Erro ao ler matérias do diretório local archive/:', err);
+      }
+    }
   }
 
-  const entries = fs.readdirSync(userDir, { withFileTypes: true });
-  const materias: Subject[] = [];
+  // Carrega as matérias persistidas em data/archives/<userId>/ (caso não tenham sido sobrepostas pelo archive local)
+  if (fs.existsSync(userDir)) {
+    try {
+      const entries = fs.readdirSync(userDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const matSlug = entry.name;
+        if (seenSlugs.has(matSlug)) continue;
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    const matSlug = entry.name;
-    const mat = readMateriaFromDir(path.join(userDir, matSlug), matSlug, userId, {
-      isShared: false,
-    });
-    if (mat) {
-      materias.push(mat);
+        const mat = readMateriaFromDir(path.join(userDir, matSlug), matSlug, userId, {
+          isShared: false,
+        });
+        if (mat) {
+          materias.push(mat);
+          seenSlugs.add(mat.slug);
+        }
+      }
+    } catch (err) {
+      console.error(`[DB] Erro ao ler matérias de ${userDir}:`, err);
     }
   }
 
