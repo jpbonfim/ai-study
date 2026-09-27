@@ -65,7 +65,7 @@ const queryString = params.toString() ? `?${params.toString()}` : '';
 
     {data.statement && (
       <div
-        class="font-serif text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-3 mb-2.5 leading-relaxed"
+        class="academic-prose font-serif text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-3 mb-2.5 leading-relaxed"
         set:html={data.renderedStatement || renderMath(data.statement)}
       />
     )}

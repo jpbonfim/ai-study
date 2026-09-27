@@ -1,8 +1,9 @@
 import katex from 'katex';
 
 /**
- * Renderiza expressões matemáticas KaTeX embutidas ($...$ e $$...$$) dentro de strings de texto,
- * preservando formatação, convertendo quebras de linha e garantindo segurança tipográfica.
+ * Renderiza expressões matemáticas KaTeX ($...$ e $$...$$) e formatação de texto
+ * (enunciados, opções de alternativas, respostas esperadas/gabaritos),
+ * preservando equações, comandos LaTeX avulsos e garantindo integridade visual.
  */
 export function renderMath(content?: string | null): string {
   if (!content) return '';
@@ -98,19 +99,38 @@ export function renderMath(content?: string | null): string {
     }
   });
 
-  // 3. Escapa caracteres especiais de HTML fora dos blocos matemáticos
+  // 3. Suporte resiliente a comandos e expressões LaTeX não delimitados por $ (ex: \Omega, \rho_{min}, 180^\circ)
+  if (text.includes('\\')) {
+    const looseLatexRegex = /(?:\\[a-zA-Z]+(?:\{[^}]*\}|_[a-zA-Z0-9]+|_{[^}]+}|\^[a-zA-Z0-9]+|\^{[^}]+})*|[0-9]+(?:\^[a-zA-Z0-9]+|\^{[^}]+}|_[a-zA-Z0-9]+|_{[^}]+})+)/g;
+    text = text.replace(looseLatexRegex, (cmd) => {
+      if (cmd.includes('___MATH_')) return cmd;
+      try {
+        const rendered = katex.renderToString(cmd.trim(), {
+          displayMode: false,
+          throwOnError: false,
+        });
+        const idx = mathBlocks.length;
+        mathBlocks.push(rendered);
+        return `___MATH_BLOCK_${idx}___`;
+      } catch {
+        return cmd;
+      }
+    });
+  }
+
+  // 4. Escapa caracteres especiais de HTML fora dos blocos matemáticos
   text = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-  // 4. Suporte a negrito, itálico, código inline e quebras de linha
+  // 5. Suporte a negrito, itálico, código inline e quebras de linha
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
   text = text.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-[var(--bg-subtle)] text-xs font-mono text-[var(--accent)]">$1</code>');
   text = text.replace(/\n/g, '<br />');
 
-  // 5. Restaura os blocos matemáticos compilados em HTML pelo KaTeX
+  // 6. Restaura os blocos matemáticos compilados em HTML pelo KaTeX
   text = text.replace(/___MATH_GROUP_(\d+)___/g, (_, idx) => {
     return groupPlaceholders[parseInt(idx, 10)] || '';
   });
