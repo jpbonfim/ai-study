@@ -77,10 +77,14 @@ marked.use({
   renderer: {
     code({ text, lang }: { text: string; lang?: string }) {
       const language = (lang || '').trim();
+      const escapedText = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       if (language === 'mermaid') {
-        return `<pre class="mermaid diagram-block" data-language="mermaid"><code class="language-mermaid">${text}</code></pre>\n`;
+        return `<pre class="mermaid diagram-block" data-language="mermaid"><code class="language-mermaid">${escapedText}</code></pre>\n`;
       }
-      return `<pre data-language="${language}"><code class="language-${language}">${text}</code></pre>\n`;
+      return `<pre data-language="${language}"><code class="language-${language}">${escapedText}</code></pre>\n`;
     },
   },
 });
