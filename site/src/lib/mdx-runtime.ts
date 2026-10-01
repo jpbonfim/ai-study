@@ -384,7 +384,7 @@ export function processQuestionFile(
   }));
 
   const statement = frontmatter.statement || '';
-  const renderedStatement = renderMath(statement);
+  const renderedStatement = renderMarkdownWithKatex(statement, ownerUserId, materiaSlug, fileDir);
 
   const expectedAnswer = frontmatter.expectedAnswer || '';
   const renderedExpectedAnswer = renderMath(expectedAnswer);

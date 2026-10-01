@@ -8,12 +8,41 @@ import katex from 'katex';
 export function renderMath(content?: string | null): string {
   if (!content) return '';
 
+  // 0. Processa blocos de código cercados (fenced code blocks: ```lang\n...``` ou colapsados)
+  const codeBlocks: string[] = [];
+  let text = content.replace(/(?:^|\n)[ \t]*```([a-zA-Z0-9_-]*)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*```(?:\r?\n|$)/g, (_, lang, code) => {
+    const language = (lang || '').trim();
+    const escapedCode = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const idx = codeBlocks.length;
+    codeBlocks.push(
+      `<pre class="academic-code-block my-3 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs font-mono overflow-x-auto text-[var(--text-primary)]" data-language="${language}"><code class="language-${language}">${escapedCode}</code></pre>`
+    );
+    return `\n\n___CODE_BLOCK_${idx}___\n\n`;
+  });
+
+  // Também suporta blocos colapsados em linha única (ex: ```http GET / ... ```)
+  text = text.replace(/```([a-zA-Z0-9_-]+)[ \t]+([\s\S]*?)```/g, (_, lang, code) => {
+    const language = (lang || '').trim();
+    const escapedCode = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const idx = codeBlocks.length;
+    codeBlocks.push(
+      `<pre class="academic-code-block my-3 p-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs font-mono overflow-x-auto text-[var(--text-primary)]" data-language="${language}"><code class="language-${language}">${escapedCode}</code></pre>`
+    );
+    return `\n\n___CODE_BLOCK_${idx}___\n\n`;
+  });
+
   // 1. Processa display math $$ ... $$ agrupando blocos contíguos
   const mathBlockRegex = /\$\$([\s\S]+?)\$\$/g;
   const blocks: { start: number; end: number; math: string }[] = [];
   let match: RegExpExecArray | null;
 
-  while ((match = mathBlockRegex.exec(content)) !== null) {
+  while ((match = mathBlockRegex.exec(text)) !== null) {
     blocks.push({
       start: match.index,
       end: mathBlockRegex.lastIndex,
@@ -33,7 +62,7 @@ export function renderMath(content?: string | null): string {
         equations: [block.math],
       };
     } else {
-      const between = content.slice(currentGroup.end, block.start);
+      const between = text.slice(currentGroup.end, block.start);
       if (between.trim() === '') {
         currentGroup.end = block.end;
         currentGroup.equations.push(block.math);
@@ -52,7 +81,6 @@ export function renderMath(content?: string | null): string {
   }
 
   const groupPlaceholders: string[] = [];
-  let text = content;
 
   // Substitui de trás para frente para manter índices válidos
   for (let i = groups.length - 1; i >= 0; i--) {
@@ -137,6 +165,11 @@ export function renderMath(content?: string | null): string {
 
   text = text.replace(/___MATH_BLOCK_(\d+)___/g, (_, idx) => {
     return mathBlocks[parseInt(idx, 10)] || '';
+  });
+
+  // 7. Restaura os blocos de código formatados
+  text = text.replace(/___CODE_BLOCK_(\d+)___/g, (_, idx) => {
+    return codeBlocks[parseInt(idx, 10)] || '';
   });
 
   return text;

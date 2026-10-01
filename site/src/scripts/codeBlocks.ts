@@ -23,6 +23,9 @@ const LANGUAGE_MAP: Record<string, string> = {
   sh: 'SHELL',
   text: 'CÓDIGO',
   txt: 'TEXTO',
+  http: 'HTTP',
+  json: 'JSON',
+  html: 'HTML',
 };
 
 export function initCodeBlocks(): void {
