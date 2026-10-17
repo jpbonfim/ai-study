@@ -23,6 +23,21 @@ class ClientStudyCache {
 
   constructor() {
     this.safeExecute(() => {
+      // Invalidação automática via parâmetro na URL (?nocache=1, ?clear_cache=1, ?bust)
+      if (typeof window !== 'undefined' && window.location) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('nocache') || params.has('clear_cache') || params.has('bust')) {
+          this.clearAll();
+          params.delete('nocache');
+          params.delete('clear_cache');
+          params.delete('bust');
+          const newUrl =
+            window.location.pathname +
+            (params.toString() ? `?${params.toString()}` : '') +
+            window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        }
+      }
       this.clearExpired();
     });
   }
@@ -37,6 +52,104 @@ class ClientStudyCache {
     if (typeof config.maxEntries === 'number' && config.maxEntries > 0) {
       this.maxEntries = config.maxEntries;
     }
+  }
+
+  /**
+   * Limpa completamente todo o cache local de estudos (capítulos, tags, metadados e manifesto)
+   */
+  public clearAll(): void {
+    this.safeExecute(() => {
+      const manifest = this.getManifest();
+      for (const item of manifest) {
+        try {
+          localStorage.removeItem(item.key);
+        } catch {}
+      }
+      try {
+        localStorage.removeItem(this.manifestKey);
+      } catch {}
+
+      // Limpa qualquer chave residual no localStorage com prefixo study_cache
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith(this.prefix) || k.startsWith('study_cache_'))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => {
+        try {
+          localStorage.removeItem(k);
+        } catch {}
+      });
+
+      // Registra timestamp do último bust para cache-busting de requisições de rede
+      try {
+        localStorage.setItem('study_last_cache_bust', String(Date.now()));
+      } catch {}
+
+      console.info('[StudyCache] Cache local de estudos invalidado com sucesso.');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('study-cache-cleared'));
+      }
+    });
+  }
+
+  /**
+   * Limpa os dados em cache de uma matéria específica
+   */
+  public clearMateria(materiaSlug: string): void {
+    this.safeExecute(() => {
+      const keysToRemove: string[] = [];
+      const prefix = `${this.prefix}ch:${materiaSlug}:`;
+      const metaPrefix = `${this.prefix}tag_meta:${materiaSlug}:`;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith(prefix) || k.startsWith(metaPrefix))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => {
+        try {
+          localStorage.removeItem(k);
+        } catch {}
+      });
+      const manifest = this.getManifest().filter((m) => !keysToRemove.includes(m.key));
+      this.saveManifest(manifest);
+      console.info(`[StudyCache] Cache da matéria ${materiaSlug} invalidado.`);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('study-cache-cleared', { detail: { materiaSlug } }));
+      }
+    });
+  }
+
+  /**
+   * Invalida o cache e recarrega a página imediatamente para ver as alterações frescas
+   */
+  public invalidateAndReload(): void {
+    this.clearAll();
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }
+
+  /**
+   * Retorna estatísticas de uso do cache local
+   */
+  public getStats(): { count: number; totalEstimatedBytes: number; keys: string[] } {
+    return (
+      this.safeExecute(() => {
+        const manifest = this.getManifest();
+        let totalBytes = 0;
+        const keys: string[] = [];
+        for (const m of manifest) {
+          keys.push(m.key);
+          const raw = localStorage.getItem(m.key);
+          if (raw) totalBytes += raw.length * 2;
+        }
+        return { count: manifest.length, totalEstimatedBytes: totalBytes, keys };
+      }) || { count: 0, totalEstimatedBytes: 0, keys: [] }
+    );
   }
 
   /**
@@ -240,7 +353,10 @@ class ClientStudyCache {
 
 export const clientStudyCache = new ClientStudyCache();
 
-// Disponibiliza no objeto window para fácil acesso e inspeção
+// Disponibiliza no objeto window para fácil acesso e inspeção no console e UI
 if (typeof window !== 'undefined') {
   (window as any).clientStudyCache = clientStudyCache;
+  (window as any).clearStudyCache = () => {
+    clientStudyCache.invalidateAndReload();
+  };
 }

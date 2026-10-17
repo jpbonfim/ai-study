@@ -891,7 +891,42 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 6. Demonstração Dinâmica da Pré-Visualização -->
+            <!-- 6. Gerenciamento de Cache e Armazenamento Local -->
+            <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-4">
+              <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+                <div>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">
+                    6. Cache e Armazenamento Local de Estudos
+                  </label>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Os cadernos e capítulos lidos são salvos localmente para carregamento instantâneo. Se você editou resumos ou fez alterações no acervo, limpe o cache para atualizar imediatamente.
+                  </p>
+                </div>
+                <span id="cache-stats-badge" class="font-mono text-xs text-[var(--text-muted)] bg-[var(--bg-subtle)] px-2.5 py-1 rounded border border-[var(--border-subtle)]">
+                  Carregando...
+                </span>
+              </div>
+
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+                <div class="text-xs text-[var(--text-secondary)] space-y-1">
+                  <p>• Dica: Você também pode usar o botão no menu lateral ou o atalho <kbd class="px-1.5 py-0.5 font-mono text-[10px] bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded font-semibold text-[var(--accent)]">Alt + C</kbd> em qualquer página.</p>
+                  <p>• Ou adicione <code class="font-mono text-[10px] text-[var(--accent)]">?nocache=1</code> ao final de qualquer endereço.</p>
+                </div>
+
+                <button
+                  type="button"
+                  id="btn-clear-study-cache-config"
+                  class="px-4 py-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] hover:opacity-90 text-white dark:text-black font-semibold text-xs transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 shrink-0"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span id="btn-clear-cache-label">Limpar Cache de Estudos</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 7. Demonstração Dinâmica da Pré-Visualização -->
             <div class="space-y-2 pt-2">
               <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Pré-Visualização em Tempo Real</span>
@@ -1660,6 +1695,55 @@ const previewMathDisplay = katex.renderToString(
 
       // Inicializa a interface
       updateUI();
+
+      // Gerenciamento de Cache na tela de Configurações
+      function updateCacheStatsDisplay() {
+        const badge = document.getElementById('cache-stats-badge');
+        if (!badge) return;
+        if (window.clientStudyCache && typeof window.clientStudyCache.getStats === 'function') {
+          const stats = window.clientStudyCache.getStats();
+          const kb = (stats.totalEstimatedBytes / 1024).toFixed(1);
+          badge.textContent = `${stats.count} itens em cache (~${kb} KB)`;
+        } else {
+          try {
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && (k.startsWith('study_cache_') || k.startsWith('study_cache_v2:'))) count++;
+            }
+            badge.textContent = `${count} itens em cache`;
+          } catch {
+            badge.textContent = 'Cache pronto';
+          }
+        }
+      }
+
+      updateCacheStatsDisplay();
+
+      const clearCacheBtn = document.getElementById('btn-clear-study-cache-config');
+      const clearCacheLabel = document.getElementById('btn-clear-cache-label');
+      clearCacheBtn?.addEventListener('click', () => {
+        if (window.clientStudyCache && typeof window.clientStudyCache.clearAll === 'function') {
+          window.clientStudyCache.clearAll();
+        } else {
+          try {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const k = localStorage.key(i);
+              if (k && (k.startsWith('study_cache_') || k.startsWith('study_cache_v2:'))) {
+                localStorage.removeItem(k);
+              }
+            }
+            localStorage.setItem('study_last_cache_bust', String(Date.now()));
+          } catch {}
+        }
+        updateCacheStatsDisplay();
+        if (clearCacheLabel) clearCacheLabel.textContent = '✓ Cache Limpo com Sucesso!';
+        clearCacheBtn.classList.add('bg-emerald-600', 'border-emerald-600');
+        setTimeout(() => {
+          if (clearCacheLabel) clearCacheLabel.textContent = 'Limpar Cache de Estudos';
+          clearCacheBtn.classList.remove('bg-emerald-600', 'border-emerald-600');
+        }, 2500);
+      });
 
       // Gerenciador de Sidebar (Desktop e Mobile) nas Configurações
       const sidebarToggle = document.getElementById('mobile-sidebar-toggle');

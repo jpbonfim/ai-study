@@ -57,12 +57,19 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   }
 
+  const isNoCache = url.searchParams.has('nocache') || url.searchParams.has('bust') || url.searchParams.has('clear_cache');
   const ttlMinutes = parseInt(process.env.CLIENT_CACHE_TTL_MINUTES || '1440', 10);
   const cacheSeconds = ttlMinutes * 60;
-  const cacheHeaders = {
-    'Content-Type': 'application/json',
-    'Cache-Control': `private, max-age=${cacheSeconds}, stale-while-revalidate=86400`,
-  };
+  const cacheHeaders = isNoCache
+    ? {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+      }
+    : {
+        'Content-Type': 'application/json',
+        'Cache-Control': `private, max-age=${cacheSeconds}, stale-while-revalidate=86400`,
+      };
 
   try {
     // 1. Carregamento sob demanda de UM capítulo específico pelo ID
