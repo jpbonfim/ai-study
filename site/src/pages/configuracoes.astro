@@ -1625,6 +1625,8 @@ const previewMathDisplay = katex.renderToString(
         root.style.setProperty('--katex-script-scale', savedState.mathScriptScale);
         root.style.setProperty('--katex-min-font-size', savedState.mathMinSize);
 
+        window.dispatchEvent(new CustomEvent('study-code-theme-changed', { detail: { theme: savedState.codeTheme } }));
+
         updateUI();
 
         // Notificação de Sucesso

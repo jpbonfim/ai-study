@@ -122,6 +122,7 @@
         root.classList.add('theme-paper');
       }
 
+      root.setAttribute('data-theme', themeName);
       localStorage.setItem('study_theme', themeName);
       updateAllThemeUI(themeName);
     }

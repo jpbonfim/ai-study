@@ -2045,11 +2045,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       import '../scripts/clientStudyCache';
 
       async function setupOptimizers() {
-        initTableOptimizer();
-        await initDiagrams();
-        initCodeBlocks();
-        initQuestionSequences();
-        initEquationGroups();
+        try { initTableOptimizer(); } catch (err) { console.warn('[Optimizer] tableOptimizer:', err); }
+        try { await initDiagrams(); } catch (err) { console.warn('[Optimizer] diagramManager:', err); }
+        try { initCodeBlocks(); } catch (err) { console.warn('[Optimizer] codeBlocks:', err); }
+        try { initQuestionSequences(); } catch (err) { console.warn('[Optimizer] questionSequence:', err); }
+        try { initEquationGroups(); } catch (err) { console.warn('[Optimizer] equationGroups:', err); }
       }
 
       (window as any).setupOptimizers = setupOptimizers;
@@ -2062,12 +2062,22 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       // Atualiza blocos se houver mudança de tema dinâmico
       const themeObserver = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-            initDiagrams();
+          if (mutation.type === 'attributes') {
+            if (mutation.attributeName === 'data-theme') {
+              initDiagrams();
+            }
+            if (mutation.attributeName === 'data-code-theme') {
+              const codeTheme = document.documentElement.getAttribute('data-code-theme');
+              if (codeTheme) {
+                document.querySelectorAll<HTMLElement>('.code-block-card').forEach((card) => {
+                  card.setAttribute('data-code-theme', codeTheme);
+                });
+              }
+            }
           }
         }
       });
-      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-code-theme'] });
     </script>
 
     <style is:global>

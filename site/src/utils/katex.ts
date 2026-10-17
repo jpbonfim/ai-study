@@ -37,6 +37,18 @@ export function renderMath(content?: string | null): string {
     return `\n\n___CODE_BLOCK_${idx}___\n\n`;
   });
 
+  // 0.5 Protege código inline (`...`) para não capturar cifrões internos
+  const inlineCodes: string[] = [];
+  text = text.replace(/`([^`]+)`/g, (_, code) => {
+    const idx = inlineCodes.length;
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    inlineCodes.push(`<code class="px-1 py-0.5 rounded bg-[var(--bg-subtle)] text-xs font-mono text-[var(--accent)]">${escaped}</code>`);
+    return `___INLINE_CODE_${idx}___`;
+  });
+
   // 1. Processa display math $$ ... $$ agrupando blocos contíguos
   const mathBlockRegex = /\$\$([\s\S]+?)\$\$/g;
   const blocks: { start: number; end: number; math: string }[] = [];
@@ -158,6 +170,7 @@ export function renderMath(content?: string | null): string {
   // 5. Suporte a negrito, itálico, código inline e quebras de linha
   text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  text = text.replace(/___INLINE_CODE_(\d+)___/g, (_, idx) => inlineCodes[parseInt(idx, 10)] || '');
   text = text.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-[var(--bg-subtle)] text-xs font-mono text-[var(--accent)]">$1</code>');
   text = text.replace(/\n/g, '<br />');
 
