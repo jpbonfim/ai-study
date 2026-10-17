@@ -1668,11 +1668,13 @@ html.theme-oled .theme-icon-oled {
    ============================================================ */
 
 /* 1. MODO ESCURO BIBLIOTECA (Suavidade nos cards e busca) */
-html.theme-dark .sidebar-materia-item {
+html.theme-dark .sidebar-materia-item,
+html.theme-dark #home-sidebar a[href="/conta"] {
   background-color: rgba(38, 41, 48, 0.35);
   border-color: rgba(43, 46, 55, 0.6);
 }
-html.theme-dark .sidebar-materia-item:hover {
+html.theme-dark .sidebar-materia-item:hover,
+html.theme-dark #home-sidebar a[href="/conta"]:hover {
   background-color: rgba(38, 41, 48, 0.75);
 }
 html.theme-dark #sidebar-materia-search {
@@ -1688,6 +1690,7 @@ html.theme-oled #config-sidebar,
 html.theme-oled #settings-sidebar,
 html.theme-oled #sidebar-materia-search,
 html.theme-oled .sidebar-materia-item,
+html.theme-oled #home-sidebar a[href="/conta"],
 html.theme-oled #recent-section,
 html.theme-oled article,
 html.theme-oled .katex-display,
@@ -1716,11 +1719,13 @@ html.theme-oled .markdown-alert {
   box-shadow: none !important;
 }
 
-html.theme-oled .sidebar-materia-item {
+html.theme-oled .sidebar-materia-item,
+html.theme-oled #home-sidebar a[href="/conta"] {
   border-color: #222222 !important;
 }
 
 html.theme-oled .sidebar-materia-item:hover,
+html.theme-oled #home-sidebar a[href="/conta"]:hover,
 html.theme-oled .theme-opt-btn:hover,
 html.theme-oled .tag-opt-btn:hover,
 html.theme-oled .modal-control-btn:hover {
