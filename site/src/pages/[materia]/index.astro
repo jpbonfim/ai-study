@@ -6,6 +6,7 @@ import { getMateria, formatTag, loadAllAccessibleMaterias, type Subject } from '
 import {
   loadUserChaptersMetadata,
   loadUserQuestionsMetadata,
+  loadChapterById,
   loadUserChaptersByTag,
   type ChapterMetadata,
   type QuestionMetadata,
@@ -17,6 +18,9 @@ const user = Astro.locals.user!;
 const { materia: materiaSlug } = Astro.params;
 const ownerParam = Astro.url.searchParams.get('owner');
 const tagParam = Astro.url.searchParams.get('tag')?.trim() || null;
+
+const clientCacheTtlMinutes = parseInt(process.env.CLIENT_CACHE_TTL_MINUTES || '1440', 10);
+const clientCacheMaxEntries = parseInt(process.env.CLIENT_CACHE_MAX_ENTRIES || '50', 10);
 
 if (!materiaSlug) {
   return Astro.redirect('/');
@@ -127,7 +131,21 @@ for (const src of otherSources) {
 }
 
 // 6. Prepara os capítulos a renderizar (APENAS se uma tag for solicitada via URL)
-interface RenderableChapter extends ChapterItem {
+interface RenderableChapter {
+  id: string;
+  filePath: string;
+  materia: string;
+  title: string;
+  topic: string;
+  chapter: number;
+  order: number;
+  description: string;
+  type: 'materia' | 'questoes';
+  tags: string[];
+  sections: any[];
+  relatedQuestions: any[];
+  htmlContent?: string;
+  ownerUserId: number;
   isFromOther: boolean;
   ownerDisplayName?: string;
   matchTags: string[];
@@ -142,21 +160,48 @@ if (tagParam) {
     const filterOwnerId = parseInt(userPart.replace('user_', ''), 10);
     const foundSrc = otherSources.find((s) => s.ownerUserId === filterOwnerId);
     if (foundSrc) {
-      const chaps = loadUserChaptersByTag(filterOwnerId, foundSrc.materiaSlug, raw);
-      chaptersToRender = chaps.map((c) => ({
-        ...c,
-        isFromOther: true,
-        ownerDisplayName: foundSrc.ownerDisplayName,
-        matchTags: [tagParam],
-      }));
+      const matchingMeta = foundSrc.chapters
+        .filter((c) => (c.tags || []).includes(raw))
+        .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
+
+      if (matchingMeta.length > 0) {
+        // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
+        const firstChap = loadChapterById(matchingMeta[0].id, filterOwnerId, foundSrc.materiaSlug);
+        chaptersToRender = [
+          firstChap
+            ? { ...firstChap, isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] }
+            : { ...matchingMeta[0], htmlContent: '', isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] },
+          ...matchingMeta.slice(1).map((m) => ({
+            ...m,
+            htmlContent: undefined,
+            isFromOther: true,
+            ownerDisplayName: foundSrc.ownerDisplayName,
+            matchTags: [tagParam],
+          })),
+        ];
+      }
     }
   } else {
-    const chaps = loadUserChaptersByTag(primaryOwnerId, materiaSlug, tagParam);
-    chaptersToRender = chaps.map((c) => ({
-      ...c,
-      isFromOther: false,
-      matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
-    }));
+    const matchingMeta = primaryChapters
+      .filter((c) => (c.tags || []).includes(tagParam))
+      .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
+
+    if (matchingMeta.length > 0) {
+      // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
+      const firstChap = loadChapterById(matchingMeta[0].id, primaryOwnerId, materiaSlug);
+      const primaryMatchTags = [tagParam, `user_${primaryOwnerId}::${tagParam}`];
+      chaptersToRender = [
+        firstChap
+          ? { ...firstChap, isFromOther: false, matchTags: primaryMatchTags }
+          : { ...matchingMeta[0], htmlContent: '', isFromOther: false, matchTags: primaryMatchTags },
+        ...matchingMeta.slice(1).map((m) => ({
+          ...m,
+          htmlContent: undefined,
+          isFromOther: false,
+          matchTags: primaryMatchTags,
+        })),
+      ];
+    }
   }
 }
 
@@ -368,6 +413,8 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
           <div class="space-y-12">
             <section
               id={chapId}
+              data-chapter-id={resumo.id}
+              data-chapter-owner={resumo.ownerUserId}
               data-chapter-tags={resumo.matchTags.join(',')}
               data-chapter-type={resumo.type || 'questoes'}
               class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
@@ -403,8 +450,32 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
                 )}
               </div>
 
-              <!-- Corpo do Capítulo (Markdown processado com KaTeX em runtime) -->
-              <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0" set:html={resumo.htmlContent} />
+              <!-- Corpo do Capítulo: Compilado ou Lazy Placeholder sob demanda -->
+              {resumo.htmlContent ? (
+                <div
+                  class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0"
+                  data-chapter-body={resumo.id}
+                  data-loaded="true"
+                  set:html={resumo.htmlContent}
+                />
+              ) : (
+                <div
+                  class="chapter-lazy-content"
+                  data-chapter-body={resumo.id}
+                  data-chapter-id={resumo.id}
+                  data-chapter-owner={resumo.ownerUserId}
+                  data-chapter-materia={resumo.materia}
+                  data-chapter-title={resumo.title}
+                  data-loaded="false"
+                >
+                  <div class="py-12 px-6 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] text-center space-y-3 my-4">
+                    <div class="inline-block w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+                    <p class="font-serif text-sm text-[var(--text-secondary)] italic">
+                      Avançando no material... Carregando Capítulo {resumo.chapter}: {resumo.title}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <!-- Divisor Clássico entre Capítulos -->
               {idx < chaptersToRender.length - 1 && (
@@ -432,7 +503,12 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   </article>
 </AcademicLayout>
 
-<script is:inline define:vars={{ materiaSlug: materia.slug, primaryOwnerId }}>
+<script is:inline define:vars={{
+  materiaSlug: materia.slug,
+  primaryOwnerId,
+  clientCacheTtlMinutes,
+  clientCacheMaxEntries,
+}}>
   (function() {
     const promptEl = document.getElementById('tag-select-prompt');
     const notebookEl = document.getElementById('notebook-content');
@@ -443,6 +519,14 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     const footerBancoLink = document.getElementById('footer-banco-link');
     const chaptersContainer = document.getElementById('chapters-container');
 
+    // Inicializa parâmetros de retenção no cache persistente do cliente
+    if (window.clientStudyCache && typeof window.clientStudyCache.setConfig === 'function') {
+      window.clientStudyCache.setConfig({
+        ttlMinutes: clientCacheTtlMinutes,
+        maxEntries: clientCacheMaxEntries,
+      });
+    }
+
     function formatTagName(t) {
       if (!t) return '';
       if (t.includes('::')) {
@@ -451,40 +535,137 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       return t;
     }
 
-    function getCacheKey(tag) {
-      return 'study_cache_' + materiaSlug + '_' + (tag || 'all');
+    // 1. Armazena no cache persistente os capítulos que já vieram renderizados pelo SSR (ex: Capítulo 1)
+    function cacheRenderedChapters() {
+      if (!window.clientStudyCache) return;
+      const renderedBodies = document.querySelectorAll('[data-chapter-body][data-loaded="true"]');
+      renderedBodies.forEach((el) => {
+        const chId = el.getAttribute('data-chapter-body');
+        const section = el.closest('section');
+        const chOwner = parseInt(section?.dataset.chapterOwner || String(primaryOwnerId), 10);
+        const chTitle = section?.querySelector('h2')?.textContent?.trim() || '';
+        if (chId && el.innerHTML.trim()) {
+          window.clientStudyCache.setChapter(materiaSlug, chOwner, chId, el.innerHTML, chTitle);
+        }
+      });
     }
 
-    function saveToClientCache(tag, html, count) {
-      try {
-        if (!tag || !html) return;
-        sessionStorage.setItem(getCacheKey(tag), JSON.stringify({
-          html,
-          count,
-          timestamp: Date.now()
-        }));
-      } catch(e) {}
-    }
+    // 2. Carrega um capítulo individual sob demanda (via cache persistente ou API)
+    let lazyObserver = null;
 
-    function getFromClientCache(tag) {
+    async function loadSingleChapter(placeholderEl) {
+      if (!placeholderEl || placeholderEl.getAttribute('data-loaded') === 'true') return;
+      if (placeholderEl.getAttribute('data-loading') === 'true') return;
+      placeholderEl.setAttribute('data-loading', 'true');
+
+      const chId = placeholderEl.dataset.chapterId;
+      const chOwner = parseInt(placeholderEl.dataset.chapterOwner || String(primaryOwnerId), 10);
+      const chMateria = placeholderEl.dataset.chapterMateria || materiaSlug;
+      const chTitle = placeholderEl.dataset.chapterTitle || '';
+
+      // Passo A: Verifica se o capítulo já está no cache persistente do cliente (0ms)
+      const cached = window.clientStudyCache?.getChapter(chMateria, chOwner, chId);
+      if (cached) {
+        placeholderEl.innerHTML = cached;
+        placeholderEl.className = 'academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0';
+        placeholderEl.setAttribute('data-loaded', 'true');
+        placeholderEl.removeAttribute('data-loading');
+        window.dispatchEvent(new CustomEvent('study-content-updated'));
+        return;
+      }
+
+      // Passo B: Compila apenas este capítulo sob demanda no servidor
       try {
-        if (!tag) return null;
-        const raw = sessionStorage.getItem(getCacheKey(tag));
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        return parsed && parsed.html ? parsed : null;
-      } catch(e) {
-        return null;
+        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(chMateria)}&chapter_id=${encodeURIComponent(chId)}&owner=${encodeURIComponent(chOwner)}`);
+        if (!res.ok) throw new Error('Falha ao carregar capítulo');
+        const data = await res.json();
+        const html = data.chapter?.htmlContent || '<p class="text-sm text-[var(--text-muted)] italic">Conteúdo indisponível.</p>';
+
+        placeholderEl.innerHTML = html;
+        placeholderEl.className = 'academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0';
+        placeholderEl.setAttribute('data-loaded', 'true');
+        placeholderEl.removeAttribute('data-loading');
+
+        // Salva no cache persistente do navegador (localStorage com TTL e LRU)
+        window.clientStudyCache?.setChapter(chMateria, chOwner, chId, html, chTitle);
+
+        window.dispatchEvent(new CustomEvent('study-content-updated'));
+      } catch (err) {
+        console.error('Erro ao carregar capítulo sob demanda:', err);
+        placeholderEl.removeAttribute('data-loading');
+        placeholderEl.innerHTML = `
+          <div class="py-8 px-6 rounded-xl border border-dashed border-[var(--border-strong)] text-center space-y-3 my-4">
+            <p class="font-serif text-sm text-[var(--text-muted)]">Ocorreu uma falha ao carregar este capítulo.</p>
+            <button type="button" class="btn-retry-chapter px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold cursor-pointer">
+              Tentar Novamente
+            </button>
+          </div>
+        `;
+        const retryBtn = placeholderEl.querySelector('.btn-retry-chapter');
+        retryBtn?.addEventListener('click', () => loadSingleChapter(placeholderEl));
       }
     }
 
-    // Salva o HTML inicial do SSR no client-cache se já houver tag renderizada
-    const initialRenderedTag = chaptersContainer?.getAttribute('data-rendered-tag');
-    if (initialRenderedTag && chaptersContainer?.innerHTML.trim()) {
-      const sectionCount = chaptersContainer.querySelectorAll('.chapter-section').length;
-      saveToClientCache(initialRenderedTag, chaptersContainer.innerHTML, sectionCount);
+    // 3. Inicializa o IntersectionObserver para detecção antecipada (600px antes do scroll)
+    function setupLazyChapters() {
+      if (lazyObserver) {
+        lazyObserver.disconnect();
+      }
+
+      const placeholders = document.querySelectorAll('.chapter-lazy-content[data-loaded="false"]');
+      if (placeholders.length === 0) return;
+
+      if ('IntersectionObserver' in window) {
+        lazyObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const target = entry.target;
+              lazyObserver.unobserve(target);
+              loadSingleChapter(target);
+            }
+          });
+        }, {
+          rootMargin: '600px 0px',
+          threshold: 0.01,
+        });
+
+        placeholders.forEach((el) => lazyObserver.observe(el));
+      } else {
+        // Fallback para navegadores sem IntersectionObserver
+        placeholders.forEach((el) => loadSingleChapter(el));
+      }
     }
 
+    // 4. Se o usuário clicar num link interno para um capítulo (ex: TOC da sidebar), carrega imediatamente
+    document.addEventListener('click', (e) => {
+      const link = e.target?.closest('a[href*="cap-"]');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      const hash = href.includes('#') ? href.split('#')[1] : null;
+      if (!hash) return;
+
+      const sec = document.getElementById(hash);
+      const placeholder = sec?.querySelector('.chapter-lazy-content[data-loaded="false"]');
+      if (placeholder) {
+        loadSingleChapter(placeholder);
+      }
+    });
+
+    // 5. Se a URL carregar com âncora (#cap-...), carrega o capítulo alvo imediatamente
+    function handleInitialHash() {
+      if (window.location.hash && window.location.hash.includes('cap-')) {
+        const hash = window.location.hash.replace('#', '');
+        const sec = document.getElementById(hash);
+        const placeholder = sec?.querySelector('.chapter-lazy-content[data-loaded="false"]');
+        if (placeholder) {
+          loadSingleChapter(placeholder).then(() => {
+            sec?.scrollIntoView({ behavior: 'smooth' });
+          });
+        }
+      }
+    }
+
+    // 6. Aplica a tag selecionada (sob demanda, no modo progressivo)
     async function applyActiveTag(tag) {
       if (!tag) {
         promptEl?.classList.remove('hidden');
@@ -511,20 +692,6 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
         return;
       }
 
-      // 1. Tenta recuperar do cache cliente (0ms)
-      const cached = getFromClientCache(tag);
-      if (cached && chaptersContainer) {
-        chaptersContainer.innerHTML = cached.html;
-        chaptersContainer.setAttribute('data-rendered-tag', tag);
-        if (chaptersCountEl) {
-          chaptersCountEl.textContent = `${cached.count} ${cached.count === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
-        }
-        noChaptersEl?.classList.toggle('hidden', cached.count > 0);
-        window.dispatchEvent(new CustomEvent('study-content-updated'));
-        return;
-      }
-
-      // 2. Se não estiver no cache cliente, busca da API /api/chapters
       if (chaptersContainer) {
         chaptersContainer.innerHTML = `
           <div class="py-16 text-center space-y-3">
@@ -544,7 +711,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
           fetchTag = parts[1];
         }
 
-        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}`);
+        const res = await fetch(`/api/chapters?mode=progressive&materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}`);
         if (!res.ok) throw new Error('Falha ao carregar capítulos');
         const data = await res.json();
         const chaps = data.chapters || [];
@@ -562,10 +729,17 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
               const prefix = isOtherUser ? `other-${resumo.ownerUserId}-` : '';
               const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
 
+              // Checa se o capítulo já está salvo no cache persistente do cliente!
+              const cachedHtml = window.clientStudyCache?.getChapter(materiaSlug, resumo.ownerUserId || fetchOwner, resumo.id);
+              const isLoaded = Boolean(cachedHtml) || Boolean(resumo.htmlContent);
+              const chapterContent = cachedHtml || resumo.htmlContent || '';
+
               html += `
                 <div class="space-y-12">
                   <section
                     id="${chapId}"
+                    data-chapter-id="${resumo.id}"
+                    data-chapter-owner="${resumo.ownerUserId || fetchOwner}"
                     data-chapter-tags="${tag}"
                     data-chapter-type="${resumo.type || 'questoes'}"
                     class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
@@ -581,9 +755,32 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
                       ${resumo.description ? `<p class="font-serif text-base text-[var(--text-secondary)] italic">${resumo.description}</p>` : ''}
                     </div>
 
-                    <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
-                      ${resumo.htmlContent || ''}
-                    </div>
+                    ${isLoaded ? `
+                      <div
+                        class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0"
+                        data-chapter-body="${resumo.id}"
+                        data-loaded="true"
+                      >
+                        ${chapterContent}
+                      </div>
+                    ` : `
+                      <div
+                        class="chapter-lazy-content"
+                        data-chapter-body="${resumo.id}"
+                        data-chapter-id="${resumo.id}"
+                        data-chapter-owner="${resumo.ownerUserId || fetchOwner}"
+                        data-chapter-materia="${materiaSlug}"
+                        data-chapter-title="${resumo.title}"
+                        data-loaded="false"
+                      >
+                        <div class="py-12 px-6 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface)] text-center space-y-3 my-4">
+                          <div class="inline-block w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+                          <p class="font-serif text-sm text-[var(--text-secondary)] italic">
+                            Avançando no material... Carregando Capítulo ${resumo.chapter}: ${resumo.title}
+                          </p>
+                        </div>
+                      </div>
+                    `}
 
                     ${idx < chaps.length - 1 ? '<div class="text-center py-8 text-[var(--text-muted)] font-serif select-none">* * *</div>' : ''}
                   </section>
@@ -593,11 +790,14 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
 
             chaptersContainer.innerHTML = html;
             chaptersContainer.setAttribute('data-rendered-tag', tag);
-            saveToClientCache(tag, html, chaps.length);
 
             if (chaptersCountEl) {
               chaptersCountEl.textContent = `${chaps.length} ${chaps.length === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
             }
+
+            cacheRenderedChapters();
+            setupLazyChapters();
+            handleInitialHash();
           }
           window.dispatchEvent(new CustomEvent('study-content-updated'));
         }
@@ -627,6 +827,10 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     });
 
     function initPageTag() {
+      cacheRenderedChapters();
+      setupLazyChapters();
+      handleInitialHash();
+
       const cur = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
       if (cur) {
         applyActiveTag(cur);
