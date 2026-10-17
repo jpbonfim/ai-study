@@ -96,6 +96,17 @@ class ClientStudyCache {
   }
 
   /**
+   * Retorna o timestamp do último bust do cache local para controle de requisições de rede
+   */
+  public getCacheBust(): string {
+    return (
+      this.safeExecute(() => {
+        return localStorage.getItem('study_last_cache_bust') || '';
+      }) || ''
+    );
+  }
+
+  /**
    * Limpa os dados em cache de uma matéria específica
    */
   public clearMateria(materiaSlug: string): void {
