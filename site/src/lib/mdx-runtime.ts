@@ -860,28 +860,28 @@ export function renderQuestionCardHtml(
     const badgeType = q.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha';
 
     return `
-<div class="question-card-preview my-6 p-4 sm:p-5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-subtle)] not-prose shadow-sm hover:border-[var(--accent)] transition-all">
-  <div class="sans-ui flex items-center justify-between gap-2 pb-2 mb-2.5 border-b border-[var(--border-subtle)] text-[11px]">
-    <div class="flex items-center gap-1.5 flex-wrap">
-      <span class="font-bold text-[var(--accent)] uppercase tracking-wider">
+<div class="question-card-preview my-2.5 sm:my-3 p-3 sm:p-3.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] not-prose shadow-2xs transition-all">
+  <div class="sans-ui flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-[var(--border-subtle)] text-[10px] sm:text-[11px]">
+    <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+      <span class="font-bold text-[var(--accent)] uppercase tracking-wider shrink-0">
         Exercício • ${q.exam} (${q.year})
       </span>
-      <span class="text-[var(--text-muted)]">•</span>
-      <span class="text-[var(--text-secondary)] font-medium">
+      <span class="text-[var(--text-muted)] shrink-0">•</span>
+      <span class="text-[var(--text-secondary)] font-medium truncate">
         ${q.topic}
       </span>
     </div>
     <div class="flex items-center gap-1.5 shrink-0">
-      <span class="rounded px-2 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] uppercase font-semibold text-[var(--text-muted)]">
+      <span class="rounded px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[9.5px] sm:text-[10px] uppercase font-semibold text-[var(--text-muted)]">
         ${badgeType}
       </span>
-      <span class="text-[var(--text-muted)] italic text-[10px]">
+      <span class="text-[var(--text-muted)] italic text-[9.5px] sm:text-[10px]">
         ${q.difficulty}
       </span>
     </div>
   </div>
 
-  <h4 class="font-serif text-lg font-bold text-[var(--text-primary)] mb-2 leading-snug">
+  <h4 class="font-serif text-sm sm:text-base font-bold text-[var(--text-primary)] mb-1 leading-snug">
     <a href="/${materiaSlug}/questoes/${q.id}" class="hover:text-[var(--accent)] transition-colors">
       ${q.title}
     </a>
@@ -889,16 +889,18 @@ export function renderQuestionCardHtml(
 
   ${
     statementPreview
-      ? `<div class="font-serif text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-3 mb-3 leading-relaxed">${statementPreview}</div>`
+      ? `<div class="font-serif text-xs sm:text-[13px] text-[var(--text-secondary)] line-clamp-2 mb-2 leading-relaxed">${statementPreview}</div>`
       : ''
   }
 
-  <div class="sans-ui flex items-center justify-end pt-2 border-t border-[var(--border-subtle)] text-xs">
+  <div class="sans-ui flex items-center justify-between pt-1.5 border-t border-[var(--border-subtle)] text-[11px] sm:text-xs">
+    <span class="font-mono text-[10px] text-[var(--text-muted)] truncate max-w-[150px]">${q.id}</span>
     <a
       href="/${materiaSlug}/questoes/${q.id}"
-      class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1.5"
+      class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 text-[11px] sm:text-xs shrink-0"
     >
-      <span>Resolução</span>
+      <span>Ver Resolução</span>
+      <span>&rarr;</span>
     </a>
   </div>
 </div>

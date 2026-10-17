@@ -239,6 +239,13 @@ table.academic-table td {
   font-size: 1.08em;
 }
 
+/* Otimização de fórmulas KaTeX dentro de Cards Compactos de Exercício */
+.question-card-preview .katex-display {
+  margin: 0.5rem 0 !important;
+  padding: 0.45rem 0.75rem !important;
+  font-size: 0.95em !important;
+}
+
 /* ============================================================
    AJUSTE DE ESCALA PARA SUBSCRITOS E SOBRESCRITOS (KaTeX)
    ============================================================ */
