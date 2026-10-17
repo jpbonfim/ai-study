@@ -96,7 +96,7 @@ marked.use({
 });
 
 // Versão do pipeline de renderização MDX. Incrementar esta constante invalida caches legados automaticamente
-export const MDX_CACHE_VERSION = 'v4';
+export const MDX_CACHE_VERSION = 'v5';
 
 // Cache em memória de itens processados: chave = cacheKey
 const renderCache = new Map<string, { mtime: number; data: any }>();
@@ -917,11 +917,11 @@ export function renderQuestionCardHtml(
     </div>
   </div>
 
-  <h4 class="font-serif text-sm sm:text-[15px] font-bold text-[var(--text-primary)] mb-1 leading-snug line-clamp-1">
+  <div class="question-card-title font-serif text-[13px] sm:text-sm font-semibold text-[var(--text-primary)] mb-1 leading-snug line-clamp-1">
     <a href="/${materiaSlug}/questoes/${q.id}" class="hover:text-[var(--accent)] transition-colors">
       ${q.title}
     </a>
-  </h4>
+  </div>
 
   ${
     statementPreview
