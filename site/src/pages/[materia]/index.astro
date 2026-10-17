@@ -605,7 +605,9 @@ if (tagParam) {
 
       // Passo B: Compila apenas este capítulo sob demanda no servidor
       try {
-        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(chMateria)}&chapter_id=${encodeURIComponent(chId)}&owner=${encodeURIComponent(chOwner)}`, { cache: 'no-cache' });
+        const cb = window.clientStudyCache?.getCacheBust?.() || '';
+        const cbQuery = cb ? `&_cb=${encodeURIComponent(cb)}` : '';
+        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(chMateria)}&chapter_id=${encodeURIComponent(chId)}&owner=${encodeURIComponent(chOwner)}${cbQuery}`);
         if (!res.ok) throw new Error('Falha ao carregar capítulo');
         const data = await res.json();
         const html = data.chapter?.htmlContent || '<p class="text-sm text-[var(--text-muted)] italic">Conteúdo indisponível.</p>';
@@ -734,8 +736,10 @@ if (tagParam) {
           fetchTag = parts[1];
         }
 
+        const cb = window.clientStudyCache?.getCacheBust?.() || '';
+        const cbQuery = cb ? `&_cb=${encodeURIComponent(cb)}` : '';
         const typeQuery = sectionType ? `&type=${encodeURIComponent(sectionType)}` : '';
-        const res = await fetch(`/api/chapters?mode=progressive&materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}${typeQuery}`, { cache: 'no-cache' });
+        const res = await fetch(`/api/chapters?mode=progressive&materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}${typeQuery}${cbQuery}`);
         if (!res.ok) throw new Error('Falha ao carregar capítulos');
         const data = await res.json();
         const chaps = data.chapters || [];
