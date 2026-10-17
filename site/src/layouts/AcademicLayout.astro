@@ -1489,10 +1489,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         const distance = Math.abs(targetPos - currentScroll);
 
         // Regra Estrita de Animação:
-        // Mantém a rolagem suave (smooth) APENAS para seções próximas (<= 1.5 * altura da tela)
+        // Mantém a rolagem suave (smooth) APENAS para seções próximas (<= 2 * altura da tela)
         // que JÁ ESTAVAM renderizadas no DOM. Para todo o resto (capítulos lazy, seções distantes ou reload),
         // remove a animação completamente (salto instantâneo: behavior: 'auto').
-        const isClose = distance <= window.innerHeight * 1.5;
+        const isClose = distance <= window.innerHeight * 2;
         const shouldUseSmooth = Boolean(preferSmooth) && !wasLazyLoaded && isClose;
 
         window.scrollTo({
