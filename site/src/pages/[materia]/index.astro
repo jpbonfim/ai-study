@@ -605,9 +605,7 @@ if (tagParam) {
 
       // Passo B: Compila apenas este capítulo sob demanda no servidor
       try {
-        const lastBust = localStorage.getItem('study_last_cache_bust');
-        const bustQuery = lastBust ? `&bust=${lastBust}` : '';
-        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(chMateria)}&chapter_id=${encodeURIComponent(chId)}&owner=${encodeURIComponent(chOwner)}${bustQuery}`);
+        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(chMateria)}&chapter_id=${encodeURIComponent(chId)}&owner=${encodeURIComponent(chOwner)}`);
         if (!res.ok) throw new Error('Falha ao carregar capítulo');
         const data = await res.json();
         const html = data.chapter?.htmlContent || '<p class="text-sm text-[var(--text-muted)] italic">Conteúdo indisponível.</p>';

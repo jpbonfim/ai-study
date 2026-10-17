@@ -13,27 +13,31 @@ cd "${APP_DIR}"
 
 # 1. Puxa as últimas alterações do Git se estiver em um repositório
 if [ -d ".git" ]; then
-  echo "==> [1/5] Atualizando código do repositório Git..."
+  echo "==> [1/6] Atualizando código do repositório Git..."
   git pull || echo "    Aviso: Não foi possível realizar git pull automático (modo manual)."
 fi
 
 # 2. Executa migração do archive legado para o usuário 1 se necessário
 if [ -d "archive" ] && [ ! -d "data/archives/1" ]; then
-  echo "==> [2/5] Migrando archive legado para data/archives/1..."
+  echo "==> [2/6] Migrando archive legado para data/archives/1..."
   bash "${SCRIPT_DIR}/migrate-archive.sh"
 fi
 
-# 3. Instala dependências do site
-echo "==> [3/5] Instalando dependências npm no site..."
+# 3. Invalida o cache do servidor
+echo "==> [3/6] Invalidando cache compilado do servidor..."
+bash "${SCRIPT_DIR}/clear-server-cache.sh"
+
+# 4. Instala dependências do site
+echo "==> [4/6] Instalando dependências npm no site..."
 cd "${APP_DIR}/site"
 npm install
 
-# 4. Compila o site em modo SSR para produção
-echo "==> [4/5] Compilando aplicação Astro SSR..."
+# 5. Compila o site em modo SSR para produção
+echo "==> [5/6] Compilando aplicação Astro SSR..."
 npm run build
 
-# 5. Ajusta permissões dos diretórios
-echo "==> [5/5] Ajustando permissões e reiniciando o serviço..."
+# 6. Ajusta permissões dos diretórios
+echo "==> [6/6] Ajustando permissões e reiniciando o serviço..."
 if id -u study &>/dev/null; then
   chown -R study:study "${APP_DIR}/data" "${APP_DIR}/site/dist" 2>/dev/null || true
 fi
