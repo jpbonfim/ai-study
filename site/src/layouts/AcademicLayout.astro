@@ -1423,84 +1423,112 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         });
       });
 
-      // Rolagem Adaptativa Inteligente para Âncoras do Documento e Sumário:
-      // Se estiver na página principal, faz a rolagem adaptativa instantânea ou suave.
-      // Se estiver em uma questão, permite que o navegador navegue diretamente para a seção correspondente no caderno de resumos.
-      document.querySelectorAll('.toc-item, a[href*="#"]').forEach((anchor) => {
-        anchor.addEventListener('click', (e) => {
-          const href = anchor.getAttribute('href');
-          if (!href || href === '#') return;
-
-          const hashIdx = href.indexOf('#');
-          if (hashIdx === -1) return;
-
-          const targetId = href.slice(hashIdx + 1);
-          if (!targetId) return;
-
-          const targetEl = document.getElementById(targetId);
-          // Se o elemento alvo NÃO existe na página atual (ex: estamos na página de uma questão e clicamos no capítulo de teoria):
-          // NÃO chamamos preventDefault() para que o navegador navegue para o caderno de resumos com o hash!
-          if (!targetEl) {
-            const isMobile = window.innerWidth < 1024;
-            if (isMobile) {
-              closeSidebar();
-            }
-            return;
-          }
-
-          // Se o elemento existe na página atual:
-          e.preventDefault();
-
-          const isMobile = window.innerWidth < 1024;
-          if (isMobile) {
-            closeSidebar();
-          }
-
-          const headerOffset = isMobile ? 70 : 35;
-          const currentScroll = window.scrollY;
-          const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-          const distance = Math.abs(targetPos - currentScroll);
-
-          // Limite adaptativo de distância: mais de 2 telas inteiras de distância é considerado muito longe
-          const isFar = distance > (window.innerHeight * 2);
-
-          if (isFar) {
-            // Salto instantâneo sem rolagem excessiva
-            window.scrollTo({ top: targetPos, behavior: 'auto' });
-          } else {
-            // Para distâncias curtas, mantém rolagem suave agradável
-            window.scrollTo({ top: targetPos, behavior: 'smooth' });
-          }
-
-          // Atualiza o hash na URL
-          if (history.pushState) {
-            history.pushState(null, '', `#${targetId}`);
-          }
-
-          // Atualiza a posição de estudo no localStorage
-          if (window._saveCurrentStudyPosition) {
-            window._saveCurrentStudyPosition(anchor.textContent?.trim(), `#${targetId}`);
-          }
-        });
-      });
-
-      // Se a página carregar com âncora na URL (ex: navegou de uma questão direto para uma seção da teoria):
-      // Pousa instantaneamente sem animação de rolagem desde o topo
-      if (window.location.hash) {
-        document.documentElement.style.scrollBehavior = 'auto';
-        const initialHashId = window.location.hash.slice(1);
-        const scrollToTarget = () => {
-          const initialHashEl = document.getElementById(initialHashId);
-          if (initialHashEl) {
-            const isMobile = window.innerWidth < 1024;
-            const headerOffset = isMobile ? 70 : 35;
-            const targetPos = Math.max(0, initialHashEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-            window.scrollTo({ top: targetPos, behavior: 'instant' });
-          }
-        };
-        scrollToTarget();
-        requestAnimationFrame(scrollToTarget);
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
       }
+
+      // Navegação Adaptativa e Carregamento sob Demanda para Seções e Sumário
+      async function navigateToStudySection(targetId, smooth = true) {
+        if (!targetId) return false;
+
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile && typeof closeSidebar === 'function') {
+          closeSidebar();
+        }
+
+        let targetEl = document.getElementById(targetId);
+        const tocItem = document.querySelector(`.toc-item[data-toc-id="${targetId}"]`);
+        const parentId = tocItem?.getAttribute('data-parent-id');
+
+        // Se o elemento não existe diretamente no DOM, verifica se pertence a um capítulo lazy
+        if (!targetEl && parentId) {
+          const parentSection = document.getElementById(parentId);
+          if (parentSection) {
+            const placeholder = parentSection.querySelector('.chapter-lazy-content[data-loaded="false"]');
+            if (placeholder && typeof window.loadSingleChapter === 'function') {
+              await window.loadSingleChapter(placeholder);
+            }
+          }
+          targetEl = document.getElementById(targetId);
+        }
+
+        // Se o próprio elemento for uma seção de capítulo com conteúdo ainda não carregado
+        if (targetEl && targetEl.classList.contains('chapter-section')) {
+          const placeholder = targetEl.querySelector('.chapter-lazy-content[data-loaded="false"]');
+          if (placeholder && typeof window.loadSingleChapter === 'function') {
+            await window.loadSingleChapter(placeholder);
+          }
+        }
+
+        // Fallback para a seção do capítulo pai se a âncora interna não for encontrada
+        if (!targetEl && parentId) {
+          targetEl = document.getElementById(parentId);
+        }
+
+        if (!targetEl) {
+          return false;
+        }
+
+        const headerOffset = isMobile ? 70 : 40;
+        const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+
+        window.scrollTo({
+          top: targetPos,
+          behavior: smooth ? 'smooth' : 'auto',
+        });
+
+        // Verificação secundária para compensar reflow assíncrono de fórmulas e fontes
+        setTimeout(() => {
+          if (targetEl && document.contains(targetEl)) {
+            const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+            if (Math.abs(updatedPos - window.scrollY) > 20) {
+              window.scrollTo({ top: updatedPos, behavior: 'auto' });
+            }
+          }
+        }, 120);
+
+        if (history.replaceState) {
+          history.replaceState(null, '', `#${targetId}`);
+        }
+
+        if (typeof updateActiveSection === 'function') {
+          updateActiveSection();
+        }
+
+        if (window._saveCurrentStudyPosition) {
+          const title = tocItem?.getAttribute('data-toc-title') || targetEl.querySelector('h2, h3')?.textContent?.trim();
+          window._saveCurrentStudyPosition(title, `#${targetId}`);
+        }
+
+        return true;
+      }
+
+      window.navigateToStudySection = navigateToStudySection;
+
+      // Interceptação delegada de cliques em links de sumário e âncoras internas
+      document.addEventListener('click', async (e) => {
+        const anchor = e.target?.closest('.toc-item, a[href*="#"]');
+        if (!anchor) return;
+
+        const href = anchor.getAttribute('href');
+        if (!href || href === '#') return;
+
+        const hashIdx = href.indexOf('#');
+        if (hashIdx === -1) return;
+
+        const targetId = href.slice(hashIdx + 1);
+        if (!targetId) return;
+
+        // Se for navegação para outra rota/página, permite comportamento padrão do navegador
+        const currentPath = window.location.pathname;
+        const linkPath = href.slice(0, hashIdx);
+        if (linkPath && linkPath !== currentPath && !currentPath.endsWith(linkPath) && !linkPath.endsWith(currentPath)) {
+          return;
+        }
+
+        e.preventDefault();
+        await navigateToStudySection(targetId, true);
+      });
 
       // 1. Validação de Gestos Touch no Celular:
       // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos
@@ -1574,88 +1602,110 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         }
       }, { passive: true });
 
-      // 2. Scrollspy: Rastreia a seção atual na tela e atualiza o cabeçalho mobile e menu lateral
-      const tocItems = Array.from(document.querySelectorAll('.toc-item'));
-      if (tocItems.length > 0) {
-        const sections = tocItems
-          .map((item) => {
-            const id = item.getAttribute('data-toc-id');
-            const el = id ? document.getElementById(id) : null;
-            return {
+      // 2. Scrollspy Dinâmico e Reativo
+      let currentActiveId = null;
+
+      function updateActiveSection() {
+        const allTocItems = Array.from(document.querySelectorAll('.toc-item'));
+        if (allTocItems.length === 0) return;
+
+        // Coleta itens ativos que realmente estão presentes no DOM neste instante
+        const sections = [];
+        for (const item of allTocItems) {
+          const parentChap = item.closest('.sidebar-chapter-item');
+          if (parentChap && parentChap.classList.contains('hidden')) continue;
+
+          const id = item.getAttribute('data-toc-id');
+          if (!id) continue;
+
+          const el = document.getElementById(id);
+          if (el) {
+            sections.push({
               id,
               el,
               title: item.getAttribute('data-toc-title') || '',
               parentId: item.getAttribute('data-parent-id'),
               itemEl: item,
-            };
-          })
-          .filter((s) => Boolean(s.el));
-
-        let currentActiveId = null;
-
-        function updateActiveSection() {
-          const scrollPos = window.scrollY + 140;
-          let activeSection = sections[0];
-
-          for (let i = 0; i < sections.length; i++) {
-            const sec = sections[i];
-            const rect = sec.el.getBoundingClientRect();
-            const top = rect.top + window.scrollY;
-
-            if (top <= scrollPos) {
-              activeSection = sec;
-            } else {
-              break;
-            }
-          }
-
-          if (activeSection && activeSection.id !== currentActiveId) {
-            currentActiveId = activeSection.id;
-
-            // Atualiza o título no cabeçalho sticky do celular
-            if (mobileSectionEl && activeSection.title) {
-              mobileSectionEl.textContent = activeSection.title;
-            }
-
-            // Atualiza indicação visual da seção ativa no menu lateral
-            tocItems.forEach((item) => {
-              const id = item.getAttribute('data-toc-id');
-              if (id === activeSection.id) {
-                item.classList.add('is-active');
-              } else {
-                item.classList.remove('is-active');
-              }
             });
-
-            // Se for subseção, destaca também o capítulo pai sutilmente
-            document.querySelectorAll('.toc-chapter-link').forEach((chapLink) => {
-              const chapId = chapLink.getAttribute('data-toc-id');
-              if (chapId === activeSection.parentId) {
-                chapLink.classList.add('is-parent-active');
-              } else {
-                chapLink.classList.remove('is-parent-active');
-              }
-            });
-
-            // Atualiza a posição de estudo no localStorage em tempo real conforme a leitura avança
-            if (window._saveCurrentStudyPosition) {
-              window._saveCurrentStudyPosition(activeSection.title, '#' + activeSection.id);
-            }
           }
         }
 
-        let scrollThrottle = null;
-        window.addEventListener('scroll', () => {
-          if (!scrollThrottle) {
-            scrollThrottle = requestAnimationFrame(() => {
-              updateActiveSection();
-              scrollThrottle = null;
-            });
-          }
-        }, { passive: true });
+        if (sections.length === 0) return;
 
-        // Execução inicial
+        const headerOffset = (window.innerWidth < 1024) ? 80 : 50;
+        const scrollPos = window.scrollY + headerOffset + 25;
+        let activeSection = sections[0];
+
+        for (let i = 0; i < sections.length; i++) {
+          const sec = sections[i];
+          const top = sec.el.getBoundingClientRect().top + window.scrollY;
+          if (top <= scrollPos) {
+            activeSection = sec;
+          } else {
+            break;
+          }
+        }
+
+        if (activeSection && activeSection.id !== currentActiveId) {
+          currentActiveId = activeSection.id;
+
+          if (mobileSectionEl && activeSection.title) {
+            mobileSectionEl.textContent = activeSection.title;
+          }
+
+          allTocItems.forEach((item) => {
+            const id = item.getAttribute('data-toc-id');
+            if (id === activeSection.id) {
+              item.classList.add('is-active');
+              item.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+            } else {
+              item.classList.remove('is-active');
+            }
+          });
+
+          document.querySelectorAll('.toc-chapter-link').forEach((chapLink) => {
+            const chapId = chapLink.getAttribute('data-toc-id');
+            if (chapId === activeSection.parentId) {
+              chapLink.classList.add('is-parent-active');
+            } else {
+              chapLink.classList.remove('is-parent-active');
+            }
+          });
+
+          if (window._saveCurrentStudyPosition) {
+            window._saveCurrentStudyPosition(activeSection.title, '#' + activeSection.id);
+          }
+        }
+      }
+
+      window.updateActiveSection = updateActiveSection;
+
+      let scrollThrottle = null;
+      window.addEventListener('scroll', () => {
+        if (!scrollThrottle) {
+          scrollThrottle = requestAnimationFrame(() => {
+            updateActiveSection();
+            scrollThrottle = null;
+          });
+        }
+      }, { passive: true });
+
+      window.addEventListener('study-content-updated', () => {
         updateActiveSection();
+      });
+
+      window.addEventListener('study-tag-changed', () => {
+        setTimeout(updateActiveSection, 60);
+      });
+
+      // Se a página carregar com âncora na URL, salta para a seção
+      if (window.location.hash) {
+        const initialHashId = window.location.hash.slice(1);
+        setTimeout(() => {
+          navigateToStudySection(initialHashId, false);
+        }, 80);
+      } else {
+        setTimeout(updateActiveSection, 80);
       }
     </script>
 
