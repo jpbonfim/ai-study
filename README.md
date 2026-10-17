@@ -400,7 +400,7 @@ The repository includes specialized skills under `.agents/skills/` designed for 
 
 ### 7.1 `question-study-generator`
 Orchestrates high-level syllabus structuring, continuous theoretical notebooks, and concurrent exam resolution across subagents.
-- Generates chapters under the "Estudo guiado por questões" tab in the sidebar.
+- Generates chapters under the "Estudo por questões" tab in the sidebar.
 - Enforces the Golden Writing Guideline (self-contained, practical formulas, prerequisite ordering, zero filler).
 - Links `relatedQuestions` and embeds `<QuestionCard />` components.
 
