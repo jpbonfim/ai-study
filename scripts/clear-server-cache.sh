@@ -45,6 +45,12 @@ else
   echo "    [-] Banco de dados ${DB_PATH} não encontrado. Nenhum cache persistente a limpar."
 fi
 
+# Atualiza o arquivo de epoch para sinalizar qualquer processo Node ativo a descartar o cache em memória
+EPOCH_FILE="${APP_DIR}/data/.cache_epoch"
+mkdir -p "${APP_DIR}/data"
+date +%s%N > "${EPOCH_FILE}" 2>/dev/null || date +%s > "${EPOCH_FILE}"
+echo "    [✓] Epoch de cache em memória atualizado (${EPOCH_FILE})."
+
 # Limpa cache temporário de build do Astro se existir
 if [ -d "${APP_DIR}/site/.astro" ]; then
   rm -rf "${APP_DIR}/site/.astro" 2>/dev/null || true
