@@ -95,9 +95,6 @@ marked.use({
   },
 });
 
-// Versão do pipeline de renderização MDX. Incrementar esta constante invalida caches legados automaticamente
-export const MDX_CACHE_VERSION = 'v5';
-
 // Cache em memória de itens processados: chave = cacheKey
 const renderCache = new Map<string, { mtime: number; data: any }>();
 
@@ -303,7 +300,7 @@ export function processChapterFile(
 ): ChapterItem {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `chap:${MDX_CACHE_VERSION}:${filePath}`;
+  const cacheKey = `chap:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -372,7 +369,7 @@ export function processQuestionFile(
 ): QuestionItem {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `quest:${MDX_CACHE_VERSION}:${filePath}`;
+  const cacheKey = `quest:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -508,7 +505,7 @@ export function processChapterMetadata(
 ): ChapterMetadata {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `chap_meta:${MDX_CACHE_VERSION}:${filePath}`;
+  const cacheKey = `chap_meta:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -565,7 +562,7 @@ export function processQuestionMetadata(
 ): QuestionMetadata {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `quest_meta:${MDX_CACHE_VERSION}:${filePath}`;
+  const cacheKey = `quest_meta:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
