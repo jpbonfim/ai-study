@@ -92,7 +92,7 @@ image: "./<figura>.png"       # opcional
 ---
 ```
 
-### Resumos teóricos (estudo guiado por questões)
+### Resumos teóricos (estudo por questões)
 ```yaml
 ---
 materia: "<slug>"

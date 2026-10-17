@@ -26,7 +26,7 @@ Specialized agent workflows and instructions are located in `.agents/skills/`. W
 1. **Theoretical Study Notebooks (`question-study-generator`)**:
    - Location: `.agents/skills/question-study-generator/SKILL.md`
    - Output destination: `archive/<subject>/resumos/<slug>.mdx`
-   - Section: Classified under the "Estudo guiado por questões" collapsible tab in the sidebar.
+   - Section: Classified under the "Estudo por questões" collapsible tab in the sidebar.
    - Rule: Always ensure an evaluation tag is specified (e.g., `teste-1`, `p1`). If the user did not provide one, ask for it before generating files. Follow the Golden Writing Guideline (self-contained, practical results without proofs, logical order, no filler introductions). Links question IDs with `<QuestionCard />`.
 
 2. **Course Material Summaries (`summary-study-generator`)**:
