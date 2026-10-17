@@ -3,6 +3,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { marked } from 'marked';
 import katex from 'katex';
+import { createHighlighter, type Highlighter } from 'shiki';
 import { getDataDirectory, getPersistentMdxCache, setPersistentMdxCache } from './db.ts';
 import { renderMath } from '../utils/katex.ts';
 import { isDevMode, getLocalArchiveDirectory } from './dev-archive.ts';
@@ -73,6 +74,34 @@ export interface QuestionItem extends QuestionMetadata {
   bodyHtml: string;
 }
 
+// Inicialização do Shiki com suporte aos 5 temas acadêmicos configuráveis
+let highlighter: Highlighter | null = null;
+try {
+  highlighter = await createHighlighter({
+    themes: ['catppuccin-mocha', 'tokyo-night', 'dracula', 'one-dark-pro', 'monokai'],
+    langs: [
+      'python',
+      'javascript',
+      'typescript',
+      'c',
+      'cpp',
+      'matlab',
+      'bash',
+      'json',
+      'html',
+      'css',
+      'http',
+      'markdown',
+      'yaml',
+      'latex',
+      'diff',
+      'text',
+    ],
+  });
+} catch (err) {
+  console.warn('[Shiki] Falha ao inicializar highlighter multi-theme:', err);
+}
+
 // Configuração do marked com renderizador customizado de blocos de código e diagramas
 marked.setOptions({
   gfm: true,
@@ -82,15 +111,49 @@ marked.setOptions({
 marked.use({
   renderer: {
     code({ text, lang }: { text: string; lang?: string }) {
-      const language = (lang || '').trim();
+      const rawLang = (lang || '').trim().toLowerCase();
       const escapedText = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-      if (language === 'mermaid') {
+
+      if (rawLang === 'mermaid') {
         return `<pre class="mermaid diagram-block" data-language="mermaid"><code class="language-mermaid">${escapedText}</code></pre>\n`;
       }
-      return `<pre data-language="${language}"><code class="language-${language}">${escapedText}</code></pre>\n`;
+
+      if (highlighter) {
+        try {
+          let targetLang = rawLang;
+          if (targetLang === 'py') targetLang = 'python';
+          else if (targetLang === 'js') targetLang = 'javascript';
+          else if (targetLang === 'ts') targetLang = 'typescript';
+          else if (targetLang === 'sh' || targetLang === 'shell') targetLang = 'bash';
+          else if (targetLang === 'c++') targetLang = 'cpp';
+          else if (targetLang === 'octave') targetLang = 'matlab';
+          else if (targetLang === 'txt') targetLang = 'text';
+
+          const loadedLangs = highlighter.getLoadedLanguages();
+          const langToUse = loadedLangs.includes(targetLang) ? targetLang : 'text';
+
+          const highlighted = highlighter.codeToHtml(text, {
+            themes: {
+              mocha: 'catppuccin-mocha',
+              tokyo: 'tokyo-night',
+              dracula: 'dracula',
+              onedark: 'one-dark-pro',
+              monokai: 'monokai',
+            },
+            defaultColor: false,
+            lang: langToUse,
+          });
+
+          return highlighted.replace('<pre ', `<pre data-language="${rawLang || 'text'}" `) + '\n';
+        } catch (err) {
+          console.warn('[Shiki] Erro ao destacar código:', err);
+        }
+      }
+
+      return `<pre class="shiki" data-language="${rawLang || 'text'}"><code class="language-${rawLang || 'text'}">${escapedText}</code></pre>\n`;
     },
   },
 });
@@ -238,6 +301,22 @@ export function renderMarkdownWithKatex(
   let text = content.replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
   text = text.replace(/<!--[\s\S]*?-->/g, '');
 
+  // 0.5 Protege blocos de código cercados (``` ou ~~~) e código inline (`...`)
+  // para que expressões com $ (ex: R$ 500, $VAR) NÃO sejam interpretadas indevidamente como fórmulas LaTeX
+  const codeBlocks: string[] = [];
+  text = text.replace(/(?:^|\n)[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?\n[ \t]*\1(?=\n|$)/g, (match) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(match);
+    return `\n\n%%KATEX_CODE_BLOCK_${idx}%%\n\n`;
+  });
+
+  const inlineCodes: string[] = [];
+  text = text.replace(/(`+)([\s\S]*?)\1/g, (match) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(match);
+    return `%%KATEX_INLINE_CODE_${idx}%%`;
+  });
+
   // 1. Localiza todos os blocos display math $$ ... $$ e agrupa os contíguos (sequenciais)
   const mathBlockRegex = /\$\$([\s\S]+?)\$\$/g;
   const blocks: { start: number; end: number; math: string }[] = [];
@@ -330,6 +409,10 @@ export function renderMarkdownWithKatex(
     }
   });
 
+  // 2.5 Restaura blocos de código e código inline antes da compilação com marked
+  text = text.replace(/%%KATEX_INLINE_CODE_(\d+)%%/g, (_, idx) => inlineCodes[parseInt(idx, 10)] ?? '');
+  text = text.replace(/%%KATEX_CODE_BLOCK_(\d+)%%/g, (_, idx) => codeBlocks[parseInt(idx, 10)] ?? '');
+
   // 3. Renderiza o markdown
   let html = marked.parse(text) as string;
 
@@ -382,7 +465,7 @@ export function processChapterFile(
 ): ChapterItem {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `chap:${filePath}`;
+  const cacheKey = `chap:v4:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -451,7 +534,7 @@ export function processQuestionFile(
 ): QuestionItem {
   syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `quest:${filePath}`;
+  const cacheKey = `quest:v4:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {

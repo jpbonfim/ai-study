@@ -552,11 +552,13 @@ export async function initDiagrams(): Promise<void> {
     )
   ).map((el) => (el.tagName.toLowerCase() === 'code' ? el.parentElement! : el) as HTMLElement);
 
-  // Também detecta blocos cujo conteúdo textual seja sintaxe Mermaid
+  // Também detecta blocos cujo conteúdo textual seja sintaxe Mermaid (apenas se não for código de outra linguagem)
   const potentialMermaidPres = Array.from(
     document.querySelectorAll<HTMLElement>('.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre')
   ).filter((pre) => {
     if (pre.dataset.diagramProcessed === 'true') return false;
+    const lang = (pre.getAttribute('data-language') || '').toLowerCase();
+    if (lang && lang !== 'mermaid' && lang !== 'text' && lang !== 'txt') return false;
     const txt = (pre.textContent || '').trim();
     return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(txt);
   });

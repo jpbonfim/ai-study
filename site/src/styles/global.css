@@ -1378,7 +1378,8 @@ html[data-code-theme="tokyo"] .shiki span,
 }
 
 html[data-code-theme="tokyo"] pre.astro-code,
-html[data-code-theme="tokyo"] .code-block-card pre {
+html[data-code-theme="tokyo"] .code-block-card pre,
+.code-block-card[data-code-theme="tokyo"] pre {
   background-color: var(--shiki-tokyo-bg, #1a1b26) !important;
   color: var(--code-card-text, #c0caf5) !important;
 }
@@ -1407,7 +1408,8 @@ html[data-code-theme="dracula"] .shiki span,
 }
 
 html[data-code-theme="dracula"] pre.astro-code,
-html[data-code-theme="dracula"] .code-block-card pre {
+html[data-code-theme="dracula"] .code-block-card pre,
+.code-block-card[data-code-theme="dracula"] pre {
   background-color: var(--shiki-dracula-bg, #282a36) !important;
   color: var(--code-card-text, #f8f8f2) !important;
 }
@@ -1436,7 +1438,8 @@ html[data-code-theme="onedark"] .shiki span,
 }
 
 html[data-code-theme="onedark"] pre.astro-code,
-html[data-code-theme="onedark"] .code-block-card pre {
+html[data-code-theme="onedark"] .code-block-card pre,
+.code-block-card[data-code-theme="onedark"] pre {
   background-color: var(--shiki-onedark-bg, #282c34) !important;
   color: var(--code-card-text, #abb2bf) !important;
 }
@@ -1465,7 +1468,8 @@ html[data-code-theme="monokai"] .shiki span,
 }
 
 html[data-code-theme="monokai"] pre.astro-code,
-html[data-code-theme="monokai"] .code-block-card pre {
+html[data-code-theme="monokai"] .code-block-card pre,
+.code-block-card[data-code-theme="monokai"] pre {
   background-color: var(--shiki-monokai-bg, #272822) !important;
   color: var(--code-card-text, #f8f8f2) !important;
 }
@@ -1709,15 +1713,6 @@ html.theme-oled table.academic-table th,
 html.theme-oled table.academic-table td,
 html.theme-oled .academic-prose th,
 html.theme-oled .academic-prose td,
-html.theme-oled .academic-prose pre,
-html.theme-oled .reader-content pre,
-html.theme-oled .resolution-content pre,
-html.theme-oled .code-block-card,
-html.theme-oled .code-block-header,
-html.theme-oled .code-block-card pre,
-html.theme-oled pre.astro-code,
-html.theme-oled .shiki,
-html.theme-oled .code-copy-btn,
 html.theme-oled .markdown-alert {
   background-color: #000000 !important;
   box-shadow: none !important;
