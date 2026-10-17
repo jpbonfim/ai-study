@@ -116,7 +116,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (now - lastLogged > 5 * 60 * 1000) {
       pageViewThrottle.set(throttleKey, now);
-      const ip = context.clientAddress || context.request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
+      let ip: string | null = null;
+      try {
+        ip = context.clientAddress || null;
+      } catch {
+        // Ignora erro se o adapter não suportar clientAddress
+      }
+      if (!ip) {
+        ip = context.request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
+      }
       const ua = context.request.headers.get('user-agent') || null;
 
       // Limpeza periódica do mapa de throttle se crescer muito

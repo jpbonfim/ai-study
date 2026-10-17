@@ -534,6 +534,7 @@ if (tagParam) {
   clientCacheTtlMinutes,
   clientCacheMaxEntries,
   initialServerSection: initialSection,
+  initialTagParam: tagParam || null,
 }}>
   (function() {
     const promptEl = document.getElementById('tag-select-prompt');
@@ -882,7 +883,7 @@ if (tagParam) {
 
       const activeTag = (typeof window.getCurrentStudyTag === 'function')
         ? window.getCurrentStudyTag()
-        : (tagParam || (function() {
+        : (initialTagParam || (function() {
             try { return localStorage.getItem('study_selected_tag_' + materiaSlug); } catch(e) { return null; }
           })());
 
@@ -916,17 +917,20 @@ if (tagParam) {
 
       const curTag = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
 
-      // Verifica se a URL contém um hash que aponte para um grupo específico
+      // Verifica se a URL contém um parâmetro type ou hash que aponte para um grupo específico
+      const urlType = (typeof window !== 'undefined') ? new URL(window.location.href).searchParams.get('type') : null;
       let hashSection = null;
       if (window.location.hash && typeof window.detectSectionFromHash === 'function') {
         hashSection = window.detectSectionFromHash(window.location.hash);
       }
 
-      let preferredSection = hashSection || (function() {
-        try {
-          return localStorage.getItem('study_selected_section_' + materiaSlug);
-        } catch(e) { return null; }
-      })() || currentActiveSection;
+      let preferredSection = (urlType === 'materia' || urlType === 'questoes')
+        ? urlType
+        : (hashSection || (function() {
+            try {
+              return localStorage.getItem('study_selected_section_' + materiaSlug);
+            } catch(e) { return null; }
+          })() || currentActiveSection);
 
       if (typeof window.getValidSectionForTag === 'function' && curTag) {
         preferredSection = window.getValidSectionForTag(curTag, preferredSection);

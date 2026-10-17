@@ -412,9 +412,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
-                              href={materia ? `/${materia.slug}${materiaOwnerParam}#${chap.id}` : `#${chap.id}`}
+                              href={materia ? `/${materia.slug}${materiaOwnerParam ? materiaOwnerParam + '&' : '?'}type=materia#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
+                              data-chapter-type="materia"
                               class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
                             >
                               {chap.title}
@@ -422,15 +423,16 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             {chap.subsections && chap.subsections.length > 0 && (
                               <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
-                                  <a
-                                    href={materia ? `/${materia.slug}${materiaOwnerParam}#${sub.id}` : `#${sub.id}`}
-                                    data-toc-id={sub.id}
-                                    data-toc-title={sub.title}
-                                    data-parent-id={chap.id}
-                                    class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
-                                  >
-                                    {sub.title}
-                                  </a>
+                                   <a
+                                     href={materia ? `/${materia.slug}${materiaOwnerParam ? materiaOwnerParam + '&' : '?'}type=materia#${sub.id}` : `#${sub.id}`}
+                                     data-toc-id={sub.id}
+                                     data-toc-title={sub.title}
+                                     data-parent-id={chap.id}
+                                     data-chapter-type="materia"
+                                     class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
+                                   >
+                                     {sub.title}
+                                   </a>
                                 ))}
                               </div>
                             )}
@@ -474,9 +476,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                             data-is-other={chap.isFromOther ? 'true' : 'false'}
                           >
                             <a
-                              href={materia ? `/${materia.slug}${materiaOwnerParam}#${chap.id}` : `#${chap.id}`}
+                              href={materia ? `/${materia.slug}${materiaOwnerParam ? materiaOwnerParam + '&' : '?'}type=questoes#${chap.id}` : `#${chap.id}`}
                               data-toc-id={chap.id}
                               data-toc-title={chap.title}
+                              data-chapter-type="questoes"
                               class="toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md"
                             >
                               {chap.title}
@@ -485,10 +488,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               <div class="pl-3 border-l-2 border-[var(--border-subtle)] space-y-0.5 ml-2 mt-0.5">
                                 {chap.subsections.map((sub) => (
                                   <a
-                                    href={materia ? `/${materia.slug}${materiaOwnerParam}#${sub.id}` : `#${sub.id}`}
+                                    href={materia ? `/${materia.slug}${materiaOwnerParam ? materiaOwnerParam + '&' : '?'}type=questoes#${sub.id}` : `#${sub.id}`}
                                     data-toc-id={sub.id}
                                     data-toc-title={sub.title}
                                     data-parent-id={chap.id}
+                                    data-chapter-type="questoes"
                                     class="toc-item toc-sub-link sans-ui block text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] py-1 px-2 rounded transition-colors leading-snug"
                                   >
                                     {sub.title}
@@ -1407,6 +1411,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               }
             }
             window.updateActiveSectionUI = updateActiveSectionUI;
+            window.applyGroupExpandedUI = applyGroupExpandedUI;
+            window.setGroupExpanded = setGroupExpanded;
+            window.isGroupExpanded = isGroupExpanded;
+            window.currentMateriaSlug = materiaSlug;
 
             window.addEventListener('study-section-changed', (e) => {
               const newSec = e.detail?.section;
@@ -1486,13 +1494,46 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
     )}
 
     <!-- Script de Interação: Fechar/Abrir Menu Lateral (Desktop e Mobile), Drawer e Scrollspy -->
-    <script is:inline>
+    <script is:inline define:vars={{ materiaSlug: materia?.slug || '' }}>
       const sidebarToggle = document.getElementById('mobile-sidebar-toggle');
       const sidebar = document.getElementById('academic-sidebar');
       const backdrop = document.getElementById('sidebar-backdrop');
       const mobileSectionEl = document.getElementById('mobile-current-section');
       const desktopOpenBtn = document.getElementById('desktop-sidebar-open-btn');
       const closeBtns = document.querySelectorAll('.sidebar-close-btn');
+
+      function safeApplyGroupExpandedUI(groupType, expanded) {
+        if (typeof window.applyGroupExpandedUI === 'function') {
+          window.applyGroupExpandedUI(groupType, expanded);
+          return;
+        }
+        const content = document.querySelector(`.toc-collapsible-content[data-group-content="${groupType}"]`);
+        const btn = document.querySelector(`.toc-collapsible-btn[data-target-group="${groupType}"]`);
+        const chevron = btn ? btn.querySelector('.toc-collapsible-chevron') : null;
+        if (!content) return;
+        if (expanded) {
+          content.classList.remove('hidden');
+          chevron?.classList.remove('-rotate-90');
+          btn?.setAttribute('aria-expanded', 'true');
+        } else {
+          content.classList.add('hidden');
+          chevron?.classList.add('-rotate-90');
+          btn?.setAttribute('aria-expanded', 'false');
+        }
+      }
+
+      function safeSetGroupExpanded(groupType, expanded) {
+        if (typeof window.setGroupExpanded === 'function') {
+          window.setGroupExpanded(groupType, expanded);
+          return;
+        }
+        const slug = materiaSlug || window.currentMateriaSlug;
+        if (slug) {
+          try {
+            localStorage.setItem('study_toc_expanded_' + slug + '_' + groupType, expanded ? 'true' : 'false');
+          } catch(e) {}
+        }
+      }
 
       function collapseDesktopSidebar() {
         document.documentElement.classList.add('sidebar-collapsed');
@@ -1565,21 +1606,24 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
         // Se o elemento não existe no DOM, verifica se pertence a outro grupo e alterna se necessário
         if (!targetEl && tocItem) {
-          const chapItem = tocItem.closest('.sidebar-chapter-item');
-          const itemType = chapItem?.getAttribute('data-chapter-type');
-          const renderedSec = document.getElementById('chapters-container')?.getAttribute('data-rendered-section');
+          const itemType = tocItem.getAttribute('data-chapter-type')
+            || tocItem.closest('.sidebar-chapter-item')?.getAttribute('data-chapter-type')
+            || tocItem.closest('.toc-collapsible-group')?.getAttribute('data-group-type');
+          const chaptersContainer = document.getElementById('chapters-container');
+          const renderedSec = chaptersContainer?.getAttribute('data-rendered-section');
+          const slug = materiaSlug || window.currentMateriaSlug;
           const currentSec = (typeof window.getCurrentStudySection === 'function')
             ? window.getCurrentStudySection()
-            : (renderedSec || localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+            : (renderedSec || (slug ? localStorage.getItem('study_selected_section_' + slug) : null) || 'materia');
 
-          const isDiff = (itemType && renderedSec && itemType !== renderedSec) || (itemType && currentSec && itemType !== currentSec);
+          const isDiff = Boolean(itemType && ((renderedSec && itemType !== renderedSec) || (currentSec && itemType !== currentSec)));
 
           if (isDiff && typeof window.switchStudySection === 'function') {
             if (typeof window.updateActiveSectionUI === 'function') {
               window.updateActiveSectionUI(itemType);
             }
-            applyGroupExpandedUI(itemType, true);
-            setGroupExpanded(itemType, true);
+            safeApplyGroupExpandedUI(itemType, true);
+            safeSetGroupExpanded(itemType, true);
             await window.switchStudySection(itemType, targetId);
             return true;
           }
@@ -1723,21 +1767,27 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         e.preventDefault();
 
         // Verifica se o item clicado pertence ao outro grupo de estudo
-        const chapItem = anchor.closest('.sidebar-chapter-item');
-        const itemType = chapItem?.getAttribute('data-chapter-type');
-        const renderedSec = document.getElementById('chapters-container')?.getAttribute('data-rendered-section');
+        const itemType = anchor.getAttribute('data-chapter-type')
+          || anchor.closest('.sidebar-chapter-item')?.getAttribute('data-chapter-type')
+          || anchor.closest('.toc-collapsible-group')?.getAttribute('data-group-type');
+        const chaptersContainer = document.getElementById('chapters-container');
+        const renderedSec = chaptersContainer?.getAttribute('data-rendered-section');
+        const slug = materiaSlug || window.currentMateriaSlug;
         const currentSec = (typeof window.getCurrentStudySection === 'function')
           ? window.getCurrentStudySection()
-          : (renderedSec || localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+          : (renderedSec || (slug ? localStorage.getItem('study_selected_section_' + slug) : null) || 'materia');
 
-        const isDiff = (itemType && renderedSec && itemType !== renderedSec) || (itemType && currentSec && itemType !== currentSec);
+        const isDiff = Boolean(itemType && ((renderedSec && itemType !== renderedSec) || (currentSec && itemType !== currentSec)));
+
+        if (itemType) {
+          safeApplyGroupExpandedUI(itemType, true);
+          safeSetGroupExpanded(itemType, true);
+        }
 
         if (isDiff && typeof window.switchStudySection === 'function') {
           if (typeof window.updateActiveSectionUI === 'function') {
             window.updateActiveSectionUI(itemType);
           }
-          applyGroupExpandedUI(itemType, true);
-          setGroupExpanded(itemType, true);
           await window.switchStudySection(itemType, targetId);
           return;
         }
