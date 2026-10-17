@@ -62,19 +62,6 @@
     </div>
   </div>
 
-  <!-- Botão Redondo de Limpar/Invalidar Cache -->
-  <button
-    type="button"
-    id="header-cache-clear-btn"
-    class="header-cache-clear-btn w-8 h-8 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all flex items-center justify-center cursor-pointer shadow-xs shrink-0 group relative"
-    aria-label="Invalidar cache local e recarregar (Alt+C)"
-    title="Invalidar cache e recarregar (Alt+C)"
-  >
-    <svg class="w-4 h-4 transition-transform group-hover:rotate-180 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-    </svg>
-  </button>
-
   <!-- Botão Redondo de Engrenagem (Configurações) -->
   <a
     href="/configuracoes"
@@ -174,8 +161,8 @@
   }
 
   function setupHeaderCacheActions() {
-    function clearCacheAndReload() {
-      // 1. Limpa via engine oficial se disponível
+    function clearBrowserCacheAndReload() {
+      // Invalida exclusivamente o cache do navegador (localStorage do cliente)
       if (window.clientStudyCache && typeof window.clientStudyCache.clearAll === 'function') {
         window.clientStudyCache.clearAll();
       } else {
@@ -186,44 +173,20 @@
               localStorage.removeItem(k);
             }
           }
-          localStorage.setItem('study_last_cache_bust', String(Date.now()));
         } catch {}
       }
 
-      // 2. Feedback visual no botão
-      document.querySelectorAll('.header-cache-clear-btn').forEach((btn) => {
-        btn.classList.add('border-emerald-500', 'text-emerald-500');
-        btn.title = 'Cache limpo com sucesso! Recarregando...';
-        btn.innerHTML = `
-          <svg class="w-4 h-4 animate-spin text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        `;
-      });
-
-      // 3. Recarrega a página com parâmetro bust para forçar busca nova no servidor
-      setTimeout(() => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('bust', String(Date.now()));
-        window.location.href = url.toString();
-      }, 250);
+      console.info('[Study] Cache do navegador limpo via atalho Alt + C.');
+      window.location.reload();
     }
 
-    document.querySelectorAll('.header-cache-clear-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        clearCacheAndReload();
-      });
-    });
-
-    // Atalho global Alt + C para desenvolvedores e usuários
+    // Atalho global Alt + C para invalidar o cache local do navegador
     if (!window.__cacheShortcutInstalled) {
       window.__cacheShortcutInstalled = true;
       window.addEventListener('keydown', (e) => {
         if (e.altKey && (e.key === 'c' || e.key === 'C')) {
           e.preventDefault();
-          clearCacheAndReload();
+          clearBrowserCacheAndReload();
         }
       });
     }
