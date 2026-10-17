@@ -38,6 +38,7 @@ interface Props {
   materia?: Subject;
   availableTags?: TagOption[];
   activeTag?: string | null;
+  activeStudySection?: 'materia' | 'questoes';
   currentQuestionId?: string;
   toc?: TocItem[];
   questions?: QuestionLink[];
@@ -51,6 +52,7 @@ const {
   materia,
   availableTags = [],
   activeTag = null,
+  activeStudySection = 'materia',
   currentQuestionId,
   toc = [],
   questions = [],
@@ -379,8 +381,14 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                     <div class="toc-collapsible-group space-y-1" data-group-type="materia">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
-                        aria-expanded="false"
+                        class:list={[
+                          "toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg border transition-all duration-150 cursor-pointer select-none group shadow-2xs",
+                          activeStudySection === 'materia'
+                            ? "border-[var(--accent)]/50 bg-[var(--accent-subtle)]/35 text-[var(--accent)] font-semibold"
+                            : "border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40"
+                        ]}
+                        aria-expanded={activeStudySection === 'materia' ? 'true' : 'false'}
+                        aria-selected={activeStudySection === 'materia' ? 'true' : 'false'}
                         data-target-group="materia"
                       >
                         <span class="flex items-center gap-2 truncate">
@@ -389,13 +397,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
                           </span>
-                          <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Resumo da matéria</span>
+                          <span class="font-bold tracking-wider uppercase text-[11px] truncate">Resumo da matéria</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class:list={["toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0", activeStudySection === 'materia' ? "" : "-rotate-90"]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1.5 pt-0.5 hidden" data-group-content="materia">
+                      <div class:list={["toc-collapsible-content space-y-1.5 pt-0.5", activeStudySection === 'materia' ? "" : "hidden"]} data-group-content="materia">
                         {materiaToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
@@ -435,8 +443,14 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                     <div class="toc-collapsible-group space-y-1" data-group-type="questoes">
                       <button
                         type="button"
-                        class="toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 transition-all duration-150 cursor-pointer select-none group shadow-2xs"
-                        aria-expanded="false"
+                        class:list={[
+                          "toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg border transition-all duration-150 cursor-pointer select-none group shadow-2xs",
+                          activeStudySection === 'questoes'
+                            ? "border-[var(--accent)]/50 bg-[var(--accent-subtle)]/35 text-[var(--accent)] font-semibold"
+                            : "border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40"
+                        ]}
+                        aria-expanded={activeStudySection === 'questoes' ? 'true' : 'false'}
+                        aria-selected={activeStudySection === 'questoes' ? 'true' : 'false'}
                         data-target-group="questoes"
                       >
                         <span class="flex items-center gap-2 truncate">
@@ -445,13 +459,13 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                           </span>
-                          <span class="font-bold tracking-wider uppercase text-[11px] text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">Estudo guiado por questões</span>
+                          <span class="font-bold tracking-wider uppercase text-[11px] truncate">Estudo guiado por questões</span>
                         </span>
-                        <svg class="toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class:list={["toc-collapsible-chevron w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent)] transform transition-transform duration-200 shrink-0", activeStudySection === 'questoes' ? "" : "-rotate-90"]} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      <div class="toc-collapsible-content space-y-1.5 pt-0.5 hidden" data-group-content="questoes">
+                      <div class:list={["toc-collapsible-content space-y-1.5 pt-0.5", activeStudySection === 'questoes' ? "" : "hidden"]} data-group-content="questoes">
                         {questoesToc.map((chap) => (
                           <div
                             class="space-y-0.5 sidebar-chapter-item"
@@ -487,20 +501,40 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                       </div>
                     </div>
 
-                    <script is:inline define:vars={{ mSlug: materia?.slug }}>
+                    <script is:inline define:vars={{ mSlug: materia?.slug, initialSec: activeStudySection }}>
                       try {
                         if (typeof localStorage !== 'undefined' && mSlug) {
+                          var savedSec = localStorage.getItem('study_selected_section_' + mSlug);
+                          var activeSec = savedSec || initialSec || 'materia';
+                          var isQ = window.location.pathname.includes('/questoes');
+                          if (isQ) activeSec = 'questoes';
+
                           ['materia', 'questoes'].forEach(function(grp) {
-                            var saved = localStorage.getItem('study_toc_expanded_' + mSlug + '_' + grp);
-                            var isQ = window.location.pathname.includes('/questoes');
-                            var expand = saved !== null ? (saved === 'true') : (grp === 'questoes' ? isQ : !isQ);
+                            var savedExp = localStorage.getItem('study_toc_expanded_' + mSlug + '_' + grp);
+                            var expand = (savedExp !== null) ? (savedExp === 'true') : (grp === activeSec);
+                            var isCurrentActive = (grp === activeSec);
+                            var c = document.querySelector('.toc-collapsible-content[data-group-content="' + grp + '"]');
+                            var b = document.querySelector('.toc-collapsible-btn[data-target-group="' + grp + '"]');
+                            var ch = b ? b.querySelector('.toc-collapsible-chevron') : null;
                             if (expand) {
-                              var c = document.querySelector('.toc-collapsible-content[data-group-content="' + grp + '"]');
-                              var b = document.querySelector('.toc-collapsible-btn[data-target-group="' + grp + '"]');
-                              var ch = b ? b.querySelector('.toc-collapsible-chevron') : null;
                               if (c) c.classList.remove('hidden');
                               if (ch) ch.classList.remove('-rotate-90');
                               if (b) b.setAttribute('aria-expanded', 'true');
+                            } else {
+                              if (c) c.classList.add('hidden');
+                              if (ch) ch.classList.add('-rotate-90');
+                              if (b) b.setAttribute('aria-expanded', 'false');
+                            }
+                            if (b) {
+                              if (isCurrentActive) {
+                                b.setAttribute('aria-selected', 'true');
+                                b.classList.add('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                                b.classList.remove('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                              } else {
+                                b.setAttribute('aria-selected', 'false');
+                                b.classList.remove('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                                b.classList.add('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                              }
                             }
                           });
                         }
@@ -982,7 +1016,6 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             if (groupMateria) {
               if (visibleMateria > 0) {
                 groupMateria.classList.remove('hidden');
-                applyGroupExpandedUI('materia', isGroupExpanded('materia'));
               } else {
                 groupMateria.classList.add('hidden');
               }
@@ -990,10 +1023,33 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
             if (groupQuestoes) {
               if (visibleQuestoes > 0) {
                 groupQuestoes.classList.remove('hidden');
-                applyGroupExpandedUI('questoes', isGroupExpanded('questoes'));
               } else {
                 groupQuestoes.classList.add('hidden');
               }
+            }
+
+            if (groupMateria || groupQuestoes) {
+              const currentSec = (typeof window.getCurrentStudySection === 'function')
+                ? window.getCurrentStudySection()
+                : (localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+
+              let activeSec = currentSec;
+              if (activeSec === 'materia' && visibleMateria === 0 && visibleQuestoes > 0) {
+                activeSec = 'questoes';
+                if (typeof window.switchStudySection === 'function') {
+                  window.switchStudySection('questoes');
+                }
+              } else if (activeSec === 'questoes' && visibleQuestoes === 0 && visibleMateria > 0) {
+                activeSec = 'materia';
+                if (typeof window.switchStudySection === 'function') {
+                  window.switchStudySection('materia');
+                }
+              }
+
+              if (typeof updateActiveSectionUI === 'function') {
+                updateActiveSectionUI(activeSec);
+              }
+              applyGroupExpandedUI(activeSec, true);
             }
 
             if (visibleChapters > 0) {
@@ -1326,9 +1382,50 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
               selectStudyTag(val || null);
             });
 
+            function updateActiveSectionUI(activeSec) {
+              const groupMateria = document.querySelector('.toc-collapsible-group[data-group-type="materia"]');
+              const groupQuestoes = document.querySelector('.toc-collapsible-group[data-group-type="questoes"]');
+              const btnMateria = groupMateria?.querySelector('.toc-collapsible-btn');
+              const btnQuestoes = groupQuestoes?.querySelector('.toc-collapsible-btn');
+
+              if (activeSec === 'materia') {
+                btnMateria?.classList.add('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                btnMateria?.classList.remove('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                btnMateria?.setAttribute('aria-selected', 'true');
+
+                btnQuestoes?.classList.remove('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                btnQuestoes?.classList.add('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                btnQuestoes?.setAttribute('aria-selected', 'false');
+              } else if (activeSec === 'questoes') {
+                btnQuestoes?.classList.add('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                btnQuestoes?.classList.remove('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                btnQuestoes?.setAttribute('aria-selected', 'true');
+
+                btnMateria?.classList.remove('border-[var(--accent)]/50', 'bg-[var(--accent-subtle)]/35', 'text-[var(--accent)]', 'font-semibold');
+                btnMateria?.classList.add('border-[var(--border-subtle)]', 'bg-[var(--bg-surface)]', 'text-[var(--text-primary)]');
+                btnMateria?.setAttribute('aria-selected', 'false');
+              }
+            }
+            window.updateActiveSectionUI = updateActiveSectionUI;
+
+            window.addEventListener('study-section-changed', (e) => {
+              const newSec = e.detail?.section;
+              if (newSec) {
+                updateActiveSectionUI(newSec);
+                applyGroupExpandedUI(newSec, true);
+                setGroupExpanded(newSec, true);
+              }
+            });
+
             function initCollapsibleTocGroups() {
+              const currentSec = (typeof window.getCurrentStudySection === 'function')
+                ? window.getCurrentStudySection()
+                : (localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+
+              updateActiveSectionUI(currentSec);
+
               ['materia', 'questoes'].forEach((groupType) => {
-                const expanded = isGroupExpanded(groupType);
+                const expanded = (groupType === currentSec) || isGroupExpanded(groupType);
                 applyGroupExpandedUI(groupType, expanded);
               });
 
@@ -1336,13 +1433,39 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
                 if (btn.dataset.collapsibleBound === 'true') return;
                 btn.dataset.collapsibleBound = 'true';
 
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                   e.stopPropagation();
                   const targetGroup = btn.getAttribute('data-target-group');
-                  if (targetGroup) {
-                    const nextExpanded = !isGroupExpanded(targetGroup);
-                    setGroupExpanded(targetGroup, nextExpanded);
+                  if (!targetGroup) return;
+
+                  const isChevronClick = Boolean(e.target?.closest('.toc-collapsible-chevron'));
+                  const content = document.querySelector(`.toc-collapsible-content[data-group-content="${targetGroup}"]`);
+                  const isCurrentlyExpanded = content ? !content.classList.contains('hidden') : false;
+
+                  const renderedSec = document.getElementById('chapters-container')?.getAttribute('data-rendered-section');
+                  const currentSec = (typeof window.getCurrentStudySection === 'function')
+                    ? window.getCurrentStudySection()
+                    : (renderedSec || localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+
+                  const isInactive = targetGroup !== currentSec || (renderedSec && targetGroup !== renderedSec);
+
+                  if (isChevronClick) {
+                    const nextExpanded = !isCurrentlyExpanded;
                     applyGroupExpandedUI(targetGroup, nextExpanded);
+                    setGroupExpanded(targetGroup, nextExpanded);
+                  } else if (isInactive) {
+                    applyGroupExpandedUI(targetGroup, true);
+                    setGroupExpanded(targetGroup, true);
+                    if (typeof updateActiveSectionUI === 'function') {
+                      updateActiveSectionUI(targetGroup);
+                    }
+                    if (typeof window.switchStudySection === 'function') {
+                      await window.switchStudySection(targetGroup);
+                    }
+                  } else {
+                    const nextExpanded = !isCurrentlyExpanded;
+                    applyGroupExpandedUI(targetGroup, nextExpanded);
+                    setGroupExpanded(targetGroup, nextExpanded);
                   }
                 });
               });
@@ -1439,6 +1562,28 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         let targetEl = document.getElementById(targetId);
         const tocItem = document.querySelector(`.toc-item[data-toc-id="${targetId}"]`);
         const parentId = tocItem?.getAttribute('data-parent-id');
+
+        // Se o elemento não existe no DOM, verifica se pertence a outro grupo e alterna se necessário
+        if (!targetEl && tocItem) {
+          const chapItem = tocItem.closest('.sidebar-chapter-item');
+          const itemType = chapItem?.getAttribute('data-chapter-type');
+          const renderedSec = document.getElementById('chapters-container')?.getAttribute('data-rendered-section');
+          const currentSec = (typeof window.getCurrentStudySection === 'function')
+            ? window.getCurrentStudySection()
+            : (renderedSec || localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+
+          const isDiff = (itemType && renderedSec && itemType !== renderedSec) || (itemType && currentSec && itemType !== currentSec);
+
+          if (isDiff && typeof window.switchStudySection === 'function') {
+            if (typeof window.updateActiveSectionUI === 'function') {
+              window.updateActiveSectionUI(itemType);
+            }
+            applyGroupExpandedUI(itemType, true);
+            setGroupExpanded(itemType, true);
+            await window.switchStudySection(itemType, targetId);
+            return true;
+          }
+        }
 
         let wasLazyLoaded = false;
 
@@ -1560,15 +1705,59 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         if (!targetId) return;
 
         // Se for navegação para outra rota/página, permite comportamento padrão do navegador
-        const currentPath = window.location.pathname;
-        const linkPath = href.slice(0, hashIdx);
-        if (linkPath && linkPath !== currentPath && !currentPath.endsWith(linkPath) && !linkPath.endsWith(currentPath)) {
-          return;
+        try {
+          const urlObj = new URL(anchor.href, window.location.origin);
+          const normLink = urlObj.pathname.replace(/\/+$/, '');
+          const normLoc = window.location.pathname.replace(/\/+$/, '');
+          if (normLink !== normLoc) {
+            return;
+          }
+        } catch(err) {
+          const currentPath = window.location.pathname.replace(/\/+$/, '');
+          const linkPath = href.slice(0, hashIdx).replace(/\/+$/, '');
+          if (linkPath && linkPath !== currentPath && !currentPath.endsWith(linkPath) && !linkPath.endsWith(currentPath)) {
+            return;
+          }
         }
 
         e.preventDefault();
+
+        // Verifica se o item clicado pertence ao outro grupo de estudo
+        const chapItem = anchor.closest('.sidebar-chapter-item');
+        const itemType = chapItem?.getAttribute('data-chapter-type');
+        const renderedSec = document.getElementById('chapters-container')?.getAttribute('data-rendered-section');
+        const currentSec = (typeof window.getCurrentStudySection === 'function')
+          ? window.getCurrentStudySection()
+          : (renderedSec || localStorage.getItem('study_selected_section_' + materiaSlug) || 'materia');
+
+        const isDiff = (itemType && renderedSec && itemType !== renderedSec) || (itemType && currentSec && itemType !== currentSec);
+
+        if (isDiff && typeof window.switchStudySection === 'function') {
+          if (typeof window.updateActiveSectionUI === 'function') {
+            window.updateActiveSectionUI(itemType);
+          }
+          applyGroupExpandedUI(itemType, true);
+          setGroupExpanded(itemType, true);
+          await window.switchStudySection(itemType, targetId);
+          return;
+        }
+
         await navigateToStudySection(targetId, true);
       });
+
+      function detectSectionFromHash(hash) {
+        if (!hash) return null;
+        const cleanHash = hash.replace(/^#/, '');
+        const tocItem = document.querySelector(`.toc-item[data-toc-id="${cleanHash}"]`);
+        if (tocItem) {
+          const chapItem = tocItem.closest('.sidebar-chapter-item');
+          return chapItem?.getAttribute('data-chapter-type') || null;
+        }
+        if (cleanHash.includes('cap-materia-')) return 'materia';
+        if (cleanHash.startsWith('cap-')) return 'questoes';
+        return null;
+      }
+      window.detectSectionFromHash = detectSectionFromHash;
 
       // 1. Validação de Gestos Touch no Celular:
       // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos

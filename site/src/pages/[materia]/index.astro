@@ -18,6 +18,7 @@ const user = Astro.locals.user!;
 const { materia: materiaSlug } = Astro.params;
 const ownerParam = Astro.url.searchParams.get('owner');
 const tagParam = Astro.url.searchParams.get('tag')?.trim() || null;
+const typeParam = (Astro.url.searchParams.get('type')?.trim() || null) as 'materia' | 'questoes' | null;
 
 const clientCacheTtlMinutes = parseInt(process.env.CLIENT_CACHE_TTL_MINUTES || '1440', 10);
 const clientCacheMaxEntries = parseInt(process.env.CLIENT_CACHE_MAX_ENTRIES || '50', 10);
@@ -151,60 +152,6 @@ interface RenderableChapter {
   matchTags: string[];
 }
 
-let chaptersToRender: RenderableChapter[] = [];
-
-if (tagParam) {
-  const isOtherUserTag = tagParam.startsWith('user_') && tagParam.includes('::');
-  if (isOtherUserTag) {
-    const [userPart, raw] = tagParam.split('::');
-    const filterOwnerId = parseInt(userPart.replace('user_', ''), 10);
-    const foundSrc = otherSources.find((s) => s.ownerUserId === filterOwnerId);
-    if (foundSrc) {
-      const matchingMeta = foundSrc.chapters
-        .filter((c) => (c.tags || []).includes(raw))
-        .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
-
-      if (matchingMeta.length > 0) {
-        // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
-        const firstChap = loadChapterById(matchingMeta[0].id, filterOwnerId, foundSrc.materiaSlug);
-        chaptersToRender = [
-          firstChap
-            ? { ...firstChap, isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] }
-            : { ...matchingMeta[0], htmlContent: '', isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] },
-          ...matchingMeta.slice(1).map((m) => ({
-            ...m,
-            htmlContent: undefined,
-            isFromOther: true,
-            ownerDisplayName: foundSrc.ownerDisplayName,
-            matchTags: [tagParam],
-          })),
-        ];
-      }
-    }
-  } else {
-    const matchingMeta = primaryChapters
-      .filter((c) => (c.tags || []).includes(tagParam))
-      .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
-
-    if (matchingMeta.length > 0) {
-      // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
-      const firstChap = loadChapterById(matchingMeta[0].id, primaryOwnerId, materiaSlug);
-      const primaryMatchTags = [tagParam, `user_${primaryOwnerId}::${tagParam}`];
-      chaptersToRender = [
-        firstChap
-          ? { ...firstChap, isFromOther: false, matchTags: primaryMatchTags }
-          : { ...matchingMeta[0], htmlContent: '', isFromOther: false, matchTags: primaryMatchTags },
-        ...matchingMeta.slice(1).map((m) => ({
-          ...m,
-          htmlContent: undefined,
-          isFromOther: false,
-          matchTags: primaryMatchTags,
-        })),
-      ];
-    }
-  }
-}
-
 // Prepara questões para a sidebar a partir de metadados
 interface RenderableQuestionLink {
   id: string;
@@ -256,6 +203,30 @@ const allChaptersMeta = [
   ),
 ];
 
+const hasMateriaType = allChaptersMeta.some((r) => r.type === 'materia');
+const hasQuestoesType = allChaptersMeta.some((r) => r.type !== 'materia');
+const hasBothTypes = hasMateriaType && hasQuestoesType;
+
+let initialSection: 'materia' | 'questoes' = 'materia';
+if (typeParam === 'materia' || typeParam === 'questoes') {
+  initialSection = typeParam;
+} else if (hasBothTypes) {
+  if (tagParam) {
+    const rawTag = tagParam.includes('::') ? tagParam.split('::')[1] : tagParam;
+    const tagHasMateria = allChaptersMeta.some((c) => (c.tags || []).includes(rawTag) && c.type === 'materia');
+    const tagHasQuestoes = allChaptersMeta.some((c) => (c.tags || []).includes(rawTag) && c.type !== 'materia');
+    if (!tagHasMateria && tagHasQuestoes) {
+      initialSection = 'questoes';
+    } else {
+      initialSection = 'materia';
+    }
+  } else {
+    initialSection = 'materia';
+  }
+} else if (hasQuestoesType && !hasMateriaType) {
+  initialSection = 'questoes';
+}
+
 const toc = allChaptersMeta.map((resumo) => {
   const isMateria = resumo.type === 'materia';
   const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
@@ -270,9 +241,62 @@ const toc = allChaptersMeta.map((resumo) => {
   };
 });
 
-const hasMateriaType = allChaptersMeta.some((r) => r.type === 'materia');
-const hasQuestoesType = allChaptersMeta.some((r) => r.type !== 'materia');
-const hasBothTypes = hasMateriaType && hasQuestoesType;
+// 6. Prepara os capítulos a renderizar (APENAS se uma tag for solicitada via URL, filtrando pela seção ativa)
+let chaptersToRender: RenderableChapter[] = [];
+
+if (tagParam) {
+  const isOtherUserTag = tagParam.startsWith('user_') && tagParam.includes('::');
+  if (isOtherUserTag) {
+    const [userPart, raw] = tagParam.split('::');
+    const filterOwnerId = parseInt(userPart.replace('user_', ''), 10);
+    const foundSrc = otherSources.find((s) => s.ownerUserId === filterOwnerId);
+    if (foundSrc) {
+      const matchingMeta = foundSrc.chapters
+        .filter((c) => (c.tags || []).includes(raw))
+        .filter((c) => (hasBothTypes ? (c.type || 'questoes') === initialSection : true))
+        .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
+
+      if (matchingMeta.length > 0) {
+        // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
+        const firstChap = loadChapterById(matchingMeta[0].id, filterOwnerId, foundSrc.materiaSlug);
+        chaptersToRender = [
+          firstChap
+            ? { ...firstChap, isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] }
+            : { ...matchingMeta[0], htmlContent: '', isFromOther: true, ownerDisplayName: foundSrc.ownerDisplayName, matchTags: [tagParam] },
+          ...matchingMeta.slice(1).map((m) => ({
+            ...m,
+            htmlContent: undefined,
+            isFromOther: true,
+            ownerDisplayName: foundSrc.ownerDisplayName,
+            matchTags: [tagParam],
+          })),
+        ];
+      }
+    }
+  } else {
+    const matchingMeta = primaryChapters
+      .filter((c) => (c.tags || []).includes(tagParam))
+      .filter((c) => (hasBothTypes ? (c.type || 'questoes') === initialSection : true))
+      .sort((a, b) => a.order - b.order || a.chapter - b.chapter);
+
+    if (matchingMeta.length > 0) {
+      // Compila APENAS o 1º capítulo no SSR; os demais são carregados sob demanda
+      const firstChap = loadChapterById(matchingMeta[0].id, primaryOwnerId, materiaSlug);
+      const primaryMatchTags = [tagParam, `user_${primaryOwnerId}::${tagParam}`];
+      chaptersToRender = [
+        firstChap
+          ? { ...firstChap, isFromOther: false, matchTags: primaryMatchTags }
+          : { ...matchingMeta[0], htmlContent: '', isFromOther: false, matchTags: primaryMatchTags },
+        ...matchingMeta.slice(1).map((m) => ({
+          ...m,
+          htmlContent: undefined,
+          isFromOther: false,
+          matchTags: primaryMatchTags,
+        })),
+      ];
+    }
+  }
+}
 ---
 
 <AcademicLayout
@@ -280,6 +304,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   materia={materia}
   availableTags={availableTags}
   activeTag={tagParam}
+  activeStudySection={initialSection}
   toc={toc}
   questions={questionsLinks}
   hasOtherUsersTags={hasOtherUsersTags}
@@ -403,7 +428,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     </div>
 
     <!-- Fluxo Contínuo de Leitura dos Capítulos -->
-    <div class="space-y-20 w-full min-w-0" id="chapters-container" data-rendered-tag={tagParam || ''}>
+    <div class="space-y-20 w-full min-w-0" id="chapters-container" data-rendered-tag={tagParam || ''} data-rendered-section={initialSection}>
       {chaptersToRender.map((resumo, idx) => {
         const isMateria = resumo.type === 'materia';
         const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
@@ -508,6 +533,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   primaryOwnerId,
   clientCacheTtlMinutes,
   clientCacheMaxEntries,
+  initialServerSection: initialSection,
 }}>
   (function() {
     const promptEl = document.getElementById('tag-select-prompt');
@@ -518,6 +544,8 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     const noChaptersEl = document.getElementById('no-chapters-for-tag');
     const footerBancoLink = document.getElementById('footer-banco-link');
     const chaptersContainer = document.getElementById('chapters-container');
+
+    let currentActiveSection = chaptersContainer?.getAttribute('data-rendered-section') || initialServerSection || 'materia';
 
     // Inicializa parâmetros de retenção no cache persistente do cliente
     if (window.clientStudyCache && typeof window.clientStudyCache.setConfig === 'function') {
@@ -648,13 +676,14 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
     }
 
-    // 6. Aplica a tag selecionada (sob demanda, no modo progressivo)
-    async function applyActiveTag(tag) {
+    // 5. Renderiza os capítulos da tag e da seção selecionada
+    async function renderChapters(tag, sectionType, targetScrollId) {
       if (!tag) {
         promptEl?.classList.remove('hidden');
         notebookEl?.classList.add('hidden');
         if (chaptersContainer) {
           chaptersContainer.setAttribute('data-rendered-tag', '');
+          chaptersContainer.setAttribute('data-rendered-section', '');
         }
         return;
       }
@@ -671,16 +700,25 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
 
       const currentRenderedTag = chaptersContainer?.getAttribute('data-rendered-tag');
-      if (currentRenderedTag === tag) {
-        handleInitialHash();
+      const currentRenderedSection = chaptersContainer?.getAttribute('data-rendered-section');
+
+      if (currentRenderedTag === tag && currentRenderedSection === sectionType) {
+        if (targetScrollId) {
+          if (typeof window.navigateToStudySection === 'function') {
+            await window.navigateToStudySection(targetScrollId, false);
+          }
+        } else {
+          handleInitialHash();
+        }
         return;
       }
 
+      currentActiveSection = sectionType;
       if (chaptersContainer) {
         chaptersContainer.innerHTML = `
           <div class="py-16 text-center space-y-3">
             <div class="inline-block w-7 h-7 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
-            <p class="font-serif text-sm text-[var(--text-secondary)] italic">Carregando avaliação...</p>
+            <p class="font-serif text-sm text-[var(--text-secondary)] italic">Carregando ${sectionType === 'materia' ? 'resumo da matéria' : 'estudo por questões'}...</p>
           </div>
         `;
       }
@@ -695,7 +733,8 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
           fetchTag = parts[1];
         }
 
-        const res = await fetch(`/api/chapters?mode=progressive&materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}`);
+        const typeQuery = sectionType ? `&type=${encodeURIComponent(sectionType)}` : '';
+        const res = await fetch(`/api/chapters?mode=progressive&materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}${typeQuery}`);
         if (!res.ok) throw new Error('Falha ao carregar capítulos');
         const data = await res.json();
         const chaps = data.chapters || [];
@@ -709,7 +748,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
             noChaptersEl?.classList.add('hidden');
             let html = '';
             chaps.forEach((resumo, idx) => {
-              const isMateria = resumo.type === 'materia';
+              const isMateria = (resumo.type || sectionType) === 'materia';
               const prefix = isOtherUser ? `other-${resumo.ownerUserId}-` : '';
               const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
 
@@ -725,13 +764,19 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
                     data-chapter-id="${resumo.id}"
                     data-chapter-owner="${resumo.ownerUserId || fetchOwner}"
                     data-chapter-tags="${tag}"
-                    data-chapter-type="${resumo.type || 'questoes'}"
+                    data-chapter-type="${resumo.type || sectionType}"
                     class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
                   >
                     <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
                       <div class="sans-ui flex flex-wrap items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
                         <span>Capítulo ${resumo.chapter}</span>
-                        ${isMateria ? '<span class="text-[var(--text-muted)] font-normal">• Resumo da Matéria</span>' : '<span class="text-[var(--text-muted)] font-normal">• Estudo Guiado por Questões</span>'}
+                        <span class="text-[var(--text-muted)] font-normal">• ${isMateria ? 'Resumo da Matéria' : 'Estudo Guiado por Questões'}</span>
+                        ${resumo.isFromOther ? `
+                          <span>•</span>
+                          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            De: ${resumo.ownerDisplayName}
+                          </span>
+                        ` : ''}
                       </div>
                       <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                         ${resumo.title}
@@ -774,6 +819,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
 
             chaptersContainer.innerHTML = html;
             chaptersContainer.setAttribute('data-rendered-tag', tag);
+            chaptersContainer.setAttribute('data-rendered-section', sectionType);
 
             if (chaptersCountEl) {
               chaptersCountEl.textContent = `${chaps.length} ${chaps.length === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
@@ -781,12 +827,24 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
 
             cacheRenderedChapters();
             setupLazyChapters();
-            handleInitialHash();
+
+            if (targetScrollId) {
+              if (typeof window.navigateToStudySection === 'function') {
+                await window.navigateToStudySection(targetScrollId, false);
+              }
+            } else {
+              const notebookEl = document.getElementById('notebook-content');
+              if (notebookEl) {
+                notebookEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              } else {
+                handleInitialHash();
+              }
+            }
           }
           window.dispatchEvent(new CustomEvent('study-content-updated'));
         }
       } catch (err) {
-        console.error('Erro ao buscar capítulos da tag:', err);
+        console.error('Erro ao buscar capítulos da tag/seção:', err);
         if (chaptersContainer) {
           chaptersContainer.innerHTML = `
             <div class="p-6 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-muted)] space-y-3">
@@ -800,23 +858,84 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
     }
 
+    // 6. Alterna entre 'materia' e 'questoes' a partir da seleção no sumário
+    async function switchStudySection(newSection, targetScrollId) {
+      if (!newSection) return;
+      currentActiveSection = newSection;
+
+      try {
+        localStorage.setItem('study_selected_section_' + materiaSlug, newSection);
+      } catch(e) {}
+
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('type', newSection);
+        if (targetScrollId) {
+          url.hash = '#' + targetScrollId;
+        }
+        window.history.replaceState(null, '', url.toString());
+      }
+
+      window.dispatchEvent(new CustomEvent('study-section-changed', {
+        detail: { section: newSection, materia: materiaSlug }
+      }));
+
+      const activeTag = (typeof window.getCurrentStudyTag === 'function')
+        ? window.getCurrentStudyTag()
+        : (tagParam || (function() {
+            try { return localStorage.getItem('study_selected_tag_' + materiaSlug); } catch(e) { return null; }
+          })());
+
+      if (activeTag) {
+        await renderChapters(activeTag, newSection, targetScrollId);
+      }
+    }
+
+    window.switchStudySection = switchStudySection;
+    window.getCurrentStudySection = () => currentActiveSection;
+
     btnSwitch?.addEventListener('click', () => {
       if (typeof window.selectStudyTag === 'function') {
         window.selectStudyTag(null);
       }
     });
 
-    window.addEventListener('study-tag-changed', (e) => {
-      applyActiveTag(e.detail?.tag || null);
+    window.addEventListener('study-tag-changed', async (e) => {
+      const newTag = e.detail?.tag || null;
+      let targetSection = currentActiveSection;
+      if (typeof window.getValidSectionForTag === 'function') {
+        targetSection = window.getValidSectionForTag(newTag, currentActiveSection);
+      }
+      currentActiveSection = targetSection;
+      await renderChapters(newTag, targetSection);
     });
 
     async function initPageTag() {
       cacheRenderedChapters();
       setupLazyChapters();
 
-      const cur = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
-      if (cur) {
-        await applyActiveTag(cur);
+      const curTag = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
+
+      // Verifica se a URL contém um hash que aponte para um grupo específico
+      let hashSection = null;
+      if (window.location.hash && typeof window.detectSectionFromHash === 'function') {
+        hashSection = window.detectSectionFromHash(window.location.hash);
+      }
+
+      let preferredSection = hashSection || (function() {
+        try {
+          return localStorage.getItem('study_selected_section_' + materiaSlug);
+        } catch(e) { return null; }
+      })() || currentActiveSection;
+
+      if (typeof window.getValidSectionForTag === 'function' && curTag) {
+        preferredSection = window.getValidSectionForTag(curTag, preferredSection);
+      }
+
+      if (preferredSection !== currentActiveSection) {
+        await switchStudySection(preferredSection);
+      } else if (curTag) {
+        await renderChapters(curTag, currentActiveSection);
       } else {
         await handleInitialHash();
       }
