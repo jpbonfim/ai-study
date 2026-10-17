@@ -157,20 +157,20 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
             </div>
 
             <!-- Navegação com Disciplinas (Ordenadas por Acesso Recente no Cliente) -->
-            <nav class="space-y-1.5 sans-ui text-sm" id="sidebar-materias-nav">
+            <nav class="space-y-1 sans-ui text-sm" id="sidebar-materias-nav">
               {MATERIAS.map((m, idx) => (
                 <a
                   href={m.status === 'active' ? (m.isShared ? `/${m.slug}?owner=${m.ownerUserId}` : `/${m.slug}`) : '#'}
                   data-materia-slug={m.slug}
                   data-default-order={idx}
                   data-search-text={`${m.name} ${m.code} ${m.institution} ${m.description} ${(m.topics || []).join(' ')}`}
-                  class={`sidebar-materia-item block p-3 rounded-lg border transition-all duration-150 ${
+                  class={`sidebar-materia-item block px-3 py-2 rounded-lg border transition-all duration-150 ${
                     m.status === 'active'
                       ? 'border-[var(--border-subtle)] bg-[var(--bg-page)] hover:border-[var(--accent)] hover:bg-[var(--bg-surface-hover)] group shadow-2xs cursor-pointer'
                       : 'border-dashed border-[var(--border-subtle)] bg-transparent text-[var(--text-muted)] opacity-65 cursor-not-allowed'
                   }`}
                 >
-                  <div class="flex items-center justify-between text-xs mb-1">
+                  <div class="flex items-center justify-between text-xs mb-0.5">
                     <span class="font-mono font-bold text-[var(--accent)]">{m.code}</span>
                     {m.isShared ? (
                       <span class="text-[10px] font-mono text-[var(--accent)] font-semibold truncate max-w-[130px]" title={`Compartilhado por ${m.ownerDisplayName || m.ownerUsername}`}>
@@ -188,7 +188,7 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
                     {m.name}
                   </div>
                   {m.status === 'active' && (
-                    <div class="text-[11px] text-[var(--text-muted)] mt-1.5 flex items-center justify-between">
+                    <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
                       <span>{m.chaptersCount} capítulos</span>
                       <span>{m.questionsCount} testes</span>
                     </div>

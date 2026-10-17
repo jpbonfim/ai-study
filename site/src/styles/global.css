@@ -48,18 +48,18 @@
      ============================================================ */
   html.theme-oled {
     --bg-page: #000000;
-    --bg-surface: #0a0a0a;
-    --bg-surface-hover: #141414;
-    --bg-subtle: #050505;
-    --border-subtle: #1c1c1c;
-    --border-strong: #2c2c2c;
+    --bg-surface: #000000;
+    --bg-surface-hover: #121212;
+    --bg-subtle: #000000;
+    --border-subtle: #222222;
+    --border-strong: #333333;
     --text-primary: #e6e6e6;
     --text-secondary: #949494;
     --text-muted: #666666;
     --accent: #e5b378;
     --accent-hover: #f0c594;
-    --accent-subtle: #1a150e;
-    --code-bg: #0d0d0d;
+    --accent-subtle: rgba(229, 179, 120, 0.12);
+    --code-bg: #000000;
     color-scheme: dark;
   }
 }
@@ -722,27 +722,27 @@ html.theme-dark {
   --alert-caution-border: rgba(248, 81, 73, 0.28);
 }
 
-/* 3. Cores para Modo Escuro OLED */
+/* 3. Cores para Modo Escuro OLED (Fundo Preto Absoluto) */
 html.theme-oled {
   --alert-note-accent: #58a6ff;
-  --alert-note-bg: rgba(56, 139, 253, 0.07);
-  --alert-note-border: rgba(56, 139, 253, 0.35);
+  --alert-note-bg: #000000;
+  --alert-note-border: rgba(56, 139, 253, 0.4);
 
   --alert-tip-accent: #3fb950;
-  --alert-tip-bg: rgba(63, 185, 80, 0.07);
-  --alert-tip-border: rgba(63, 185, 80, 0.35);
+  --alert-tip-bg: #000000;
+  --alert-tip-border: rgba(63, 185, 80, 0.4);
 
   --alert-important-accent: #a371f7;
-  --alert-important-bg: rgba(163, 113, 247, 0.07);
-  --alert-important-border: rgba(163, 113, 247, 0.35);
+  --alert-important-bg: #000000;
+  --alert-important-border: rgba(163, 113, 247, 0.4);
 
   --alert-warning-accent: #d29922;
-  --alert-warning-bg: rgba(210, 153, 34, 0.07);
-  --alert-warning-border: rgba(210, 153, 34, 0.35);
+  --alert-warning-bg: #000000;
+  --alert-warning-border: rgba(210, 153, 34, 0.4);
 
   --alert-caution-accent: #f85149;
-  --alert-caution-bg: rgba(248, 81, 73, 0.07);
-  --alert-caution-border: rgba(248, 81, 73, 0.35);
+  --alert-caution-bg: #000000;
+  --alert-caution-border: rgba(248, 81, 73, 0.4);
 }
 
 /* Mapeamento de variáveis por variante */
@@ -1661,4 +1661,73 @@ html.theme-dark .theme-icon-dark {
 
 html.theme-oled .theme-icon-oled {
   display: block !important;
+}
+
+/* ============================================================
+   REGRAS ESPECÍFICAS DE SUPERFÍCIE PARA TEMAS ESCUROS
+   ============================================================ */
+
+/* 1. MODO ESCURO BIBLIOTECA (Suavidade nos cards e busca) */
+html.theme-dark .sidebar-materia-item {
+  background-color: rgba(38, 41, 48, 0.35);
+  border-color: rgba(43, 46, 55, 0.6);
+}
+html.theme-dark .sidebar-materia-item:hover {
+  background-color: rgba(38, 41, 48, 0.75);
+}
+html.theme-dark #sidebar-materia-search {
+  background-color: rgba(38, 41, 48, 0.25);
+  border-color: rgba(43, 46, 55, 0.6);
+}
+
+/* 2. MODO OLED (Preto Absoluto #000000 para telas OLED) */
+html.theme-oled body,
+html.theme-oled #home-sidebar,
+html.theme-oled #academic-sidebar,
+html.theme-oled #config-sidebar,
+html.theme-oled #settings-sidebar,
+html.theme-oled #sidebar-materia-search,
+html.theme-oled .sidebar-materia-item,
+html.theme-oled #recent-section,
+html.theme-oled article,
+html.theme-oled .katex-display,
+html.theme-oled .academic-box,
+html.theme-oled .diagram-card,
+html.theme-oled .diagram-card-header,
+html.theme-oled .diagram-viewport,
+html.theme-oled .system-block-card,
+html.theme-oled .theme-dropdown-menu,
+html.theme-oled table.academic-table,
+html.theme-oled table.academic-table th,
+html.theme-oled table.academic-table td,
+html.theme-oled .academic-prose th,
+html.theme-oled .academic-prose td,
+html.theme-oled .academic-prose pre,
+html.theme-oled .reader-content pre,
+html.theme-oled .resolution-content pre,
+html.theme-oled .code-block-card,
+html.theme-oled .code-block-header,
+html.theme-oled .code-block-card pre,
+html.theme-oled pre.astro-code,
+html.theme-oled .shiki,
+html.theme-oled .code-copy-btn,
+html.theme-oled .markdown-alert {
+  background-color: #000000 !important;
+  box-shadow: none !important;
+}
+
+html.theme-oled .sidebar-materia-item {
+  border-color: #222222 !important;
+}
+
+html.theme-oled .sidebar-materia-item:hover,
+html.theme-oled .theme-opt-btn:hover,
+html.theme-oled .tag-opt-btn:hover,
+html.theme-oled .modal-control-btn:hover {
+  background-color: #121212 !important;
+}
+
+html.theme-oled :not(pre) > code {
+  background-color: #000000 !important;
+  border-color: #222222 !important;
 }

@@ -153,17 +153,17 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
            ============================================================ */
         html.theme-oled {
             --bg-page: #000000;
-            --bg-surface: #0a0a0a;
-            --bg-surface-hover: #141414;
-            --bg-subtle: #050505;
-            --border-subtle: #1c1c1c;
-            --border-strong: #2c2c2c;
+            --bg-surface: #000000;
+            --bg-surface-hover: #121212;
+            --bg-subtle: #000000;
+            --border-subtle: #222222;
+            --border-strong: #333333;
             --text-primary: #e6e6e6;
             --text-secondary: #949494;
             --text-muted: #666666;
             --accent: #e5b378;
-            --accent-subtle: #1a150e;
-            --card-shadow: rgba(0, 0, 0, 0.8);
+            --accent-subtle: rgba(229, 179, 120, 0.12);
+            --card-shadow: none;
             color-scheme: dark;
         }
 
@@ -468,20 +468,20 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
         }
         html.theme-oled {
             --alert-note-accent: #58a6ff;
-            --alert-note-bg: rgba(56, 139, 253, 0.07);
-            --alert-note-border: rgba(56, 139, 253, 0.35);
+            --alert-note-bg: #000000;
+            --alert-note-border: rgba(56, 139, 253, 0.4);
             --alert-tip-accent: #3fb950;
-            --alert-tip-bg: rgba(63, 185, 80, 0.07);
-            --alert-tip-border: rgba(63, 185, 80, 0.35);
+            --alert-tip-bg: #000000;
+            --alert-tip-border: rgba(63, 185, 80, 0.4);
             --alert-important-accent: #a371f7;
-            --alert-important-bg: rgba(163, 113, 247, 0.07);
-            --alert-important-border: rgba(163, 113, 247, 0.35);
+            --alert-important-bg: #000000;
+            --alert-important-border: rgba(163, 113, 247, 0.4);
             --alert-warning-accent: #d29922;
-            --alert-warning-bg: rgba(210, 153, 34, 0.07);
-            --alert-warning-border: rgba(210, 153, 34, 0.35);
+            --alert-warning-bg: #000000;
+            --alert-warning-border: rgba(210, 153, 34, 0.4);
             --alert-caution-accent: #f85149;
-            --alert-caution-bg: rgba(248, 81, 73, 0.07);
-            --alert-caution-border: rgba(248, 81, 73, 0.35);
+            --alert-caution-bg: #000000;
+            --alert-caution-border: rgba(248, 81, 73, 0.4);
         }
         .markdown-alert-note { --alert-accent: var(--alert-note-accent); --alert-bg: var(--alert-note-bg); --alert-border: var(--alert-note-border); }
         .markdown-alert-tip { --alert-accent: var(--alert-tip-accent); --alert-bg: var(--alert-tip-bg); --alert-border: var(--alert-tip-border); }
