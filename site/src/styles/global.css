@@ -671,6 +671,201 @@ table.academic-table tbody tr:hover {
   color: var(--text-secondary) !important;
 }
 
+/* ============================================================
+   BLOCO DE ALERTAS / CALLOUTS ACADÊMICOS (GITHUB-STYLE ALERTS)
+   ============================================================ */
+
+/* 1. Cores para Tema Papel / Séptia (Padrão e :root) */
+:root,
+html.theme-paper {
+  --alert-note-accent: #0969da;
+  --alert-note-bg: #ebf3fc;
+  --alert-note-border: rgba(9, 105, 218, 0.22);
+
+  --alert-tip-accent: #1a7f37;
+  --alert-tip-bg: #eaf5ed;
+  --alert-tip-border: rgba(26, 127, 55, 0.22);
+
+  --alert-important-accent: #8250df;
+  --alert-important-bg: #f3eefb;
+  --alert-important-border: rgba(130, 80, 223, 0.22);
+
+  --alert-warning-accent: #b45309;
+  --alert-warning-bg: #fef3c7;
+  --alert-warning-border: rgba(180, 83, 9, 0.3);
+
+  --alert-caution-accent: #cf222e;
+  --alert-caution-bg: #fde8e8;
+  --alert-caution-border: rgba(207, 34, 46, 0.22);
+}
+
+/* 2. Cores para Modo Escuro Biblioteca */
+html.theme-dark {
+  --alert-note-accent: #58a6ff;
+  --alert-note-bg: rgba(56, 139, 253, 0.1);
+  --alert-note-border: rgba(56, 139, 253, 0.28);
+
+  --alert-tip-accent: #3fb950;
+  --alert-tip-bg: rgba(63, 185, 80, 0.1);
+  --alert-tip-border: rgba(63, 185, 80, 0.28);
+
+  --alert-important-accent: #a371f7;
+  --alert-important-bg: rgba(163, 113, 247, 0.1);
+  --alert-important-border: rgba(163, 113, 247, 0.28);
+
+  --alert-warning-accent: #d29922;
+  --alert-warning-bg: rgba(210, 153, 34, 0.1);
+  --alert-warning-border: rgba(210, 153, 34, 0.28);
+
+  --alert-caution-accent: #f85149;
+  --alert-caution-bg: rgba(248, 81, 73, 0.1);
+  --alert-caution-border: rgba(248, 81, 73, 0.28);
+}
+
+/* 3. Cores para Modo Escuro OLED */
+html.theme-oled {
+  --alert-note-accent: #58a6ff;
+  --alert-note-bg: rgba(56, 139, 253, 0.07);
+  --alert-note-border: rgba(56, 139, 253, 0.35);
+
+  --alert-tip-accent: #3fb950;
+  --alert-tip-bg: rgba(63, 185, 80, 0.07);
+  --alert-tip-border: rgba(63, 185, 80, 0.35);
+
+  --alert-important-accent: #a371f7;
+  --alert-important-bg: rgba(163, 113, 247, 0.07);
+  --alert-important-border: rgba(163, 113, 247, 0.35);
+
+  --alert-warning-accent: #d29922;
+  --alert-warning-bg: rgba(210, 153, 34, 0.07);
+  --alert-warning-border: rgba(210, 153, 34, 0.35);
+
+  --alert-caution-accent: #f85149;
+  --alert-caution-bg: rgba(248, 81, 73, 0.07);
+  --alert-caution-border: rgba(248, 81, 73, 0.35);
+}
+
+/* Mapeamento de variáveis por variante */
+.markdown-alert-note {
+  --alert-accent: var(--alert-note-accent);
+  --alert-bg: var(--alert-note-bg);
+  --alert-border: var(--alert-note-border);
+}
+.markdown-alert-tip {
+  --alert-accent: var(--alert-tip-accent);
+  --alert-bg: var(--alert-tip-bg);
+  --alert-border: var(--alert-tip-border);
+}
+.markdown-alert-important {
+  --alert-accent: var(--alert-important-accent);
+  --alert-bg: var(--alert-important-bg);
+  --alert-border: var(--alert-important-border);
+}
+.markdown-alert-warning {
+  --alert-accent: var(--alert-warning-accent);
+  --alert-bg: var(--alert-warning-bg);
+  --alert-border: var(--alert-warning-border);
+}
+.markdown-alert-caution {
+  --alert-accent: var(--alert-caution-accent);
+  --alert-bg: var(--alert-caution-bg);
+  --alert-border: var(--alert-caution-border);
+}
+
+/* Card Estrutural do Alerta */
+.markdown-alert {
+  position: relative;
+  margin: 1.75rem 0 !important;
+  padding: 1rem 1.35rem !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--alert-border) !important;
+  border-left: 4.5px solid var(--alert-accent) !important;
+  background-color: var(--alert-bg) !important;
+  font-style: normal !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.markdown-alert-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0.02em !important;
+  color: var(--alert-accent) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.markdown-alert-icon-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  color: var(--alert-accent) !important;
+}
+
+.markdown-alert-icon {
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  display: block !important;
+}
+
+.markdown-alert-title-text {
+  display: inline-block !important;
+}
+
+.markdown-alert-content {
+  font-style: normal !important;
+  color: var(--text-primary) !important;
+  font-size: 0.98em !important;
+  line-height: 1.72 !important;
+}
+
+.markdown-alert-content > :first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-alert-content > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.markdown-alert-content p {
+  margin-top: 0.45rem !important;
+  margin-bottom: 0.45rem !important;
+  font-style: normal !important;
+}
+
+.markdown-alert-content strong {
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+}
+
+.markdown-alert-content code {
+  background-color: var(--code-bg, rgba(0, 0, 0, 0.05)) !important;
+  padding: 0.15em 0.35em !important;
+  border-radius: 4px !important;
+  font-size: 0.88em !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.markdown-alert-content ul,
+.markdown-alert-content ol {
+  margin: 0.5rem 0 !important;
+  padding-left: 1.25rem !important;
+}
+
+.markdown-alert-content li {
+  margin: 0.25rem 0 !important;
+  font-style: normal !important;
+}
+
+.markdown-alert-content ul > li::before {
+  background-color: var(--alert-accent) !important;
+}
+
 /* Caixas de Teorema e Definição Acadêmica */
 .academic-box {
   border: 1px solid var(--border-subtle);
@@ -1444,4 +1639,26 @@ html[data-code-theme="monokai"] .code-block-card pre {
   html.sidebar-collapsed .desktop-sidebar-open-btn {
     display: flex !important;
   }
+}
+
+/* ============================================================
+   ÍCONES DINÂMICOS DO SELETOR DE TEMA
+   ============================================================ */
+.theme-icon-paper,
+.theme-icon-dark,
+.theme-icon-oled {
+  display: none !important;
+}
+
+html.theme-paper .theme-icon-paper,
+:root:not(.dark):not(.theme-dark):not(.theme-oled) .theme-icon-paper {
+  display: block !important;
+}
+
+html.theme-dark .theme-icon-dark {
+  display: block !important;
+}
+
+html.theme-oled .theme-icon-oled {
+  display: block !important;
 }

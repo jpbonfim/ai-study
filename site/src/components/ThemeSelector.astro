@@ -6,12 +6,22 @@
   <button
     type="button"
     class="theme-dropdown-trigger flex items-center gap-1.5 p-1.5 px-2 rounded-md border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-xs font-medium cursor-pointer"
-    aria-label="Selecionar modo de leitura"
+    aria-label="Tema"
     title="Ajustar tema de leitura (Papel, Escuro, OLED)"
   >
-    <!-- Ícone de Paleta / Livro -->
-    <svg class="w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    <!-- Ícone Dinâmico de Tema -->
+    <!-- Ícone Sol (Tema Papel / Sépia) -->
+    <svg class="theme-icon-paper w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+    <!-- Ícone Lua (Tema Escuro Biblioteca) -->
+    <svg class="theme-icon-dark w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+    <!-- Ícone Contraste / Eclipse (Tema OLED) -->
+    <svg class="theme-icon-oled w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke-width="2" />
+      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" />
     </svg>
     <span class="current-theme-label text-[11px] font-mono capitalize">Papel</span>
     <svg class="w-3 h-3 text-[var(--text-muted)] transition-transform dropdown-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,7 +34,7 @@
     class="theme-dropdown-menu hidden absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-44 z-50 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] p-1 shadow-lg shadow-black/10 text-xs space-y-0.5"
   >
     <div class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border-subtle)] mb-1">
-      Modo de Leitura
+      Tema
     </div>
 
     <button
@@ -33,7 +43,9 @@
       class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#e8decb] border border-[#b8ab96]"></span>
+        <svg class="w-3.5 h-3.5 text-[#b45309] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12h-1m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
         <span>Papel / Sépia</span>
       </div>
       <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
@@ -45,7 +57,9 @@
       class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#2a2d36] border border-[#484e5c]"></span>
+        <svg class="w-3.5 h-3.5 text-[#58a6ff] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
         <span>Escuro</span>
       </div>
       <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
@@ -57,7 +71,10 @@
       class="theme-opt-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#000000] border border-[#444444]"></span>
+        <svg class="w-3.5 h-3.5 text-[#e5b378] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" stroke-width="2" />
+          <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" />
+        </svg>
         <span>Preto OLED</span>
       </div>
       <span class="theme-check text-[var(--accent)] font-bold hidden">✓</span>
@@ -94,8 +111,19 @@
         oled: 'OLED'
       };
 
+      const titles = {
+        paper: 'Ajustar tema de leitura (Atual: Papel / Sépia)',
+        dark: 'Ajustar tema de leitura (Atual: Escuro)',
+        oled: 'Ajustar tema de leitura (Atual: Preto OLED)'
+      };
+
       document.querySelectorAll('.current-theme-label').forEach((el) => {
         el.textContent = labels[themeName] || 'Papel';
+      });
+
+      document.querySelectorAll('.theme-selector-root .theme-dropdown-trigger').forEach((btn) => {
+        btn.setAttribute('title', titles[themeName] || 'Ajustar tema de leitura');
+        btn.setAttribute('aria-label', titles[themeName] || 'Ajustar tema de leitura');
       });
 
       document.querySelectorAll('.theme-opt-btn').forEach((btn) => {
