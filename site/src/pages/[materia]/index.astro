@@ -639,11 +639,11 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     }
 
     // 4. Se a URL contiver âncora (#...), navega e carrega o capítulo alvo
-    function handleInitialHash() {
+    async function handleInitialHash() {
       if (window.location.hash) {
         const hash = window.location.hash.slice(1);
         if (typeof window.navigateToStudySection === 'function') {
-          window.navigateToStudySection(hash, false);
+          await window.navigateToStudySection(hash, false);
         }
       }
     }
@@ -672,6 +672,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
 
       const currentRenderedTag = chaptersContainer?.getAttribute('data-rendered-tag');
       if (currentRenderedTag === tag) {
+        handleInitialHash();
         return;
       }
 
@@ -809,14 +810,15 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       applyActiveTag(e.detail?.tag || null);
     });
 
-    function initPageTag() {
+    async function initPageTag() {
       cacheRenderedChapters();
       setupLazyChapters();
-      handleInitialHash();
 
       const cur = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
       if (cur) {
-        applyActiveTag(cur);
+        await applyActiveTag(cur);
+      } else {
+        await handleInitialHash();
       }
     }
 
