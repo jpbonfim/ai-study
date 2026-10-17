@@ -272,10 +272,10 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
               Portal Acadêmico
             </span>
             <h1 class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[var(--text-primary)]">
-              Biblioteca de Cadernos de Estudo
+              Biblioteca de Conteúdos
             </h1>
             <p class="font-serif text-base text-[var(--text-secondary)] italic">
-              Sínteses teóricas com rigor matemático, fluxo contínuo de leitura e banco de provas comentadas passo a passo.
+              Resumos teóricos e bancos de questões resolvidas
             </p>
           </header>
 
@@ -284,7 +284,7 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
             <div class="sans-ui flex items-center justify-between text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
               <span class="font-mono font-bold uppercase tracking-wider text-[var(--accent)] flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
-                Continuar Estudando • Última Sessão de Estudo
+                Continuar estudo
               </span>
               <span id="recent-time-badge" class="italic">Caderno em andamento</span>
             </div>
@@ -308,7 +308,6 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
                 class="sans-ui shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded border border-[var(--accent)] bg-[var(--accent)] hover:opacity-90 text-white dark:text-black font-semibold text-xs transition-opacity cursor-pointer shadow-xs"
               >
                 <span id="recent-continue-btn-text">Continuar Caderno</span>
-                <span>&rarr;</span>
               </a>
             </div>
           </section>
@@ -317,7 +316,6 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
           <section class="space-y-4">
             <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center justify-between">
               <span>Disciplinas Disponíveis</span>
-              <span>Selecione no catálogo ou pelo menu lateral</span>
             </div>
 
             <div class="space-y-3.5">
@@ -376,15 +374,14 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
                     {m.status === 'active' ? (
                       <>
                         <span class="text-[var(--text-muted)] font-mono text-[11px] sm:text-xs truncate mr-2">
-                          <span class="hidden sm:inline">{m.chaptersCount} capítulos em fluxo contínuo • {m.questionsCount} questões resolvidas</span>
+                          <span class="hidden sm:inline">{m.chaptersCount} capítulos • {m.questionsCount} questões</span>
                           <span class="sm:hidden">{m.chaptersCount} caps • {m.questionsCount} questões</span>
                         </span>
                         <a
                           href={m.isShared ? `/${m.slug}?owner=${m.ownerUserId}` : `/${m.slug}`}
                           class="inline-flex items-center gap-1 font-bold text-[var(--accent)] hover:underline shrink-0 text-[11px] sm:text-xs"
                         >
-                          <span>Abrir Caderno Integral</span>
-                          <span>&rarr;</span>
+                          <span>Abrir Caderno</span>
                         </a>
                       </>
                     ) : (
@@ -597,7 +594,7 @@ const { own, shared, all: MATERIAS } = loadAllAccessibleMaterias(user.id);
 
             if (timeBadge && parsed.visitedAt) {
               const dt = new Date(parsed.visitedAt);
-              timeBadge.textContent = `Acessado recentemente (${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })})`;
+              timeBadge.textContent = `Último acesso: ${dt.toLocaleDateString('pt-BR')} às ${dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
             }
           }
         }
