@@ -1009,6 +1009,7 @@ h4[id] {
    - Mostra todo o diagrama na tela quando possível
    - Rolagem horizontal se a largura exceder o container (como tabelas)
    - Limite vertical máximo (480px) SEM rolagem vertical dentro do bloco
+   - justify-content flex-start com margin auto no SVG para evitar corte à esquerda em overflow móvel
 */
 .diagram-viewport {
   width: 100%;
@@ -1017,8 +1018,8 @@ h4[id] {
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
-  display: flex;
-  justify-content: center;
+  display: flex !important;
+  justify-content: flex-start !important;
   align-items: center;
   padding: 1.5rem 1rem;
   background-color: var(--bg-surface);
@@ -1030,6 +1031,9 @@ h4[id] {
   max-width: 100%;
   height: auto;
   min-width: min-content;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* ============================================================

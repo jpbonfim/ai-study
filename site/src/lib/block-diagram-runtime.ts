@@ -438,7 +438,7 @@ export function renderBlockDiagramHtml(
       <span>Visualizar</span>
     </button>
   </div>
-  <div class="diagram-viewport overflow-x-auto p-4 flex justify-center items-center" tabindex="0" role="region" aria-label="Diagrama esquemático de sistemas de controle com rolagem livre">
+  <div class="diagram-viewport overflow-x-auto p-4 flex justify-start items-center" tabindex="0" role="region" aria-label="Diagrama esquemático de sistemas de controle com rolagem livre">
     ${svgContent}
   </div>
 </div>
