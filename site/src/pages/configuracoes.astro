@@ -978,13 +978,13 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 7. Gerenciamento de Armazenamento e Cache -->
+            <!-- 7. Gerenciamento de Armazenamento e Cache do Navegador -->
             <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <label class="font-bold text-[var(--text-primary)] text-base block">7. Armazenamento e Cache</label>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">7. Armazenamento e Cache do Navegador</label>
                   <p class="text-xs text-[var(--text-secondary)] mt-0.5">
-                    Gerencie o cache local do navegador e o cache compilado do servidor para forçar a atualização imediata do acervo.
+                    Limpe os cadernos e metadados salvos localmente no seu navegador para liberar espaço e forçar a busca das versões mais recentes.
                   </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -995,37 +995,22 @@ const previewMathDisplay = katex.renderToString(
                 </div>
               </div>
 
-              <!-- Informações sobre os Caches -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div class="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-1.5">
+              <!-- Informações sobre o Cache do Navegador -->
+              <div class="p-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-2 text-xs">
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 font-bold text-[var(--text-primary)]">
                     <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span>Cache do Navegador</span>
+                    <span>Cache Local no Navegador (localStorage & Sessão)</span>
                   </div>
-                  <p class="text-[var(--text-muted)] leading-relaxed">
-                    Armazena localmente os cadernos renderizados e metadados no localStorage para navegação instantânea.
-                  </p>
-                  <div id="browser-cache-stats" class="font-mono text-[11px] text-[var(--text-secondary)] pt-1">
+                  <span id="browser-cache-stats" class="font-mono text-[11px] font-semibold text-[var(--text-secondary)]">
                     Calculando tamanho...
-                  </div>
+                  </span>
                 </div>
-
-                <div class="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-1.5">
-                  <div class="flex items-center gap-2 font-bold text-[var(--text-primary)]">
-                    <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                    </svg>
-                    <span>Cache do Servidor</span>
-                  </div>
-                  <p class="text-[var(--text-muted)] leading-relaxed">
-                    Cache persistente no SQLite de fórmulas KaTeX e nós de cadernos MDX processados no Node.
-                  </p>
-                  <div class="font-mono text-[11px] text-[var(--text-secondary)] pt-1">
-                    SQLite + In-Memory Node
-                  </div>
-                </div>
+                <p class="text-[var(--text-muted)] leading-relaxed">
+                  Armazena os cadernos compilados e manifestos de estudo para permitir navegação imediata. Ao limpar, o navegador buscará o conteúdo atualizado diretamente no próximo acesso.
+                </p>
               </div>
 
               <!-- Ação de Limpeza -->
@@ -1042,7 +1027,7 @@ const previewMathDisplay = katex.renderToString(
                     <svg class="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    <span id="clear-site-cache-text">Limpar Cache do Site</span>
+                    <span id="clear-site-cache-text">Limpar Cache do Navegador</span>
                   </button>
                 </div>
               </div>
@@ -1065,7 +1050,7 @@ const previewMathDisplay = katex.renderToString(
                   type="button"
                   id="bottom-clear-cache-btn"
                   class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors"
-                  title="Limpar Cache do Site e do Navegador"
+                  title="Limpar Cache do Navegador"
                 >
                   <svg class="w-3.5 h-3.5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1772,8 +1757,8 @@ const previewMathDisplay = katex.renderToString(
         }
       }
 
-      // Função de Limpeza de Cache do Site (Cliente + Servidor)
-      async function performClearSiteCache() {
+      // Função de Limpeza de Cache do Navegador (Exclusivamente Cliente)
+      async function performClearBrowserCache() {
         const clearBtn = document.getElementById('clear-site-cache-btn');
         const bottomClearBtn = document.getElementById('bottom-clear-cache-btn');
         const clearText = document.getElementById('clear-site-cache-text');
@@ -1783,7 +1768,7 @@ const previewMathDisplay = katex.renderToString(
         const setButtonsLoading = (loading) => {
           if (clearBtn) clearBtn.disabled = loading;
           if (bottomClearBtn) bottomClearBtn.disabled = loading;
-          if (clearText) clearText.textContent = loading ? 'Limpando cache...' : 'Limpar Cache do Site';
+          if (clearText) clearText.textContent = loading ? 'Limpando cache...' : 'Limpar Cache do Navegador';
           if (loading) {
             if (clearBtn) clearBtn.classList.add('opacity-75', 'cursor-wait');
             if (bottomClearBtn) bottomClearBtn.classList.add('opacity-75', 'cursor-wait');
@@ -1795,17 +1780,7 @@ const previewMathDisplay = katex.renderToString(
 
         setButtonsLoading(true);
 
-        // 1. Limpa o cache do servidor via endpoint API
-        try {
-          await fetch('/api/cache/clear', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-        } catch (err) {
-          console.warn('[Cache Clear] Erro ao comunicar com API de cache do servidor:', err);
-        }
-
-        // 2. Limpa o cache do cliente (localStorage e sessionStorage)
+        // 1. Limpa o cache do cliente (localStorage e sessionStorage)
         try {
           if (window.clientStudyCache && typeof window.clientStudyCache.clearAll === 'function') {
             window.clientStudyCache.clearAll();
@@ -1842,7 +1817,7 @@ const previewMathDisplay = katex.renderToString(
           }
         } catch (e) {}
 
-        // 3. Atualiza UI e feedback
+        // 2. Atualiza UI e feedback imediato
         if (badge) {
           badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Cache Limpo</span>';
         }
@@ -1854,28 +1829,29 @@ const previewMathDisplay = katex.renderToString(
               <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
-              <span>Cache do site e do navegador limpos com sucesso!</span>
+              <span>Cache do navegador limpo com sucesso!</span>
             </div>
             <p class="text-[var(--text-muted)] mt-1 text-[11px]">
-              O armazenamento temporário foi esvaziado. A página será recarregada em instantes...
+              O armazenamento local foi esvaziado. A página será recarregada em instantes...
             </p>
           `;
         }
 
         if (statusMessage) {
-          statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Cache do site limpo com sucesso!</strong>';
+          statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Cache do navegador limpo com sucesso!</strong>';
         }
 
         updateBrowserCacheStats();
 
-        // 4. Recarrega a página para aplicar o estado limpo
+        // 3. Recarrega a página para aplicar o estado limpo
         setTimeout(() => {
           window.location.reload();
         }, 900);
       }
 
-      document.getElementById('clear-site-cache-btn')?.addEventListener('click', performClearSiteCache);
-      document.getElementById('bottom-clear-cache-btn')?.addEventListener('click', performClearSiteCache);
+      document.getElementById('clear-site-cache-btn')?.addEventListener('click', performClearBrowserCache);
+      document.getElementById('bottom-clear-cache-btn')?.addEventListener('click', performClearBrowserCache);
+
 
       // Atualiza o contador de cache ao carregar
       updateBrowserCacheStats();
