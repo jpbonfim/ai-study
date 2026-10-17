@@ -3,12 +3,20 @@ export const prerender = false;
 
 import AcademicLayout, { type TagOption } from '../../layouts/AcademicLayout.astro';
 import { getMateria, formatTag, loadAllAccessibleMaterias, type Subject } from '../../data/materias';
-import { loadUserChapters, loadUserQuestions, type ChapterItem, type QuestionItem } from '../../lib/mdx-runtime';
+import {
+  loadUserChaptersMetadata,
+  loadUserQuestionsMetadata,
+  loadUserChaptersByTag,
+  type ChapterMetadata,
+  type QuestionMetadata,
+  type ChapterItem,
+} from '../../lib/mdx-runtime';
 import { hasPermissionToSubject } from '../../lib/permissions';
 
 const user = Astro.locals.user!;
 const { materia: materiaSlug } = Astro.params;
 const ownerParam = Astro.url.searchParams.get('owner');
+const tagParam = Astro.url.searchParams.get('tag')?.trim() || null;
 
 if (!materiaSlug) {
   return Astro.redirect('/');
@@ -40,9 +48,9 @@ if (!materia) {
   return Astro.redirect('/?error=materia_nao_encontrada');
 }
 
-// 2. Carrega capítulos e questões do dono principal
-const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
-const primaryQuestions = loadUserQuestions(primaryOwnerId, materiaSlug);
+// 2. Carrega apenas metadados rápidos do dono principal (sem compilação pesada de Markdown/KaTeX)
+const primaryChapters = loadUserChaptersMetadata(primaryOwnerId, materiaSlug);
+const primaryQuestions = loadUserQuestionsMetadata(primaryOwnerId, materiaSlug);
 
 const isOwnSubject = user.id === primaryOwnerId;
 
@@ -54,8 +62,8 @@ interface OtherSource {
   ownerDisplayName: string;
   ownerUsername: string;
   materiaSlug: string;
-  chapters: ChapterItem[];
-  questions: QuestionItem[];
+  chapters: ChapterMetadata[];
+  questions: QuestionMetadata[];
 }
 
 const otherSources: OtherSource[] = [];
@@ -69,8 +77,8 @@ if (canonicalCode && isOwnSubject) {
         ownerDisplayName: s.ownerDisplayName || s.ownerUsername || `Usuário ${s.ownerUserId}`,
         ownerUsername: s.ownerUsername || '',
         materiaSlug: s.slug,
-        chapters: loadUserChapters(s.ownerUserId, s.slug),
-        questions: loadUserQuestions(s.ownerUserId, s.slug),
+        chapters: loadUserChaptersMetadata(s.ownerUserId, s.slug),
+        questions: loadUserQuestionsMetadata(s.ownerUserId, s.slug),
       });
     }
   }
@@ -78,7 +86,7 @@ if (canonicalCode && isOwnSubject) {
 
 const hasOtherUsersTags = otherSources.length > 0;
 
-// 4. Monta lista de tags próprias
+// 4. Monta lista de tags próprias a partir de metadados
 const ownRawTags = [
   ...new Set([
     ...primaryChapters.flatMap((c) => c.tags || []),
@@ -118,30 +126,41 @@ for (const src of otherSources) {
   }
 }
 
-// 6. Prepara todos os capítulos para leitura contínua
+// 6. Prepara os capítulos a renderizar (APENAS se uma tag for solicitada via URL)
 interface RenderableChapter extends ChapterItem {
   isFromOther: boolean;
   ownerDisplayName?: string;
   matchTags: string[];
 }
 
-const chaptersToRender: RenderableChapter[] = [
-  ...primaryChapters.map((c) => ({
-    ...c,
-    isFromOther: false,
-    matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
-  })),
-  ...otherSources.flatMap((src) =>
-    src.chapters.map((c) => ({
-      ...c,
-      isFromOther: true,
-      ownerDisplayName: src.ownerDisplayName,
-      matchTags: (c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
-    }))
-  ),
-];
+let chaptersToRender: RenderableChapter[] = [];
 
-// Prepara questões para a sidebar
+if (tagParam) {
+  const isOtherUserTag = tagParam.startsWith('user_') && tagParam.includes('::');
+  if (isOtherUserTag) {
+    const [userPart, raw] = tagParam.split('::');
+    const filterOwnerId = parseInt(userPart.replace('user_', ''), 10);
+    const foundSrc = otherSources.find((s) => s.ownerUserId === filterOwnerId);
+    if (foundSrc) {
+      const chaps = loadUserChaptersByTag(filterOwnerId, foundSrc.materiaSlug, raw);
+      chaptersToRender = chaps.map((c) => ({
+        ...c,
+        isFromOther: true,
+        ownerDisplayName: foundSrc.ownerDisplayName,
+        matchTags: [tagParam],
+      }));
+    }
+  } else {
+    const chaps = loadUserChaptersByTag(primaryOwnerId, materiaSlug, tagParam);
+    chaptersToRender = chaps.map((c) => ({
+      ...c,
+      isFromOther: false,
+      matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+    }));
+  }
+}
+
+// Prepara questões para a sidebar a partir de metadados
 interface RenderableQuestionLink {
   id: string;
   title: string;
@@ -175,8 +194,24 @@ const questionsLinks: RenderableQuestionLink[] = [
   ),
 ];
 
-// Sumário (TOC)
-const toc = chaptersToRender.map((resumo) => {
+// Sumário (TOC) construído a partir de todos os metadados de capítulos
+const allChaptersMeta = [
+  ...primaryChapters.map((c) => ({
+    ...c,
+    isFromOther: false,
+    matchTags: [...(c.tags || []), ...((c.tags || []).map((t) => `user_${primaryOwnerId}::${t}`))],
+  })),
+  ...otherSources.flatMap((src) =>
+    src.chapters.map((c) => ({
+      ...c,
+      isFromOther: true,
+      ownerDisplayName: src.ownerDisplayName,
+      matchTags: (c.tags || []).map((t) => `user_${src.ownerUserId}::${t}`),
+    }))
+  ),
+];
+
+const toc = allChaptersMeta.map((resumo) => {
   const isMateria = resumo.type === 'materia';
   const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
   const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
@@ -190,8 +225,8 @@ const toc = chaptersToRender.map((resumo) => {
   };
 });
 
-const hasMateriaType = chaptersToRender.some((r) => r.type === 'materia');
-const hasQuestoesType = chaptersToRender.some((r) => r.type !== 'materia');
+const hasMateriaType = allChaptersMeta.some((r) => r.type === 'materia');
+const hasQuestoesType = allChaptersMeta.some((r) => r.type !== 'materia');
 const hasBothTypes = hasMateriaType && hasQuestoesType;
 ---
 
@@ -199,12 +234,13 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   title={`${materia.name} (${materia.code})`}
   materia={materia}
   availableTags={availableTags}
+  activeTag={tagParam}
   toc={toc}
   questions={questionsLinks}
   hasOtherUsersTags={hasOtherUsersTags}
 >
   <!-- ESTADO 1: Prompt Inicial quando NENHUMA tag estiver selecionada -->
-  <div id="tag-select-prompt" class="space-y-8 py-6 max-w-3xl mx-auto w-full">
+  <div id="tag-select-prompt" class={`space-y-8 py-6 max-w-3xl mx-auto w-full ${tagParam ? 'hidden' : ''}`}>
     <div class="p-8 sm:p-12 rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-surface)] shadow-sm text-center space-y-6">
       
       <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/30 mx-auto">
@@ -275,14 +311,16 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   </div>
 
   <!-- ESTADO 2: Caderno Completo da Tag Selecionada -->
-  <article id="notebook-content" class="space-y-14 w-full min-w-0 hidden">
+  <article id="notebook-content" class={`space-y-14 w-full min-w-0 ${tagParam ? '' : 'hidden'}`}>
     
     <!-- Barra Informativa da Tag Ativa -->
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs shadow-2xs">
       <div class="flex items-center gap-2">
         <span class="w-2.5 h-2.5 rounded-full bg-[var(--accent)]"></span>
         <span class="text-[var(--text-secondary)]">Avaliação Selecionada:</span>
-        <strong id="active-tag-display-name" class="text-[var(--accent)] font-bold font-mono text-sm"></strong>
+        <strong id="active-tag-display-name" class="text-[var(--accent)] font-bold font-mono text-sm">
+          {tagParam ? formatTag(tagParam.includes('::') ? tagParam.split('::')[1] : tagParam) : ''}
+        </strong>
       </div>
       <button
         type="button"
@@ -307,20 +345,20 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       </p>
 
       <div class="sans-ui flex items-center justify-center gap-4 pt-3 text-xs text-[var(--text-muted)]">
-        <span id="header-chapters-count">{chaptersToRender.length} Capítulos Cadastrados</span>
+        <span id="header-chapters-count">{chaptersToRender.length} {chaptersToRender.length === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo</span>
         <span>•</span>
         <span id="header-questions-count">{questionsLinks.length} Questões Disponíveis</span>
       </div>
     </header>
 
     <!-- Alerta quando a tag selecionada não tiver capítulos -->
-    <div id="no-chapters-for-tag" class="hidden p-8 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-secondary)] space-y-2">
+    <div id="no-chapters-for-tag" class={`${chaptersToRender.length === 0 && tagParam ? '' : 'hidden'} p-8 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-secondary)] space-y-2`}>
       <p class="font-serif text-base font-bold text-[var(--text-primary)]">Nenhum capítulo teórico cadastrado para esta tag.</p>
       <p>Você pode acessar as questões diretamente pelo menu lateral ou escolher outra tag.</p>
     </div>
 
     <!-- Fluxo Contínuo de Leitura dos Capítulos -->
-    <div class="space-y-20 w-full min-w-0" id="chapters-container">
+    <div class="space-y-20 w-full min-w-0" id="chapters-container" data-rendered-tag={tagParam || ''}>
       {chaptersToRender.map((resumo, idx) => {
         const isMateria = resumo.type === 'materia';
         const prefix = resumo.isFromOther ? `other-${resumo.ownerUserId}-` : '';
@@ -358,9 +396,11 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
                 <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
                   {resumo.title}
                 </h2>
-                <p class="font-serif text-base text-[var(--text-secondary)] italic">
-                  {resumo.description}
-                </p>
+                {resumo.description && (
+                  <p class="font-serif text-base text-[var(--text-secondary)] italic">
+                    {resumo.description}
+                  </p>
+                )}
               </div>
 
               <!-- Corpo do Capítulo (Markdown processado com KaTeX em runtime) -->
@@ -383,7 +423,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       <p>Fim do Caderno Teórico de {materia.name}.</p>
       <p>
         Para praticar com mais exercícios, consulte o{' '}
-        <a id="footer-banco-link" href={`/${materia.slug}/questoes`} class="text-[var(--accent)] font-semibold hover:underline">
+        <a id="footer-banco-link" href={`/${materia.slug}/questoes${tagParam ? `?tag=${encodeURIComponent(tagParam)}` : ''}`} class="text-[var(--accent)] font-semibold hover:underline">
           Banco Completo de Questões Resolvidas
         </a>.
       </p>
@@ -392,7 +432,7 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
   </article>
 </AcademicLayout>
 
-<script is:inline>
+<script is:inline define:vars={{ materiaSlug: materia.slug, primaryOwnerId }}>
   (function() {
     const promptEl = document.getElementById('tag-select-prompt');
     const notebookEl = document.getElementById('notebook-content');
@@ -401,20 +441,57 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
     const btnSwitch = document.getElementById('btn-switch-tag');
     const noChaptersEl = document.getElementById('no-chapters-for-tag');
     const footerBancoLink = document.getElementById('footer-banco-link');
+    const chaptersContainer = document.getElementById('chapters-container');
 
     function formatTagName(t) {
       if (!t) return '';
-      // Se for formato unívoco user_ID::tag, remove o prefixo para exibição limpa
       if (t.includes('::')) {
         return t.split('::')[1];
       }
       return t;
     }
 
-    function applyActiveTag(tag) {
+    function getCacheKey(tag) {
+      return 'study_cache_' + materiaSlug + '_' + (tag || 'all');
+    }
+
+    function saveToClientCache(tag, html, count) {
+      try {
+        if (!tag || !html) return;
+        sessionStorage.setItem(getCacheKey(tag), JSON.stringify({
+          html,
+          count,
+          timestamp: Date.now()
+        }));
+      } catch(e) {}
+    }
+
+    function getFromClientCache(tag) {
+      try {
+        if (!tag) return null;
+        const raw = sessionStorage.getItem(getCacheKey(tag));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && parsed.html ? parsed : null;
+      } catch(e) {
+        return null;
+      }
+    }
+
+    // Salva o HTML inicial do SSR no client-cache se já houver tag renderizada
+    const initialRenderedTag = chaptersContainer?.getAttribute('data-rendered-tag');
+    if (initialRenderedTag && chaptersContainer?.innerHTML.trim()) {
+      const sectionCount = chaptersContainer.querySelectorAll('.chapter-section').length;
+      saveToClientCache(initialRenderedTag, chaptersContainer.innerHTML, sectionCount);
+    }
+
+    async function applyActiveTag(tag) {
       if (!tag) {
         promptEl?.classList.remove('hidden');
         notebookEl?.classList.add('hidden');
+        if (chaptersContainer) {
+          chaptersContainer.setAttribute('data-rendered-tag', '');
+        }
         return;
       }
 
@@ -426,31 +503,116 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
 
       if (footerBancoLink) {
-        const matSlug = footerBancoLink.getAttribute('href')?.split('/')[1] || 'pds';
-        footerBancoLink.href = `/${matSlug}/questoes?tag=${encodeURIComponent(tag)}`;
+        footerBancoLink.href = `/${materiaSlug}/questoes?tag=${encodeURIComponent(tag)}`;
       }
 
-      let visibleCaps = 0;
-      document.querySelectorAll('.chapter-section').forEach(sec => {
-        const tags = (sec.getAttribute('data-chapter-tags') || '').split(',').map(s => s.trim());
-        if (tags.includes(tag)) {
-          sec.classList.remove('hidden');
-          visibleCaps++;
-        } else {
-          sec.classList.add('hidden');
-        }
-      });
-
-      if (noChaptersEl) {
-        if (visibleCaps === 0) {
-          noChaptersEl.classList.remove('hidden');
-        } else {
-          noChaptersEl.classList.add('hidden');
-        }
+      const currentRenderedTag = chaptersContainer?.getAttribute('data-rendered-tag');
+      if (currentRenderedTag === tag) {
+        return;
       }
 
-      if (chaptersCountEl) {
-        chaptersCountEl.textContent = `${visibleCaps} ${visibleCaps === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
+      // 1. Tenta recuperar do cache cliente (0ms)
+      const cached = getFromClientCache(tag);
+      if (cached && chaptersContainer) {
+        chaptersContainer.innerHTML = cached.html;
+        chaptersContainer.setAttribute('data-rendered-tag', tag);
+        if (chaptersCountEl) {
+          chaptersCountEl.textContent = `${cached.count} ${cached.count === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
+        }
+        noChaptersEl?.classList.toggle('hidden', cached.count > 0);
+        window.dispatchEvent(new CustomEvent('study-content-updated'));
+        return;
+      }
+
+      // 2. Se não estiver no cache cliente, busca da API /api/chapters
+      if (chaptersContainer) {
+        chaptersContainer.innerHTML = `
+          <div class="py-16 text-center space-y-3">
+            <div class="inline-block w-7 h-7 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+            <p class="font-serif text-sm text-[var(--text-secondary)] italic">Carregando avaliação...</p>
+          </div>
+        `;
+      }
+
+      try {
+        const isOtherUser = tag.startsWith('user_') && tag.includes('::');
+        let fetchOwner = primaryOwnerId;
+        let fetchTag = tag;
+        if (isOtherUser) {
+          const parts = tag.split('::');
+          fetchOwner = parseInt(parts[0].replace('user_', ''), 10);
+          fetchTag = parts[1];
+        }
+
+        const res = await fetch(`/api/chapters?materia=${encodeURIComponent(materiaSlug)}&tag=${encodeURIComponent(fetchTag)}&owner=${fetchOwner}`);
+        if (!res.ok) throw new Error('Falha ao carregar capítulos');
+        const data = await res.json();
+        const chaps = data.chapters || [];
+
+        if (chaptersContainer) {
+          if (chaps.length === 0) {
+            chaptersContainer.innerHTML = '';
+            noChaptersEl?.classList.remove('hidden');
+            if (chaptersCountEl) chaptersCountEl.textContent = '0 Capítulos';
+          } else {
+            noChaptersEl?.classList.add('hidden');
+            let html = '';
+            chaps.forEach((resumo, idx) => {
+              const isMateria = resumo.type === 'materia';
+              const prefix = isOtherUser ? `other-${resumo.ownerUserId}-` : '';
+              const chapId = isMateria ? `${prefix}cap-materia-${resumo.chapter}` : `${prefix}cap-${resumo.chapter}`;
+
+              html += `
+                <div class="space-y-12">
+                  <section
+                    id="${chapId}"
+                    data-chapter-tags="${tag}"
+                    data-chapter-type="${resumo.type || 'questoes'}"
+                    class="chapter-section scroll-mt-20 space-y-8 w-full min-w-0"
+                  >
+                    <div class="space-y-2 border-b border-[var(--border-subtle)] pb-4">
+                      <div class="sans-ui flex flex-wrap items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-[var(--accent)]">
+                        <span>Capítulo ${resumo.chapter}</span>
+                        ${isMateria ? '<span class="text-[var(--text-muted)] font-normal">• Resumo da Matéria</span>' : '<span class="text-[var(--text-muted)] font-normal">• Estudo Guiado por Questões</span>'}
+                      </div>
+                      <h2 class="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                        ${resumo.title}
+                      </h2>
+                      ${resumo.description ? `<p class="font-serif text-base text-[var(--text-secondary)] italic">${resumo.description}</p>` : ''}
+                    </div>
+
+                    <div class="academic-prose leading-relaxed text-[var(--text-primary)] space-y-6 w-full min-w-0">
+                      ${resumo.htmlContent || ''}
+                    </div>
+
+                    ${idx < chaps.length - 1 ? '<div class="text-center py-8 text-[var(--text-muted)] font-serif select-none">* * *</div>' : ''}
+                  </section>
+                </div>
+              `;
+            });
+
+            chaptersContainer.innerHTML = html;
+            chaptersContainer.setAttribute('data-rendered-tag', tag);
+            saveToClientCache(tag, html, chaps.length);
+
+            if (chaptersCountEl) {
+              chaptersCountEl.textContent = `${chaps.length} ${chaps.length === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo`;
+            }
+          }
+          window.dispatchEvent(new CustomEvent('study-content-updated'));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar capítulos da tag:', err);
+        if (chaptersContainer) {
+          chaptersContainer.innerHTML = `
+            <div class="p-6 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-muted)] space-y-3">
+              <p>Ocorreu um erro ao carregar os capítulos desta avaliação.</p>
+              <button type="button" onclick="location.reload()" class="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold cursor-pointer">
+                Tentar Novamente
+              </button>
+            </div>
+          `;
+        }
       }
     }
 
@@ -466,7 +628,9 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
 
     function initPageTag() {
       const cur = (typeof window.getCurrentStudyTag === 'function') ? window.getCurrentStudyTag() : null;
-      applyActiveTag(cur);
+      if (cur) {
+        applyActiveTag(cur);
+      }
     }
 
     if (document.readyState === 'loading') {

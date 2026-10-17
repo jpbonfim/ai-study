@@ -17,7 +17,11 @@ export function initEquationGroups(root: Document | HTMLElement = document): voi
     return true;
   });
 
-  if (displays.length < 2) return;
+  if (displays.length < 2) {
+    displays.forEach((el) => (el.dataset.equationGrouped = 'true'));
+    return;
+  }
+  displays.forEach((el) => (el.dataset.equationGrouped = 'true'));
 
   function getEffectiveBlock(el: HTMLElement): HTMLElement {
     const parent = el.parentElement;
