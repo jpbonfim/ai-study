@@ -1675,8 +1675,12 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         initEquationGroups();
       }
 
+      (window as any).setupOptimizers = setupOptimizers;
       setupOptimizers();
       document.addEventListener('astro:page-load', setupOptimizers);
+      window.addEventListener('study-content-updated', () => {
+        setupOptimizers();
+      });
 
       // Atualiza blocos se houver mudança de tema dinâmico
       const themeObserver = new MutationObserver((mutations) => {
@@ -1690,6 +1694,11 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
     </script>
 
     <style is:global>
+      .chapter-section {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 1200px;
+      }
+
       @media (min-width: 1024px) {
         html.sidebar-collapsed #academic-sidebar {
           transform: translateX(-100%) !important;
