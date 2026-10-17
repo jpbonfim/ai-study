@@ -257,6 +257,23 @@ table.academic-table td {
   font-size: 0.98em !important;
 }
 
+/* Remove chevron e estilos de heading intrusivos em títulos de cards */
+.question-card-preview h4,
+.academic-prose .question-card-preview h4,
+.reader-content .question-card-preview h4 {
+  display: block !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.25rem !important;
+  gap: 0 !important;
+}
+
+.question-card-preview h4::before,
+.academic-prose .question-card-preview h4::before,
+.reader-content .question-card-preview h4::before {
+  content: none !important;
+  display: none !important;
+}
+
 /* ============================================================
    AJUSTE DE ESCALA PARA SUBSCRITOS E SOBRESCRITOS (KaTeX)
    ============================================================ */
