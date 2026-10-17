@@ -978,15 +978,101 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 5. Barra Inferior de Ações (Salvar e Restaurar) -->
+            <!-- 7. Gerenciamento de Armazenamento e Cache -->
+            <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">7. Armazenamento e Cache</label>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Gerencie o cache local do navegador e o cache compilado do servidor para forçar a atualização imediata do acervo.
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="cache-status-badge" class="font-mono text-xs text-[var(--text-muted)] bg-[var(--bg-subtle)] px-2.5 py-1 rounded border border-[var(--border-subtle)] flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Cache Ativo</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Informações sobre os Caches -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-1.5">
+                  <div class="flex items-center gap-2 font-bold text-[var(--text-primary)]">
+                    <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>Cache do Navegador</span>
+                  </div>
+                  <p class="text-[var(--text-muted)] leading-relaxed">
+                    Armazena localmente os cadernos renderizados e metadados no localStorage para navegação instantânea.
+                  </p>
+                  <div id="browser-cache-stats" class="font-mono text-[11px] text-[var(--text-secondary)] pt-1">
+                    Calculando tamanho...
+                  </div>
+                </div>
+
+                <div class="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-1.5">
+                  <div class="flex items-center gap-2 font-bold text-[var(--text-primary)]">
+                    <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                    </svg>
+                    <span>Cache do Servidor</span>
+                  </div>
+                  <p class="text-[var(--text-muted)] leading-relaxed">
+                    Cache persistente no SQLite de fórmulas KaTeX e nós de cadernos MDX processados no Node.
+                  </p>
+                  <div class="font-mono text-[11px] text-[var(--text-secondary)] pt-1">
+                    SQLite + In-Memory Node
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ação de Limpeza -->
+              <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-[var(--border-subtle)]">
+                <div class="text-xs text-[var(--text-muted)]">
+                  Suas preferências de leitura (tema, fontes, tamanhos) serão preservadas intactas.
+                </div>
+                <div class="flex items-center gap-3">
+                  <button
+                    type="button"
+                    id="clear-site-cache-btn"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-page)] hover:bg-[var(--bg-subtle)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-bold cursor-pointer transition-all shadow-xs group"
+                  >
+                    <svg class="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span id="clear-site-cache-text">Limpar Cache do Site</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Feedback inline -->
+              <div id="cache-feedback-message" class="hidden text-xs py-2 px-3 rounded-md bg-[var(--bg-subtle)] border border-[var(--border-subtle)]"></div>
+            </div>
+
+            <!-- 8. Barra Inferior de Ações (Salvar e Restaurar) -->
             <div class="pt-6 border-t border-[var(--border-strong)] flex flex-col sm:flex-row items-center justify-between gap-4">
-              <button
-                type="button"
-                id="reset-defaults-btn"
-                class="w-full sm:w-auto px-4 py-2.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors"
-              >
-                Restaurar Padrões de Fábrica
-              </button>
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  id="reset-defaults-btn"
+                  class="w-full sm:w-auto px-4 py-2.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  Restaurar Padrões de Fábrica
+                </button>
+                <button
+                  type="button"
+                  id="bottom-clear-cache-btn"
+                  class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors"
+                  title="Limpar Cache do Site e do Navegador"
+                >
+                  <svg class="w-3.5 h-3.5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Limpar Cache</span>
+                </button>
+              </div>
 
               <div class="flex items-center gap-3 w-full sm:w-auto">
                 <a
@@ -1659,6 +1745,140 @@ const previewMathDisplay = katex.renderToString(
           statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Padrões de fábrica restaurados!</strong>';
         }
       });
+
+      // Estatísticas do Cache do Navegador
+      function updateBrowserCacheStats() {
+        const statsEl = document.getElementById('browser-cache-stats');
+        if (!statsEl) return;
+        try {
+          let count = 0;
+          let bytes = 0;
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('study_cache_') || k.startsWith('study_cache_v2:'))) {
+              count++;
+              const val = localStorage.getItem(k) || '';
+              bytes += (k.length + val.length) * 2;
+            }
+          }
+          const kb = (bytes / 1024).toFixed(1);
+          if (count === 0) {
+            statsEl.textContent = '0 itens em cache (0 KB)';
+          } else {
+            statsEl.textContent = `${count} ${count === 1 ? 'item' : 'itens'} em cache (~${kb} KB)`;
+          }
+        } catch (e) {
+          statsEl.textContent = 'Cache do navegador ativo';
+        }
+      }
+
+      // Função de Limpeza de Cache do Site (Cliente + Servidor)
+      async function performClearSiteCache() {
+        const clearBtn = document.getElementById('clear-site-cache-btn');
+        const bottomClearBtn = document.getElementById('bottom-clear-cache-btn');
+        const clearText = document.getElementById('clear-site-cache-text');
+        const feedback = document.getElementById('cache-feedback-message');
+        const badge = document.getElementById('cache-status-badge');
+
+        const setButtonsLoading = (loading) => {
+          if (clearBtn) clearBtn.disabled = loading;
+          if (bottomClearBtn) bottomClearBtn.disabled = loading;
+          if (clearText) clearText.textContent = loading ? 'Limpando cache...' : 'Limpar Cache do Site';
+          if (loading) {
+            if (clearBtn) clearBtn.classList.add('opacity-75', 'cursor-wait');
+            if (bottomClearBtn) bottomClearBtn.classList.add('opacity-75', 'cursor-wait');
+          } else {
+            if (clearBtn) clearBtn.classList.remove('opacity-75', 'cursor-wait');
+            if (bottomClearBtn) bottomClearBtn.classList.remove('opacity-75', 'cursor-wait');
+          }
+        };
+
+        setButtonsLoading(true);
+
+        // 1. Limpa o cache do servidor via endpoint API
+        try {
+          await fetch('/api/cache/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } catch (err) {
+          console.warn('[Cache Clear] Erro ao comunicar com API de cache do servidor:', err);
+        }
+
+        // 2. Limpa o cache do cliente (localStorage e sessionStorage)
+        try {
+          if (window.clientStudyCache && typeof window.clientStudyCache.clearAll === 'function') {
+            window.clientStudyCache.clearAll();
+          }
+        } catch (e) {}
+
+        try {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (
+              k &&
+              (k.startsWith('study_cache_') ||
+                k.startsWith('study_cache_v2:') ||
+                k.startsWith('study_recent_questions_') ||
+                k.startsWith('study_toc_') ||
+                k.startsWith('study_manifest_'))
+            ) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+          localStorage.setItem('study_last_cache_bust', String(Date.now()));
+        } catch (e) {}
+
+        try {
+          sessionStorage.clear();
+        } catch (e) {}
+
+        try {
+          if ('caches' in window) {
+            const cacheNames = await window.caches.keys();
+            await Promise.all(cacheNames.map((c) => window.caches.delete(c)));
+          }
+        } catch (e) {}
+
+        // 3. Atualiza UI e feedback
+        if (badge) {
+          badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Cache Limpo</span>';
+        }
+
+        if (feedback) {
+          feedback.classList.remove('hidden');
+          feedback.innerHTML = `
+            <div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Cache do site e do navegador limpos com sucesso!</span>
+            </div>
+            <p class="text-[var(--text-muted)] mt-1 text-[11px]">
+              O armazenamento temporário foi esvaziado. A página será recarregada em instantes...
+            </p>
+          `;
+        }
+
+        if (statusMessage) {
+          statusMessage.innerHTML = '<strong class="text-emerald-600 dark:text-emerald-400">✓ Cache do site limpo com sucesso!</strong>';
+        }
+
+        updateBrowserCacheStats();
+
+        // 4. Recarrega a página para aplicar o estado limpo
+        setTimeout(() => {
+          window.location.reload();
+        }, 900);
+      }
+
+      document.getElementById('clear-site-cache-btn')?.addEventListener('click', performClearSiteCache);
+      document.getElementById('bottom-clear-cache-btn')?.addEventListener('click', performClearSiteCache);
+
+      // Atualiza o contador de cache ao carregar
+      updateBrowserCacheStats();
 
       // Inicializa a interface
       updateUI();

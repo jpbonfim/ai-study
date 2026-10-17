@@ -190,6 +190,19 @@ export function setPersistentMdxCache(cacheKey: string, mtime: number, data: any
   }
 }
 
+export function clearPersistentMdxCache(): number {
+  try {
+    const info = db.prepare(`DELETE FROM compiled_mdx_cache`).run();
+    try {
+      db.prepare(`VACUUM`).run();
+    } catch {}
+    return info.changes;
+  } catch (err) {
+    console.error(`[DB Cache] Erro ao limpar cache persistente:`, err);
+    return 0;
+  }
+}
+
 
 /**
  * Inicializa o administrador se nenhum existir no banco
