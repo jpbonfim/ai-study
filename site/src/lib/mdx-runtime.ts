@@ -303,7 +303,8 @@ export function processChapterFile(
     return renderQuestionCardHtml(qId.trim(), ownerUserId, materiaSlug);
   });
 
-  const id = path.basename(filePath, path.extname(filePath));
+  const baseName = path.basename(filePath, path.extname(filePath));
+  const id = frontmatter.id || (isMateriaSubfolder && !baseName.startsWith('materia-') ? `materia-${baseName}` : baseName);
 
   const item: ChapterItem = {
     id,
@@ -495,7 +496,8 @@ export function processChapterMetadata(
 
   const rawTags = frontmatter.tags || (frontmatter.tag ? [frontmatter.tag] : ['teste-1']);
   const tags = Array.isArray(rawTags) ? rawTags : [rawTags];
-  const id = path.basename(filePath, path.extname(filePath));
+  const baseName = path.basename(filePath, path.extname(filePath));
+  const id = frontmatter.id || (isMateriaSubfolder && !baseName.startsWith('materia-') ? `materia-${baseName}` : baseName);
 
   const meta: ChapterMetadata = {
     id,
@@ -587,8 +589,9 @@ export function loadUserChaptersMetadata(userId: number, materiaSlug: string): C
         } else if (/\.(md|mdx)$/i.test(entry.name)) {
           try {
             const meta = processChapterMetadata(fullPath, userId, materiaSlug);
-            if (!seenIds.has(meta.id)) {
-              seenIds.add(meta.id);
+            const key = `${meta.type}:${meta.id}`;
+            if (!seenIds.has(key)) {
+              seenIds.add(key);
               results.push(meta);
             }
           } catch (err) {
@@ -655,7 +658,8 @@ export function loadUserQuestionsMetadata(userId: number, materiaSlug: string): 
 export function loadUserChaptersByTag(
   userId: number,
   materiaSlug: string,
-  tag?: string | null
+  tag?: string | null,
+  type?: 'materia' | 'questoes' | null
 ): ChapterItem[] {
   const candidateDirs = getCandidateDirs(userId, materiaSlug, 'resumos');
   const results: ChapterItem[] = [];
@@ -673,11 +677,13 @@ export function loadUserChaptersByTag(
         } else if (/\.(md|mdx)$/i.test(entry.name)) {
           try {
             const meta = processChapterMetadata(fullPath, userId, materiaSlug);
-            if (seenIds.has(meta.id)) continue;
+            const key = `${meta.type}:${meta.id}`;
+            if (seenIds.has(key)) continue;
 
             const matchesTag = !tag || (meta.tags || []).includes(tag);
-            if (matchesTag) {
-              seenIds.add(meta.id);
+            const matchesType = !type || (meta.type || 'questoes') === type;
+            if (matchesTag && matchesType) {
+              seenIds.add(key);
               results.push(processChapterFile(fullPath, userId, materiaSlug));
             }
           } catch (err) {
@@ -707,6 +713,9 @@ export function loadChapterById(
   materiaSlug: string
 ): ChapterItem | null {
   const candidateDirs = getCandidateDirs(userId, materiaSlug, 'resumos');
+  const cleanId = chapterId.replace(/^materia-/, '');
+  const wantsMateria = chapterId.startsWith('materia-');
+
   for (const dir of candidateDirs) {
     if (!fs.existsSync(dir)) continue;
 
@@ -719,8 +728,15 @@ export function loadChapterById(
           if (res) return res;
         } else if (/\.(md|mdx)$/i.test(entry.name)) {
           const base = path.basename(entry.name, path.extname(entry.name));
-          if (base === chapterId) {
-            return processChapterFile(fullPath, userId, materiaSlug);
+          const isMat = fullPath.includes('/resumos/materia/');
+          if (wantsMateria) {
+            if (isMat && (base === cleanId || base === chapterId)) {
+              return processChapterFile(fullPath, userId, materiaSlug);
+            }
+          } else {
+            if (!isMat && base === chapterId) {
+              return processChapterFile(fullPath, userId, materiaSlug);
+            }
           }
         }
       }

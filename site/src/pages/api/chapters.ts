@@ -23,6 +23,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const tagParam = url.searchParams.get('tag') || null;
   const ownerParam = url.searchParams.get('owner');
   const chapterId = url.searchParams.get('chapter_id');
+  const typeParam = url.searchParams.get('type') || null;
   const mode = url.searchParams.get('mode') || 'progressive';
   const metadataOnly =
     url.searchParams.get('metadata_only') === '1' ||
@@ -82,12 +83,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // 2. Apenas metadados da tag (ultra rápido, ~1ms)
     if (metadataOnly) {
       const allMeta = loadUserChaptersMetadata(ownerId, materiaSlug);
-      const filtered = tagParam
+      let filtered = tagParam
         ? allMeta
             .filter((c) => (c.tags || []).includes(tagParam))
             .sort((a, b) => a.order - b.order || a.chapter - b.chapter)
         : allMeta;
-      return new Response(JSON.stringify({ chapters: filtered, tag: tagParam }), {
+      if (typeParam) {
+        filtered = filtered.filter((c) => (c.type || 'questoes') === typeParam);
+      }
+      return new Response(JSON.stringify({ chapters: filtered, tag: tagParam, type: typeParam }), {
         status: 200,
         headers: cacheHeaders,
       });
@@ -96,14 +100,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // 3. Modo progressivo: compila apenas o 1º capítulo e entrega metadados dos seguintes
     if (mode === 'progressive') {
       const allMeta = loadUserChaptersMetadata(ownerId, materiaSlug);
-      const tagMeta = tagParam
+      let tagMeta = tagParam
         ? allMeta
             .filter((c) => (c.tags || []).includes(tagParam))
             .sort((a, b) => a.order - b.order || a.chapter - b.chapter)
         : allMeta;
 
+      if (typeParam) {
+        tagMeta = tagMeta.filter((c) => (c.type || 'questoes') === typeParam);
+      }
+
       if (tagMeta.length === 0) {
-        return new Response(JSON.stringify({ chapters: [], tag: tagParam }), {
+        return new Response(JSON.stringify({ chapters: [], tag: tagParam, type: typeParam }), {
           status: 200,
           headers: cacheHeaders,
         });
@@ -115,15 +123,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
         ...tagMeta.slice(1).map((m) => ({ ...m, htmlContent: null })),
       ];
 
-      return new Response(JSON.stringify({ chapters, tag: tagParam }), {
+      return new Response(JSON.stringify({ chapters, tag: tagParam, type: typeParam }), {
         status: 200,
         headers: cacheHeaders,
       });
     }
 
     // 4. Modo legado (compila todos os capítulos da tag)
-    const chapters = loadUserChaptersByTag(ownerId, materiaSlug, tagParam);
-    return new Response(JSON.stringify({ chapters, tag: tagParam }), {
+    const chapters = loadUserChaptersByTag(ownerId, materiaSlug, tagParam, typeParam as any);
+    return new Response(JSON.stringify({ chapters, tag: tagParam, type: typeParam }), {
       status: 200,
       headers: cacheHeaders,
     });
