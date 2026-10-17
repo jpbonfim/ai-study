@@ -19,6 +19,8 @@
 
 export function optimizeSingleTable(table: HTMLTableElement): void {
   if (!table) return;
+  if (table.dataset.tableOptimized === 'true') return;
+  table.dataset.tableOptimized = 'true';
 
   // 1. Garante wrapper limpo sem sobreposições
   let wrapper = table.parentElement;
