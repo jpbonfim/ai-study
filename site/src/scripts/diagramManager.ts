@@ -1,4 +1,12 @@
-import mermaid from 'mermaid';
+let mermaidInstance: any = null;
+
+async function getMermaid() {
+  if (!mermaidInstance) {
+    const mod = await import('mermaid');
+    mermaidInstance = mod.default || mod;
+  }
+  return mermaidInstance;
+}
 
 /**
  * Diagram Manager:
@@ -505,17 +513,71 @@ export async function initDiagrams(): Promise<void> {
 
   getOrCreateModal();
 
+  // 1. Inicializa diagramas de blocos especializados de sistemas (.system-block-card) - SVGs puros
+  document.querySelectorAll<HTMLElement>('.system-block-card').forEach((card) => {
+    if (card.dataset.diagramProcessed === 'true') return;
+    const eyeBtn = card.querySelector('.diagram-eye-btn');
+    const svgEl = card.querySelector('.diagram-viewport svg') as SVGElement;
+    const title = card.dataset.diagramTitle || 'Diagrama de Blocos de Sistemas';
+
+    if (svgEl) {
+      setupSvgResponsive(svgEl);
+      const viewport = card.querySelector('.diagram-viewport');
+      viewport?.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        openDiagramModal(svgEl, title);
+      });
+    }
+
+    if (eyeBtn && svgEl) {
+      eyeBtn.addEventListener('click', () => {
+        openDiagramModal(svgEl, title);
+      });
+    }
+
+    card.setAttribute('data-diagram-processed', 'true');
+  });
+
+  // 2. Inicializa imagens com zoom interativo (executa SEMPRE)
+  setupZoomableImages();
+
+  // 3. Identifica se há diagramas mermaid (já renderizados que precisam de re-render ou novos em código)
+  const existingCards = Array.from(
+    document.querySelectorAll<HTMLElement>('.diagram-card[data-mermaid-code]')
+  );
+
+  const mermaidCodeBlocks = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      'pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"], pre.mermaid, pre code.language-mermaid, pre code[class*="mermaid"], .academic-prose pre code[class*="language-mermaid"], .diagram-block'
+    )
+  ).map((el) => (el.tagName.toLowerCase() === 'code' ? el.parentElement! : el) as HTMLElement);
+
+  // Também detecta blocos cujo conteúdo textual seja sintaxe Mermaid
+  const potentialMermaidPres = Array.from(
+    document.querySelectorAll<HTMLElement>('.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre')
+  ).filter((pre) => {
+    if (pre.dataset.diagramProcessed === 'true') return false;
+    const txt = (pre.textContent || '').trim();
+    return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(txt);
+  });
+
+  const targets = Array.from(new Set([...mermaidCodeBlocks, ...potentialMermaidPres]));
+
+  // Se NÃO houver nenhum diagrama mermaid, evita carregar o pacote pesado de 2.5MB!
+  if (existingCards.length === 0 && targets.length === 0) {
+    return;
+  }
+
+  // Carrega Mermaid dinamicamente apenas sob demanda
+  const mermaid = await getMermaid();
+
   const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('study_theme') || 'paper';
   const isDark = currentTheme === 'dark' || currentTheme === 'oled';
   const isOled = currentTheme === 'oled';
 
   mermaid.initialize(getMermaidConfig(isDark, isOled));
 
-  // 1. Re-renderiza cartões já criados se o tema tiver mudado
-  const existingCards = Array.from(
-    document.querySelectorAll<HTMLElement>('.diagram-card[data-mermaid-code]')
-  );
-
+  // 4. Re-renderiza cartões já criados se o tema tiver mudado
   for (const card of existingCards) {
     const code = card.dataset.mermaidCode;
     const title = card.dataset.diagramTitle || '';
@@ -542,53 +604,6 @@ export async function initDiagrams(): Promise<void> {
       // Ignora falhas de re-renderização pontual
     }
   }
-
-  // 2. Inicializa diagramas de blocos especializados de sistemas (.system-block-card)
-  document.querySelectorAll<HTMLElement>('.system-block-card').forEach((card) => {
-    if (card.dataset.diagramProcessed === 'true') return;
-    const eyeBtn = card.querySelector('.diagram-eye-btn');
-    const svgEl = card.querySelector('.diagram-viewport svg') as SVGElement;
-    const title = card.dataset.diagramTitle || 'Diagrama de Blocos de Sistemas';
-
-    if (svgEl) {
-      setupSvgResponsive(svgEl);
-      const viewport = card.querySelector('.diagram-viewport');
-      viewport?.addEventListener('dblclick', (e) => {
-        e.preventDefault();
-        openDiagramModal(svgEl, title);
-      });
-    }
-
-    if (eyeBtn && svgEl) {
-      eyeBtn.addEventListener('click', () => {
-        openDiagramModal(svgEl, title);
-      });
-    }
-
-    card.setAttribute('data-diagram-processed', 'true');
-  });
-
-  // 3. Inicializa imagens com zoom interativo (executa SEMPRE)
-  setupZoomableImages();
-
-  // 4. Busca blocos gerados por markdown (```mermaid) e blocos dedicados .diagram-block
-  const mermaidCodeBlocks = Array.from(
-    document.querySelectorAll<HTMLElement>(
-      'pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"], pre.mermaid, pre code.language-mermaid, pre code[class*="mermaid"], .academic-prose pre code[class*="language-mermaid"], .diagram-block'
-    )
-  ).map((el) => (el.tagName.toLowerCase() === 'code' ? el.parentElement! : el) as HTMLElement);
-
-  // Também detecta blocos cujo conteúdo textual seja sintaxe Mermaid
-  const potentialMermaidPres = Array.from(
-    document.querySelectorAll<HTMLElement>('.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre')
-  ).filter((pre) => {
-    if (pre.dataset.diagramProcessed === 'true') return false;
-    const txt = (pre.textContent || '').trim();
-    return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(txt);
-  });
-
-  const targets = Array.from(new Set([...mermaidCodeBlocks, ...potentialMermaidPres]));
-  if (targets.length === 0) return;
 
   for (let i = 0; i < targets.length; i++) {
     const el = targets[i];

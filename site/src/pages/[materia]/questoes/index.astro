@@ -3,7 +3,12 @@ export const prerender = false;
 
 import AcademicLayout, { type TagOption } from '../../../layouts/AcademicLayout.astro';
 import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
-import { loadUserChapters, loadUserQuestions, type ChapterItem, type QuestionItem } from '../../../lib/mdx-runtime';
+import {
+  loadUserChaptersMetadata,
+  loadUserQuestions,
+  type ChapterMetadata,
+  type QuestionItem,
+} from '../../../lib/mdx-runtime';
 import QuestionCard from '../../../components/QuestionCard.astro';
 import { hasPermissionToSubject } from '../../../lib/permissions';
 
@@ -38,8 +43,8 @@ if (!materia) {
   return Astro.redirect('/?error=materia_nao_encontrada');
 }
 
-// Carrega capítulos e questões do dono principal
-const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
+// Carrega metadados de capítulos (rápido) e questões do dono principal
+const primaryChapters = loadUserChaptersMetadata(primaryOwnerId, materiaSlug);
 const primaryQuestions = loadUserQuestions(primaryOwnerId, materiaSlug);
 
 // Busca outras fontes acessíveis com o mesmo código acadêmico
@@ -50,7 +55,7 @@ interface OtherSource {
   ownerDisplayName: string;
   ownerUsername: string;
   materiaSlug: string;
-  chapters: ChapterItem[];
+  chapters: ChapterMetadata[];
   questions: QuestionItem[];
 }
 
@@ -66,7 +71,7 @@ if (canonicalCode && isOwnSubject) {
         ownerDisplayName: s.ownerDisplayName || s.ownerUsername || `Usuário ${s.ownerUserId}`,
         ownerUsername: s.ownerUsername || '',
         materiaSlug: s.slug,
-        chapters: loadUserChapters(s.ownerUserId, s.slug),
+        chapters: loadUserChaptersMetadata(s.ownerUserId, s.slug),
         questions: loadUserQuestions(s.ownerUserId, s.slug),
       });
     }

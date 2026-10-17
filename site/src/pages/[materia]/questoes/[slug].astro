@@ -6,7 +6,14 @@ import QuestionToggle from '../../../components/QuestionToggle.astro';
 import Theory from '../../../components/Theory.astro';
 import Resolution from '../../../components/Resolution.astro';
 import { getMateria, formatTag, loadAllAccessibleMaterias } from '../../../data/materias';
-import { loadUserChapters, loadUserQuestions, type ChapterItem, type QuestionItem } from '../../../lib/mdx-runtime';
+import {
+  loadUserChaptersMetadata,
+  loadUserQuestionsMetadata,
+  loadQuestionById,
+  type ChapterMetadata,
+  type QuestionMetadata,
+  type QuestionItem,
+} from '../../../lib/mdx-runtime';
 import { hasPermissionToSubject } from '../../../lib/permissions';
 
 const user = Astro.locals.user!;
@@ -40,9 +47,9 @@ if (!materia) {
   return Astro.redirect('/?error=materia_nao_encontrada');
 }
 
-// Carrega capítulos e questões do dono principal
-const primaryChapters = loadUserChapters(primaryOwnerId, materiaSlug);
-const primaryQuestoes = loadUserQuestions(primaryOwnerId, materiaSlug);
+// Carrega metadados rápidos do dono principal (sem compilação pesada)
+const primaryChapters = loadUserChaptersMetadata(primaryOwnerId, materiaSlug);
+const primaryQuestoes = loadUserQuestionsMetadata(primaryOwnerId, materiaSlug);
 
 // Busca outras fontes acessíveis com o mesmo código acadêmico
 const canonicalCode = (materia.code || '').trim().toUpperCase();
@@ -52,8 +59,8 @@ interface OtherSource {
   ownerDisplayName: string;
   ownerUsername: string;
   materiaSlug: string;
-  chapters: ChapterItem[];
-  questions: QuestionItem[];
+  chapters: ChapterMetadata[];
+  questions: QuestionMetadata[];
 }
 
 const isOwnSubject = user.id === primaryOwnerId;
@@ -68,8 +75,8 @@ if (canonicalCode && isOwnSubject) {
         ownerDisplayName: s.ownerDisplayName || s.ownerUsername || `Usuário ${s.ownerUserId}`,
         ownerUsername: s.ownerUsername || '',
         materiaSlug: s.slug,
-        chapters: loadUserChapters(s.ownerUserId, s.slug),
-        questions: loadUserQuestions(s.ownerUserId, s.slug),
+        chapters: loadUserChaptersMetadata(s.ownerUserId, s.slug),
+        questions: loadUserQuestionsMetadata(s.ownerUserId, s.slug),
       });
     }
   }
@@ -77,20 +84,20 @@ if (canonicalCode && isOwnSubject) {
 
 const hasOtherUsersTags = otherSources.length > 0;
 
-// Localiza a questão (respeitando q_owner caso venha especificado)
+// Localiza e compila APENAS a questão atual (respeitando q_owner caso venha especificado)
 const qOwnerParam = Astro.url.searchParams.get('q_owner');
-let questao: QuestionItem | undefined;
+let questao: QuestionItem | null = null;
 let questionIsFromOther = false;
 let questionOwnerDisplayName = '';
 
 if (qOwnerParam) {
   const parsedQOwner = parseInt(qOwnerParam, 10);
   if (parsedQOwner === primaryOwnerId) {
-    questao = primaryQuestoes.find((q) => q.id === slug);
+    questao = loadQuestionById(slug, primaryOwnerId, materiaSlug);
   } else {
     const targetSrc = otherSources.find((src) => src.ownerUserId === parsedQOwner);
     if (targetSrc) {
-      questao = targetSrc.questions.find((q) => q.id === slug);
+      questao = loadQuestionById(slug, targetSrc.ownerUserId, targetSrc.materiaSlug);
       if (questao) {
         questionIsFromOther = true;
         questionOwnerDisplayName = targetSrc.ownerDisplayName;
@@ -100,14 +107,13 @@ if (qOwnerParam) {
 }
 
 if (!questao) {
-  questao = primaryQuestoes.find((q) => q.id === slug);
+  questao = loadQuestionById(slug, primaryOwnerId, materiaSlug);
 }
 
 if (!questao) {
   for (const src of otherSources) {
-    const found = src.questions.find((q) => q.id === slug);
-    if (found) {
-      questao = found;
+    questao = loadQuestionById(slug, src.ownerUserId, src.materiaSlug);
+    if (questao) {
       questionIsFromOther = true;
       questionOwnerDisplayName = src.ownerDisplayName;
       break;

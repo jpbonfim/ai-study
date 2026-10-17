@@ -3,7 +3,7 @@ import path from 'node:path';
 import matter from 'gray-matter';
 import { marked } from 'marked';
 import katex from 'katex';
-import { getDataDirectory } from './db.ts';
+import { getDataDirectory, getPersistentMdxCache, setPersistentMdxCache } from './db.ts';
 import { renderMath } from '../utils/katex.ts';
 import { isDevMode, getLocalArchiveDirectory } from './dev-archive.ts';
 import { renderBlockDiagramHtml } from './block-diagram-runtime.ts';
@@ -13,7 +13,7 @@ export interface SectionItem {
   title: string;
 }
 
-export interface ChapterItem {
+export interface ChapterMetadata {
   id: string;
   filePath: string;
   materia: string;
@@ -26,9 +26,12 @@ export interface ChapterItem {
   tags: string[];
   sections: SectionItem[];
   relatedQuestions: string[];
+  ownerUserId: number;
+}
+
+export interface ChapterItem extends ChapterMetadata {
   htmlContent: string;
   rawContent: string;
-  ownerUserId: number;
 }
 
 export interface QuestionOption {
@@ -42,7 +45,7 @@ export interface QuestionImage {
   caption?: string;
 }
 
-export interface QuestionItem {
+export interface QuestionMetadata {
   id: string;
   filePath: string;
   materia: string;
@@ -54,6 +57,10 @@ export interface QuestionItem {
   tags: string[];
   difficulty: 'Fácil' | 'Médio' | 'Difícil';
   type: 'multipla_escolha' | 'discursiva';
+  ownerUserId: number;
+}
+
+export interface QuestionItem extends QuestionMetadata {
   statement: string;
   renderedStatement: string;
   options: QuestionOption[];
@@ -64,7 +71,6 @@ export interface QuestionItem {
   theoryHtml: string;
   resolutionHtml: string;
   bodyHtml: string;
-  ownerUserId: number;
 }
 
 // Configuração do marked com renderizador customizado de blocos de código e diagramas
@@ -178,6 +184,7 @@ export function renderMarkdownWithKatex(
         return katex.renderToString(eq.trim(), {
           displayMode: true,
           throwOnError: false,
+          output: 'html',
         });
       } catch {
         return `$$${eq}$$`;
@@ -205,6 +212,7 @@ export function renderMarkdownWithKatex(
       const rendered = katex.renderToString(math.trim(), {
         displayMode: false,
         throwOnError: false,
+        output: 'html',
       });
       const idx = mathInlineBlocks.length;
       mathInlineBlocks.push(rendered);
@@ -269,6 +277,12 @@ export function processChapterFile(
     return cached.data as ChapterItem;
   }
 
+  const persistentCached = getPersistentMdxCache(cacheKey, stat.mtimeMs);
+  if (persistentCached) {
+    renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: persistentCached });
+    return persistentCached as ChapterItem;
+  }
+
   const raw = fs.readFileSync(filePath, 'utf-8');
   const { data: frontmatter, content } = matter(raw);
 
@@ -310,6 +324,7 @@ export function processChapterFile(
   };
 
   renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: item });
+  setPersistentMdxCache(cacheKey, stat.mtimeMs, item);
   return item;
 }
 
@@ -327,6 +342,12 @@ export function processQuestionFile(
 
   if (cached && cached.mtime === stat.mtimeMs) {
     return cached.data as QuestionItem;
+  }
+
+  const persistentCached = getPersistentMdxCache(cacheKey, stat.mtimeMs);
+  if (persistentCached) {
+    renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: persistentCached });
+    return persistentCached as QuestionItem;
   }
 
   const raw = fs.readFileSync(filePath, 'utf-8');
@@ -421,28 +442,137 @@ export function processQuestionFile(
   };
 
   renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: item });
+  setPersistentMdxCache(cacheKey, stat.mtimeMs, item);
   return item;
 }
 
-/**
- * Lê todos os capítulos de uma matéria de um usuário
- */
-export function loadUserChapters(userId: number, materiaSlug: string): ChapterItem[] {
+function getCandidateDirs(userId: number, materiaSlug: string, subfolder: 'resumos' | 'questoes'): string[] {
   const dataDir = getDataDirectory();
   const localArchive = getLocalArchiveDirectory();
-  const localResumos = localArchive ? path.join(localArchive, materiaSlug, 'resumos') : null;
-  const userResumos = path.join(dataDir, 'archives', String(userId), materiaSlug, 'resumos');
+  const localDir = localArchive ? path.join(localArchive, materiaSlug, subfolder) : null;
+  const userDir = path.join(dataDir, 'archives', String(userId), materiaSlug, subfolder);
 
   const candidateDirs: string[] = [];
   if (isDevMode()) {
-    if (localResumos) candidateDirs.push(localResumos);
-    candidateDirs.push(userResumos);
+    if (localDir) candidateDirs.push(localDir);
+    candidateDirs.push(userDir);
   } else {
-    candidateDirs.push(userResumos);
-    if (localResumos) candidateDirs.push(localResumos);
+    candidateDirs.push(userDir);
+    if (localDir) candidateDirs.push(localDir);
+  }
+  return candidateDirs;
+}
+
+/**
+ * Lê apenas os metadados (frontmatter) de um capítulo sem processar Markdown ou KaTeX
+ */
+export function processChapterMetadata(
+  filePath: string,
+  ownerUserId: number,
+  materiaSlug: string
+): ChapterMetadata {
+  const stat = fs.statSync(filePath);
+  const cacheKey = `chap_meta:${filePath}`;
+  const cached = renderCache.get(cacheKey);
+
+  if (cached && cached.mtime === stat.mtimeMs) {
+    return cached.data as ChapterMetadata;
   }
 
-  const results: ChapterItem[] = [];
+  const persistentCached = getPersistentMdxCache(cacheKey, stat.mtimeMs);
+  if (persistentCached) {
+    renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: persistentCached });
+    return persistentCached as ChapterMetadata;
+  }
+
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  const { data: frontmatter } = matter(raw);
+
+  const isMateriaSubfolder = filePath.includes('/resumos/materia/');
+  const resolvedType: 'materia' | 'questoes' = frontmatter.type ||
+    frontmatter.studyType ||
+    (isMateriaSubfolder ? 'materia' : 'questoes');
+
+  const rawTags = frontmatter.tags || (frontmatter.tag ? [frontmatter.tag] : ['teste-1']);
+  const tags = Array.isArray(rawTags) ? rawTags : [rawTags];
+  const id = path.basename(filePath, path.extname(filePath));
+
+  const meta: ChapterMetadata = {
+    id,
+    filePath,
+    materia: frontmatter.materia || materiaSlug,
+    title: frontmatter.title || `Capítulo ${frontmatter.chapter || 1}`,
+    topic: frontmatter.topic || 'Geral',
+    chapter: Number(frontmatter.chapter || 1),
+    order: Number(frontmatter.order || frontmatter.chapter || 1),
+    description: frontmatter.description || '',
+    type: resolvedType,
+    tags: tags.length > 0 ? tags : ['teste-1'],
+    sections: frontmatter.sections || [],
+    relatedQuestions: frontmatter.relatedQuestions || [],
+    ownerUserId,
+  };
+
+  renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: meta });
+  setPersistentMdxCache(cacheKey, stat.mtimeMs, meta);
+  return meta;
+}
+
+/**
+ * Lê apenas os metadados (frontmatter) de uma questão sem processar Markdown ou KaTeX
+ */
+export function processQuestionMetadata(
+  filePath: string,
+  ownerUserId: number,
+  materiaSlug: string
+): QuestionMetadata {
+  const stat = fs.statSync(filePath);
+  const cacheKey = `quest_meta:${filePath}`;
+  const cached = renderCache.get(cacheKey);
+
+  if (cached && cached.mtime === stat.mtimeMs) {
+    return cached.data as QuestionMetadata;
+  }
+
+  const persistentCached = getPersistentMdxCache(cacheKey, stat.mtimeMs);
+  if (persistentCached) {
+    renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: persistentCached });
+    return persistentCached as QuestionMetadata;
+  }
+
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  const { data: frontmatter } = matter(raw);
+
+  const rawTags = frontmatter.tags || (frontmatter.tag ? [frontmatter.tag] : ['teste-1']);
+  const tags = Array.isArray(rawTags) ? rawTags : [rawTags];
+  const id = frontmatter.id || path.basename(filePath, path.extname(filePath));
+
+  const meta: QuestionMetadata = {
+    id,
+    filePath,
+    materia: frontmatter.materia || materiaSlug,
+    title: frontmatter.title || id,
+    exam: frontmatter.exam || 'Avaliação',
+    year: Number(frontmatter.year || new Date().getFullYear()),
+    topic: frontmatter.topic || 'Geral',
+    topicSlug: frontmatter.topicSlug || 'geral',
+    tags: tags.length > 0 ? tags : ['teste-1'],
+    difficulty: frontmatter.difficulty || 'Médio',
+    type: frontmatter.type || 'multipla_escolha',
+    ownerUserId,
+  };
+
+  renderCache.set(cacheKey, { mtime: stat.mtimeMs, data: meta });
+  setPersistentMdxCache(cacheKey, stat.mtimeMs, meta);
+  return meta;
+}
+
+/**
+ * Lê apenas os metadados de todos os capítulos de uma matéria (rápido, sem compilação pesada)
+ */
+export function loadUserChaptersMetadata(userId: number, materiaSlug: string): ChapterMetadata[] {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'resumos');
+  const results: ChapterMetadata[] = [];
   const seenIds = new Set<string>();
 
   for (const dir of candidateDirs) {
@@ -456,13 +586,13 @@ export function loadUserChapters(userId: number, materiaSlug: string): ChapterIt
           walk(fullPath);
         } else if (/\.(md|mdx)$/i.test(entry.name)) {
           try {
-            const chap = processChapterFile(fullPath, userId, materiaSlug);
-            if (!seenIds.has(chap.id)) {
-              seenIds.add(chap.id);
-              results.push(chap);
+            const meta = processChapterMetadata(fullPath, userId, materiaSlug);
+            if (!seenIds.has(meta.id)) {
+              seenIds.add(meta.id);
+              results.push(meta);
             }
           } catch (err) {
-            console.error(`Erro ao carregar capítulo em ${fullPath}:`, err);
+            console.error(`Erro ao carregar metadados do capítulo em ${fullPath}:`, err);
           }
         }
       }
@@ -480,23 +610,186 @@ export function loadUserChapters(userId: number, materiaSlug: string): ChapterIt
 }
 
 /**
- * Lê todas as questões de uma matéria de um usuário
+ * Lê apenas os metadados de todas as questões de uma matéria (rápido, sem compilação pesada)
  */
-export function loadUserQuestions(userId: number, materiaSlug: string): QuestionItem[] {
-  const dataDir = getDataDirectory();
-  const localArchive = getLocalArchiveDirectory();
-  const localQuestoes = localArchive ? path.join(localArchive, materiaSlug, 'questoes') : null;
-  const userQuestoes = path.join(dataDir, 'archives', String(userId), materiaSlug, 'questoes');
+export function loadUserQuestionsMetadata(userId: number, materiaSlug: string): QuestionMetadata[] {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'questoes');
+  const results: QuestionMetadata[] = [];
+  const seenIds = new Set<string>();
 
-  const candidateDirs: string[] = [];
-  if (isDevMode()) {
-    if (localQuestoes) candidateDirs.push(localQuestoes);
-    candidateDirs.push(userQuestoes);
-  } else {
-    candidateDirs.push(userQuestoes);
-    if (localQuestoes) candidateDirs.push(localQuestoes);
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    function walk(d: string) {
+      const entries = fs.readdirSync(d, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(d, entry.name);
+        if (entry.isDirectory()) {
+          walk(fullPath);
+        } else if (/\.(md|mdx)$/i.test(entry.name)) {
+          try {
+            const meta = processQuestionMetadata(fullPath, userId, materiaSlug);
+            if (!seenIds.has(meta.id)) {
+              seenIds.add(meta.id);
+              results.push(meta);
+            }
+          } catch (err) {
+            console.error(`Erro ao carregar metadados da questão em ${fullPath}:`, err);
+          }
+        }
+      }
+    }
+
+    walk(dir);
   }
 
+  return results.sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return a.title.localeCompare(b.title);
+  });
+}
+
+/**
+ * Lê e compila apenas os capítulos que pertencem a uma determinada tag (ou todos se tag não informada)
+ */
+export function loadUserChaptersByTag(
+  userId: number,
+  materiaSlug: string,
+  tag?: string | null
+): ChapterItem[] {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'resumos');
+  const results: ChapterItem[] = [];
+  const seenIds = new Set<string>();
+
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    function walk(d: string) {
+      const entries = fs.readdirSync(d, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(d, entry.name);
+        if (entry.isDirectory()) {
+          walk(fullPath);
+        } else if (/\.(md|mdx)$/i.test(entry.name)) {
+          try {
+            const meta = processChapterMetadata(fullPath, userId, materiaSlug);
+            if (seenIds.has(meta.id)) continue;
+
+            const matchesTag = !tag || (meta.tags || []).includes(tag);
+            if (matchesTag) {
+              seenIds.add(meta.id);
+              results.push(processChapterFile(fullPath, userId, materiaSlug));
+            }
+          } catch (err) {
+            console.error(`Erro ao carregar capítulo por tag em ${fullPath}:`, err);
+          }
+        }
+      }
+    }
+
+    walk(dir);
+  }
+
+  return results.sort((a, b) => {
+    const typeA = a.type === 'materia' ? 0 : 1;
+    const typeB = b.type === 'materia' ? 0 : 1;
+    if (typeA !== typeB) return typeA - typeB;
+    return a.order - b.order;
+  });
+}
+
+/**
+ * Carrega e compila um capítulo específico pelo seu identificador (id/slug)
+ */
+export function loadChapterById(
+  chapterId: string,
+  userId: number,
+  materiaSlug: string
+): ChapterItem | null {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'resumos');
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+
+    function walk(d: string): ChapterItem | null {
+      const entries = fs.readdirSync(d, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(d, entry.name);
+        if (entry.isDirectory()) {
+          const res = walk(fullPath);
+          if (res) return res;
+        } else if (/\.(md|mdx)$/i.test(entry.name)) {
+          const base = path.basename(entry.name, path.extname(entry.name));
+          if (base === chapterId) {
+            return processChapterFile(fullPath, userId, materiaSlug);
+          }
+        }
+      }
+      return null;
+    }
+
+    const found = walk(dir);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Carrega e compila uma questão específica pelo seu identificador (id/slug)
+ */
+export function loadQuestionById(
+  questionId: string,
+  userId: number,
+  materiaSlug: string
+): QuestionItem | null {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'questoes');
+
+  // Checagem rápida por nome de arquivo direto
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+    for (const ext of ['.mdx', '.md']) {
+      const direct = path.join(dir, `${questionId}${ext}`);
+      if (fs.existsSync(direct)) {
+        try {
+          return processQuestionFile(direct, userId, materiaSlug);
+        } catch (err) {
+          console.error(`Erro ao carregar questão direta ${direct}:`, err);
+        }
+      }
+    }
+  }
+
+  // Fallback: busca por id do frontmatter
+  for (const dir of candidateDirs) {
+    if (!fs.existsSync(dir)) continue;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() && /\.(md|mdx)$/i.test(entry.name)) {
+        const fullPath = path.join(dir, entry.name);
+        try {
+          const meta = processQuestionMetadata(fullPath, userId, materiaSlug);
+          if (meta.id === questionId) {
+            return processQuestionFile(fullPath, userId, materiaSlug);
+          }
+        } catch {}
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Lê todos os capítulos de uma matéria de um usuário (compilação completa)
+ */
+export function loadUserChapters(userId: number, materiaSlug: string): ChapterItem[] {
+  return loadUserChaptersByTag(userId, materiaSlug, null);
+}
+
+/**
+ * Lê todas as questões de uma matéria de um usuário (compilação completa)
+ */
+export function loadUserQuestions(userId: number, materiaSlug: string): QuestionItem[] {
+  const candidateDirs = getCandidateDirs(userId, materiaSlug, 'questoes');
   const results: QuestionItem[] = [];
   const seenIds = new Set<string>();
 
@@ -541,15 +834,14 @@ export function renderQuestionCardHtml(
   materiaSlug: string
 ): string {
   try {
-    const questions = loadUserQuestions(ownerUserId, materiaSlug);
-    let q = questions.find((item) => item.id === questionId);
+    const q = loadQuestionById(questionId, ownerUserId, materiaSlug);
 
     if (!q) {
       return `<div class="my-4 p-3.5 rounded-lg border border-dashed border-[var(--border-strong)] text-xs text-[var(--text-muted)] not-prose">[Questão <code>${questionId}</code> não encontrada no acervo]</div>`;
     }
 
-  const statementPreview = q.renderedStatement || renderMath(q.statement || '');
-  const badgeType = q.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha';
+    const statementPreview = q.renderedStatement || renderMath(q.statement || '');
+    const badgeType = q.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha';
 
     return `
 <div class="question-card-preview my-6 p-4 sm:p-5 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-subtle)] not-prose shadow-sm hover:border-[var(--accent)] transition-all">

@@ -90,6 +90,7 @@ export function renderMath(content?: string | null): string {
         return katex.renderToString(eq.trim(), {
           displayMode: true,
           throwOnError: false,
+          output: 'html',
         });
       } catch {
         return `$$${eq}$$`;
@@ -118,6 +119,7 @@ export function renderMath(content?: string | null): string {
       const rendered = katex.renderToString(math.trim(), {
         displayMode: false,
         throwOnError: false,
+        output: 'html',
       });
       const idx = mathBlocks.length;
       mathBlocks.push(rendered);
@@ -136,6 +138,7 @@ export function renderMath(content?: string | null): string {
         const rendered = katex.renderToString(cmd.trim(), {
           displayMode: false,
           throwOnError: false,
+          output: 'html',
         });
         const idx = mathBlocks.length;
         mathBlocks.push(rendered);

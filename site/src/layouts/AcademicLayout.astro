@@ -1423,84 +1423,152 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         });
       });
 
-      // Rolagem Adaptativa Inteligente para Âncoras do Documento e Sumário:
-      // Se estiver na página principal, faz a rolagem adaptativa instantânea ou suave.
-      // Se estiver em uma questão, permite que o navegador navegue diretamente para a seção correspondente no caderno de resumos.
-      document.querySelectorAll('.toc-item, a[href*="#"]').forEach((anchor) => {
-        anchor.addEventListener('click', (e) => {
-          const href = anchor.getAttribute('href');
-          if (!href || href === '#') return;
-
-          const hashIdx = href.indexOf('#');
-          if (hashIdx === -1) return;
-
-          const targetId = href.slice(hashIdx + 1);
-          if (!targetId) return;
-
-          const targetEl = document.getElementById(targetId);
-          // Se o elemento alvo NÃO existe na página atual (ex: estamos na página de uma questão e clicamos no capítulo de teoria):
-          // NÃO chamamos preventDefault() para que o navegador navegue para o caderno de resumos com o hash!
-          if (!targetEl) {
-            const isMobile = window.innerWidth < 1024;
-            if (isMobile) {
-              closeSidebar();
-            }
-            return;
-          }
-
-          // Se o elemento existe na página atual:
-          e.preventDefault();
-
-          const isMobile = window.innerWidth < 1024;
-          if (isMobile) {
-            closeSidebar();
-          }
-
-          const headerOffset = isMobile ? 70 : 35;
-          const currentScroll = window.scrollY;
-          const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-          const distance = Math.abs(targetPos - currentScroll);
-
-          // Limite adaptativo de distância: mais de 2 telas inteiras de distância é considerado muito longe
-          const isFar = distance > (window.innerHeight * 2);
-
-          if (isFar) {
-            // Salto instantâneo sem rolagem excessiva
-            window.scrollTo({ top: targetPos, behavior: 'auto' });
-          } else {
-            // Para distâncias curtas, mantém rolagem suave agradável
-            window.scrollTo({ top: targetPos, behavior: 'smooth' });
-          }
-
-          // Atualiza o hash na URL
-          if (history.pushState) {
-            history.pushState(null, '', `#${targetId}`);
-          }
-
-          // Atualiza a posição de estudo no localStorage
-          if (window._saveCurrentStudyPosition) {
-            window._saveCurrentStudyPosition(anchor.textContent?.trim(), `#${targetId}`);
-          }
-        });
-      });
-
-      // Se a página carregar com âncora na URL (ex: navegou de uma questão direto para uma seção da teoria):
-      // Pousa instantaneamente sem animação de rolagem desde o topo
-      if (window.location.hash) {
-        document.documentElement.style.scrollBehavior = 'auto';
-        const initialHashId = window.location.hash.slice(1);
-        const scrollToTarget = () => {
-          const initialHashEl = document.getElementById(initialHashId);
-          if (initialHashEl) {
-            const isMobile = window.innerWidth < 1024;
-            const headerOffset = isMobile ? 70 : 35;
-            const targetPos = Math.max(0, initialHashEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-            window.scrollTo({ top: targetPos, behavior: 'instant' });
-          }
-        };
-        scrollToTarget();
-        requestAnimationFrame(scrollToTarget);
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
       }
+
+      // Navegação Adaptativa e Carregamento sob Demanda para Seções e Sumário
+      async function navigateToStudySection(targetId, preferSmooth = true) {
+        if (!targetId) return false;
+
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile && typeof closeSidebar === 'function') {
+          closeSidebar();
+        }
+
+        let targetEl = document.getElementById(targetId);
+        const tocItem = document.querySelector(`.toc-item[data-toc-id="${targetId}"]`);
+        const parentId = tocItem?.getAttribute('data-parent-id');
+
+        let wasLazyLoaded = false;
+
+        // Se o elemento não existe e loadSingleChapter ainda está inicializando, aguarda brevemente
+        if (!targetEl && (parentId || targetId)) {
+          if (typeof window.loadSingleChapter !== 'function') {
+            for (let i = 0; i < 20; i++) {
+              await new Promise((r) => setTimeout(r, 50));
+              if (typeof window.loadSingleChapter === 'function') break;
+            }
+          }
+        }
+
+        // Se o elemento não existe diretamente no DOM, verifica se pertence a um capítulo lazy
+        if (!targetEl && parentId) {
+          const parentSection = document.getElementById(parentId);
+          if (parentSection) {
+            const placeholder = parentSection.querySelector('.chapter-lazy-content[data-loaded="false"]');
+            if (placeholder && typeof window.loadSingleChapter === 'function') {
+              wasLazyLoaded = true;
+              await window.loadSingleChapter(placeholder);
+            }
+          }
+          targetEl = document.getElementById(targetId);
+        }
+
+        // Se o próprio elemento for uma seção de capítulo com conteúdo ainda não carregado
+        if (targetEl && targetEl.classList.contains('chapter-section')) {
+          const placeholder = targetEl.querySelector('.chapter-lazy-content[data-loaded="false"]');
+          if (placeholder && typeof window.loadSingleChapter === 'function') {
+            wasLazyLoaded = true;
+            await window.loadSingleChapter(placeholder);
+          }
+        }
+
+        // Fallback para a seção do capítulo pai se a âncora interna não for encontrada
+        if (!targetEl && parentId) {
+          targetEl = document.getElementById(parentId);
+        }
+
+        if (!targetEl) {
+          return false;
+        }
+
+        const headerOffset = isMobile ? 70 : 40;
+        const currentScroll = window.scrollY;
+        const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+        const distance = Math.abs(targetPos - currentScroll);
+
+        // Regra Estrita de Animação:
+        // Mantém a rolagem suave (smooth) APENAS para seções próximas (<= 2 * altura da tela)
+        // que JÁ ESTAVAM renderizadas no DOM. Para todo o resto (capítulos lazy, seções distantes ou reload),
+        // remove a animação completamente (salto instantâneo: behavior: 'auto').
+        const isClose = distance <= window.innerHeight * 2;
+        const shouldUseSmooth = Boolean(preferSmooth) && !wasLazyLoaded && isClose;
+
+        window.scrollTo({
+          top: targetPos,
+          behavior: shouldUseSmooth ? 'smooth' : 'auto',
+        });
+
+        // Quando o salto for instantâneo, executa confirmação em RAF e tick curto para absorver qualquer reflow de KaTeX/fontes
+        if (!shouldUseSmooth) {
+          requestAnimationFrame(() => {
+            if (targetEl && document.contains(targetEl)) {
+              const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+              if (Math.abs(updatedPos - window.scrollY) > 2) {
+                window.scrollTo({ top: updatedPos, behavior: 'auto' });
+              }
+            }
+          });
+
+          setTimeout(() => {
+            if (targetEl && document.contains(targetEl)) {
+              const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+              if (Math.abs(updatedPos - window.scrollY) > 4) {
+                window.scrollTo({ top: updatedPos, behavior: 'auto' });
+              }
+            }
+          }, 80);
+        }
+
+        if (history.replaceState) {
+          try {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.hash = `#${targetId}`;
+            history.replaceState(null, '', currentUrl.toString());
+          } catch(e) {
+            history.replaceState(null, '', `#${targetId}`);
+          }
+        }
+
+        if (typeof updateActiveSection === 'function') {
+          updateActiveSection();
+        }
+
+        if (window._saveCurrentStudyPosition) {
+          const title = tocItem?.getAttribute('data-toc-title') || targetEl.querySelector('h2, h3')?.textContent?.trim();
+          window._saveCurrentStudyPosition(title, `#${targetId}`);
+        }
+
+        return true;
+      }
+
+      window.navigateToStudySection = navigateToStudySection;
+
+      // Interceptação delegada de cliques em links de sumário e âncoras internas
+      document.addEventListener('click', async (e) => {
+        const anchor = e.target?.closest('.toc-item, a[href*="#"]');
+        if (!anchor) return;
+
+        const href = anchor.getAttribute('href');
+        if (!href || href === '#') return;
+
+        const hashIdx = href.indexOf('#');
+        if (hashIdx === -1) return;
+
+        const targetId = href.slice(hashIdx + 1);
+        if (!targetId) return;
+
+        // Se for navegação para outra rota/página, permite comportamento padrão do navegador
+        const currentPath = window.location.pathname;
+        const linkPath = href.slice(0, hashIdx);
+        if (linkPath && linkPath !== currentPath && !currentPath.endsWith(linkPath) && !linkPath.endsWith(currentPath)) {
+          return;
+        }
+
+        e.preventDefault();
+        await navigateToStudySection(targetId, true);
+      });
 
       // 1. Validação de Gestos Touch no Celular:
       // Impede abertura acidental durante rolagem vertical ou horizontal de tabelas, equações e blocos
@@ -1574,88 +1642,157 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         }
       }, { passive: true });
 
-      // 2. Scrollspy: Rastreia a seção atual na tela e atualiza o cabeçalho mobile e menu lateral
-      const tocItems = Array.from(document.querySelectorAll('.toc-item'));
-      if (tocItems.length > 0) {
-        const sections = tocItems
-          .map((item) => {
-            const id = item.getAttribute('data-toc-id');
-            const el = id ? document.getElementById(id) : null;
-            return {
+      // 2. Scrollspy Dinâmico e Reativo
+      let currentActiveId = null;
+
+      function updateActiveSection() {
+        const allTocItems = Array.from(document.querySelectorAll('.toc-item'));
+        if (allTocItems.length === 0) return;
+
+        // Coleta itens do sumário cujos elementos alvos estão presentes no documento
+        const candidates = [];
+        for (const item of allTocItems) {
+          // Ignora se o capítulo estiver oculto pelo filtro de tags
+          const parentChap = item.closest('.sidebar-chapter-item');
+          if (parentChap && parentChap.classList.contains('hidden')) continue;
+
+          const id = item.getAttribute('data-toc-id');
+          if (!id) continue;
+
+          const el = document.getElementById(id);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            // Ignora se o elemento estiver com display: none (rects zerados)
+            if (rect.top === 0 && rect.bottom === 0 && rect.width === 0 && rect.height === 0) {
+              continue;
+            }
+
+            candidates.push({
               id,
               el,
               title: item.getAttribute('data-toc-title') || '',
               parentId: item.getAttribute('data-parent-id'),
               itemEl: item,
-            };
-          })
-          .filter((s) => Boolean(s.el));
+              top: rect.top,
+              docTop: rect.top + window.scrollY,
+            });
+          }
+        }
 
-        let currentActiveId = null;
+        if (candidates.length === 0) return;
 
-        function updateActiveSection() {
-          const scrollPos = window.scrollY + 140;
-          let activeSection = sections[0];
+        // CRUCIAL: Ordena os candidatos estritamente pela coordenada vertical real no documento
+        candidates.sort((a, b) => a.docTop - b.docTop);
 
-          for (let i = 0; i < sections.length; i++) {
-            const sec = sections[i];
-            const rect = sec.el.getBoundingClientRect();
-            const top = rect.top + window.scrollY;
+        const isMobile = window.innerWidth < 1024;
+        const threshold = isMobile ? 90 : 70;
 
-            if (top <= scrollPos) {
-              activeSection = sec;
+        let activeCandidate = candidates[0];
+
+        // Se o leitor chegou ao fim do documento (rodapé), ativa a última seção disponível
+        const isAtBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 60);
+
+        if (isAtBottom) {
+          activeCandidate = candidates[candidates.length - 1];
+        } else {
+          for (let i = 0; i < candidates.length; i++) {
+            if (candidates[i].top <= threshold) {
+              activeCandidate = candidates[i];
             } else {
               break;
             }
           }
-
-          if (activeSection && activeSection.id !== currentActiveId) {
-            currentActiveId = activeSection.id;
-
-            // Atualiza o título no cabeçalho sticky do celular
-            if (mobileSectionEl && activeSection.title) {
-              mobileSectionEl.textContent = activeSection.title;
-            }
-
-            // Atualiza indicação visual da seção ativa no menu lateral
-            tocItems.forEach((item) => {
-              const id = item.getAttribute('data-toc-id');
-              if (id === activeSection.id) {
-                item.classList.add('is-active');
-              } else {
-                item.classList.remove('is-active');
-              }
-            });
-
-            // Se for subseção, destaca também o capítulo pai sutilmente
-            document.querySelectorAll('.toc-chapter-link').forEach((chapLink) => {
-              const chapId = chapLink.getAttribute('data-toc-id');
-              if (chapId === activeSection.parentId) {
-                chapLink.classList.add('is-parent-active');
-              } else {
-                chapLink.classList.remove('is-parent-active');
-              }
-            });
-
-            // Atualiza a posição de estudo no localStorage em tempo real conforme a leitura avança
-            if (window._saveCurrentStudyPosition) {
-              window._saveCurrentStudyPosition(activeSection.title, '#' + activeSection.id);
-            }
-          }
         }
 
-        let scrollThrottle = null;
-        window.addEventListener('scroll', () => {
-          if (!scrollThrottle) {
-            scrollThrottle = requestAnimationFrame(() => {
-              updateActiveSection();
-              scrollThrottle = null;
-            });
-          }
-        }, { passive: true });
+        if (activeCandidate && activeCandidate.id !== currentActiveId) {
+          currentActiveId = activeCandidate.id;
 
-        // Execução inicial
+          if (mobileSectionEl && activeCandidate.title) {
+            mobileSectionEl.textContent = activeCandidate.title;
+          }
+
+          // Se a seção ativa pertence a um grupo colapsável recolhido, expande-o automaticamente
+          const collContent = activeCandidate.itemEl.closest('.toc-collapsible-content');
+          if (collContent && collContent.classList.contains('hidden')) {
+            collContent.classList.remove('hidden');
+            const grp = collContent.getAttribute('data-group-content');
+            const btn = document.querySelector(`.toc-collapsible-btn[data-target-group="${grp}"]`);
+            btn?.setAttribute('aria-expanded', 'true');
+            const chevron = btn?.querySelector('.toc-collapsible-chevron');
+            chevron?.classList.remove('-rotate-90');
+          }
+
+          allTocItems.forEach((item) => {
+            const id = item.getAttribute('data-toc-id');
+            if (id === activeCandidate.id) {
+              item.classList.add('is-active');
+              item.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+            } else {
+              item.classList.remove('is-active');
+            }
+          });
+
+          document.querySelectorAll('.toc-chapter-link').forEach((chapLink) => {
+            const chapId = chapLink.getAttribute('data-toc-id');
+            if (activeCandidate.parentId && chapId === activeCandidate.parentId) {
+              chapLink.classList.add('is-parent-active');
+            } else {
+              chapLink.classList.remove('is-parent-active');
+            }
+          });
+
+          if (window._saveCurrentStudyPosition) {
+            window._saveCurrentStudyPosition(activeCandidate.title, '#' + activeCandidate.id);
+          }
+        }
+      }
+
+      window.updateActiveSection = updateActiveSection;
+
+      let scrollThrottle = null;
+      window.addEventListener('scroll', () => {
+        if (!scrollThrottle) {
+          scrollThrottle = requestAnimationFrame(() => {
+            updateActiveSection();
+            scrollThrottle = null;
+          });
+        }
+      }, { passive: true });
+
+      window.addEventListener('study-content-updated', () => {
         updateActiveSection();
+      });
+
+      window.addEventListener('study-tag-changed', () => {
+        setTimeout(updateActiveSection, 60);
+      });
+
+      // Restauração Resiliente da Âncora na URL no recarregamento da página
+      function restoreInitialHash() {
+        if (!window.location.hash) {
+          updateActiveSection();
+          return;
+        }
+        const targetId = window.location.hash.slice(1);
+        if (!targetId) return;
+
+        let attempts = 0;
+        async function tryRestore() {
+          attempts++;
+          const success = await navigateToStudySection(targetId, false);
+          if (!success && attempts < 15) {
+            setTimeout(tryRestore, 80);
+          }
+        }
+        tryRestore();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(restoreInitialHash, 50);
+        });
+      } else {
+        setTimeout(restoreInitialHash, 50);
       }
     </script>
 
@@ -1666,6 +1803,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       import { initCodeBlocks } from '../scripts/codeBlocks';
       import { initQuestionSequences } from '../scripts/questionSequenceManager';
       import { initEquationGroups } from '../scripts/equationGroupManager';
+      import '../scripts/clientStudyCache';
 
       async function setupOptimizers() {
         initTableOptimizer();
@@ -1675,8 +1813,12 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         initEquationGroups();
       }
 
+      (window as any).setupOptimizers = setupOptimizers;
       setupOptimizers();
       document.addEventListener('astro:page-load', setupOptimizers);
+      window.addEventListener('study-content-updated', () => {
+        setupOptimizers();
+      });
 
       // Atualiza blocos se houver mudança de tema dinâmico
       const themeObserver = new MutationObserver((mutations) => {

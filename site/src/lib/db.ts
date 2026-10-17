@@ -142,6 +142,13 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS compiled_mdx_cache (
+    cache_key TEXT PRIMARY KEY,
+    mtime REAL NOT NULL,
+    data_json TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
   CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
   CREATE INDEX IF NOT EXISTS idx_permissions_granted ON subject_permissions(granted_user_id);
@@ -150,7 +157,39 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_logs_user ON activity_logs(user_id);
   CREATE INDEX IF NOT EXISTS idx_logs_action ON activity_logs(action);
   CREATE INDEX IF NOT EXISTS idx_logs_created ON activity_logs(created_at);
+  CREATE INDEX IF NOT EXISTS idx_mdx_cache_mtime ON compiled_mdx_cache(cache_key, mtime);
 `);
+
+const getMdxCacheStmt = db.prepare(`SELECT data_json FROM compiled_mdx_cache WHERE cache_key = ? AND mtime = ?`);
+const setMdxCacheStmt = db.prepare(`
+  INSERT INTO compiled_mdx_cache (cache_key, mtime, data_json, updated_at)
+  VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+  ON CONFLICT(cache_key) DO UPDATE SET
+    mtime = excluded.mtime,
+    data_json = excluded.data_json,
+    updated_at = CURRENT_TIMESTAMP
+`);
+
+export function getPersistentMdxCache(cacheKey: string, mtime: number): any | null {
+  try {
+    const row = getMdxCacheStmt.get(cacheKey, mtime) as { data_json: string } | undefined;
+    if (row && row.data_json) {
+      return JSON.parse(row.data_json);
+    }
+  } catch (err) {
+    console.error(`[DB Cache] Erro ao ler cache ${cacheKey}:`, err);
+  }
+  return null;
+}
+
+export function setPersistentMdxCache(cacheKey: string, mtime: number, data: any): void {
+  try {
+    setMdxCacheStmt.run(cacheKey, mtime, JSON.stringify(data));
+  } catch (err) {
+    console.error(`[DB Cache] Erro ao salvar cache ${cacheKey}:`, err);
+  }
+}
+
 
 /**
  * Inicializa o administrador se nenhum existir no banco
