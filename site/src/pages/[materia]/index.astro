@@ -606,6 +606,8 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
     }
 
+    window.loadSingleChapter = loadSingleChapter;
+
     // 3. Inicializa o IntersectionObserver para detecção antecipada (600px antes do scroll)
     function setupLazyChapters() {
       if (lazyObserver) {
@@ -636,31 +638,12 @@ const hasBothTypes = hasMateriaType && hasQuestoesType;
       }
     }
 
-    // 4. Se o usuário clicar num link interno para um capítulo (ex: TOC da sidebar), carrega imediatamente
-    document.addEventListener('click', (e) => {
-      const link = e.target?.closest('a[href*="cap-"]');
-      if (!link) return;
-      const href = link.getAttribute('href') || '';
-      const hash = href.includes('#') ? href.split('#')[1] : null;
-      if (!hash) return;
-
-      const sec = document.getElementById(hash);
-      const placeholder = sec?.querySelector('.chapter-lazy-content[data-loaded="false"]');
-      if (placeholder) {
-        loadSingleChapter(placeholder);
-      }
-    });
-
-    // 5. Se a URL carregar com âncora (#cap-...), carrega o capítulo alvo imediatamente
+    // 4. Se a URL contiver âncora (#...), navega e carrega o capítulo alvo
     function handleInitialHash() {
-      if (window.location.hash && window.location.hash.includes('cap-')) {
-        const hash = window.location.hash.replace('#', '');
-        const sec = document.getElementById(hash);
-        const placeholder = sec?.querySelector('.chapter-lazy-content[data-loaded="false"]');
-        if (placeholder) {
-          loadSingleChapter(placeholder).then(() => {
-            sec?.scrollIntoView({ behavior: 'smooth' });
-          });
+      if (window.location.hash) {
+        const hash = window.location.hash.slice(1);
+        if (typeof window.navigateToStudySection === 'function') {
+          window.navigateToStudySection(hash, false);
         }
       }
     }
