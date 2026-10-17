@@ -739,6 +739,9 @@ function setupSvgResponsive(svgEl: SVGElement): void {
   svgEl.style.width = 'auto';
   svgEl.style.height = 'auto';
   svgEl.style.display = 'block';
+  svgEl.style.marginLeft = 'auto';
+  svgEl.style.marginRight = 'auto';
+  svgEl.style.flexShrink = '0';
 
   // Se o diagrama for largo (> 520px) em telas estreitas, garante largura mínima legível para acionar scroll horizontal
   if (vb.width > 520) {

@@ -110,7 +110,7 @@ const arrowUrl = `url(#${arrowId})`;
 
   <!-- Viewport Responsivo do Diagrama -->
   <div
-    class="diagram-viewport overflow-x-auto p-4 flex justify-center items-center"
+    class="diagram-viewport overflow-x-auto p-4 flex justify-start items-center"
     tabindex="0"
     role="region"
     aria-label="Diagrama esquemático de sistemas de controle com rolagem livre"
@@ -797,6 +797,9 @@ const arrowUrl = `url(#${arrowId})`;
     display: block;
     height: auto;
     font-family: var(--reader-font-family, serif);
+    margin-left: auto;
+    margin-right: auto;
+    flex-shrink: 0;
   }
 
   .system-diagram-svg foreignObject {
