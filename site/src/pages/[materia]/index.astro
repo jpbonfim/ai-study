@@ -338,7 +338,7 @@ if (tagParam) {
 
       <div class="pt-6 border-t border-[var(--border-subtle)] space-y-4">
         <div class="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-          Avaliações Disponíveis para Estudo
+          Tags Disponíveis para Estudo
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
@@ -359,10 +359,6 @@ if (tagParam) {
                     </span>
                   )}
                 </div>
-                <span class="sans-ui text-xs font-semibold text-[var(--accent)] flex items-center gap-1 shrink-0">
-                  <span>Estudar</span>
-                  <span class="transition-transform group-hover:translate-x-0.5">&rarr;</span>
-                </span>
               </div>
               <div class="sans-ui flex items-center gap-3 text-xs text-[var(--text-secondary)]">
                 <span>{tag.chaptersCount} {tag.chaptersCount === 1 ? 'Capítulo' : 'Capítulos'}</span>
@@ -375,7 +371,7 @@ if (tagParam) {
       </div>
 
       <div class="sans-ui text-xs text-[var(--text-muted)] pt-2">
-        Dica: Você também pode alternar entre avaliações a qualquer momento pelo menu lateral.
+        Dica: Você também pode alternar entre tags a qualquer momento pelo menu lateral.
       </div>
     </div>
   </div>
@@ -387,7 +383,7 @@ if (tagParam) {
     <div class="sans-ui flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs shadow-2xs">
       <div class="flex items-center gap-2">
         <span class="w-2.5 h-2.5 rounded-full bg-[var(--accent)]"></span>
-        <span class="text-[var(--text-secondary)]">Avaliação Selecionada:</span>
+        <span class="text-[var(--text-secondary)]">Tag selecionada:</span>
         <strong id="active-tag-display-name" class="text-[var(--accent)] font-bold font-mono text-sm">
           {tagParam ? formatTag(tagParam.includes('::') ? tagParam.split('::')[1] : tagParam) : ''}
         </strong>
@@ -397,8 +393,7 @@ if (tagParam) {
         id="btn-switch-tag"
         class="text-[var(--accent)] hover:underline font-semibold cursor-pointer flex items-center gap-1"
       >
-        <span>Trocar Avaliação / Ver Todas</span>
-        <span>&rarr;</span>
+        <span>Outras tags</span>
       </button>
     </div>
 
@@ -415,9 +410,9 @@ if (tagParam) {
       </p>
 
       <div class="sans-ui flex items-center justify-center gap-4 pt-3 text-xs text-[var(--text-muted)]">
-        <span id="header-chapters-count">{chaptersToRender.length} {chaptersToRender.length === 1 ? 'Capítulo' : 'Capítulos'} em Fluxo Contínuo</span>
+        <span id="header-chapters-count">{chaptersToRender.length} {chaptersToRender.length === 1 ? 'Capítulo' : 'Capítulos'}</span>
         <span>•</span>
-        <span id="header-questions-count">{questionsLinks.length} Questões Disponíveis</span>
+        <span id="header-questions-count">{questionsLinks.length} Questões</span>
       </div>
     </header>
 

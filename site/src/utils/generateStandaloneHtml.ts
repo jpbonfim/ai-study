@@ -429,6 +429,111 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             color: var(--text-muted);
         }
 
+        /* ============================================================
+           Alertas GitHub-Style ([!NOTE], [!TIP], etc.)
+           ============================================================ */
+        :root, html.theme-paper {
+            --alert-note-accent: #0969da;
+            --alert-note-bg: #ebf3fc;
+            --alert-note-border: rgba(9, 105, 218, 0.22);
+            --alert-tip-accent: #1a7f37;
+            --alert-tip-bg: #eaf5ed;
+            --alert-tip-border: rgba(26, 127, 55, 0.22);
+            --alert-important-accent: #8250df;
+            --alert-important-bg: #f3eefb;
+            --alert-important-border: rgba(130, 80, 223, 0.22);
+            --alert-warning-accent: #b45309;
+            --alert-warning-bg: #fef3c7;
+            --alert-warning-border: rgba(180, 83, 9, 0.3);
+            --alert-caution-accent: #cf222e;
+            --alert-caution-bg: #fde8e8;
+            --alert-caution-border: rgba(207, 34, 46, 0.22);
+        }
+        html.theme-dark {
+            --alert-note-accent: #58a6ff;
+            --alert-note-bg: rgba(56, 139, 253, 0.1);
+            --alert-note-border: rgba(56, 139, 253, 0.28);
+            --alert-tip-accent: #3fb950;
+            --alert-tip-bg: rgba(63, 185, 80, 0.1);
+            --alert-tip-border: rgba(63, 185, 80, 0.28);
+            --alert-important-accent: #a371f7;
+            --alert-important-bg: rgba(163, 113, 247, 0.1);
+            --alert-important-border: rgba(163, 113, 247, 0.28);
+            --alert-warning-accent: #d29922;
+            --alert-warning-bg: rgba(210, 153, 34, 0.1);
+            --alert-warning-border: rgba(210, 153, 34, 0.28);
+            --alert-caution-accent: #f85149;
+            --alert-caution-bg: rgba(248, 81, 73, 0.1);
+            --alert-caution-border: rgba(248, 81, 73, 0.28);
+        }
+        html.theme-oled {
+            --alert-note-accent: #58a6ff;
+            --alert-note-bg: rgba(56, 139, 253, 0.07);
+            --alert-note-border: rgba(56, 139, 253, 0.35);
+            --alert-tip-accent: #3fb950;
+            --alert-tip-bg: rgba(63, 185, 80, 0.07);
+            --alert-tip-border: rgba(63, 185, 80, 0.35);
+            --alert-important-accent: #a371f7;
+            --alert-important-bg: rgba(163, 113, 247, 0.07);
+            --alert-important-border: rgba(163, 113, 247, 0.35);
+            --alert-warning-accent: #d29922;
+            --alert-warning-bg: rgba(210, 153, 34, 0.07);
+            --alert-warning-border: rgba(210, 153, 34, 0.35);
+            --alert-caution-accent: #f85149;
+            --alert-caution-bg: rgba(248, 81, 73, 0.07);
+            --alert-caution-border: rgba(248, 81, 73, 0.35);
+        }
+        .markdown-alert-note { --alert-accent: var(--alert-note-accent); --alert-bg: var(--alert-note-bg); --alert-border: var(--alert-note-border); }
+        .markdown-alert-tip { --alert-accent: var(--alert-tip-accent); --alert-bg: var(--alert-tip-bg); --alert-border: var(--alert-tip-border); }
+        .markdown-alert-important { --alert-accent: var(--alert-important-accent); --alert-bg: var(--alert-important-bg); --alert-border: var(--alert-important-border); }
+        .markdown-alert-warning { --alert-accent: var(--alert-warning-accent); --alert-bg: var(--alert-warning-bg); --alert-border: var(--alert-warning-border); }
+        .markdown-alert-caution { --alert-accent: var(--alert-caution-accent); --alert-bg: var(--alert-caution-bg); --alert-border: var(--alert-caution-border); }
+
+        .markdown-alert {
+            position: relative;
+            margin: 1.5rem 0;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--alert-border);
+            border-left: 4.5px solid var(--alert-accent);
+            background-color: var(--alert-bg);
+            font-style: normal;
+        }
+        .markdown-alert-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            line-height: 1.35;
+            color: var(--alert-accent);
+            margin-bottom: 0.45rem;
+        }
+        .markdown-alert-icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--alert-accent);
+        }
+        .markdown-alert-icon {
+            width: 1.05rem;
+            height: 1.05rem;
+            display: block;
+        }
+        .markdown-alert-content {
+            font-style: normal;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        .markdown-alert-content p {
+            margin: 0.45rem 0;
+            font-style: normal;
+        }
+        .markdown-alert-content p:first-child { margin-top: 0; }
+        .markdown-alert-content p:last-child { margin-bottom: 0; }
+        .markdown-alert-content ul, .markdown-alert-content ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+
         pre {
             background: var(--bg-subtle);
             padding: 12px;
@@ -557,7 +662,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             </div>
 
             <!-- Seletor de Tema (Papel, Escuro, OLED) -->
-            <div class="theme-segmented-control" role="radiogroup" aria-label="Modo de Leitura">
+            <div class="theme-segmented-control" role="radiogroup" aria-label="Tema">
                 <button type="button" class="theme-btn" data-theme="paper" onclick="setTheme('paper')" title="Tema Papel / Sépia">
                     <span class="theme-dot" style="background:#e8decb; border:1px solid #b8ab96;"></span>
                     <span>Papel</span>
@@ -753,6 +858,55 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
             return path;
         }
 
+        const ALERT_ICONS = {
+            note: '<svg class="markdown-alert-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>',
+            tip: '<svg class="markdown-alert-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.628-.756-1.596-1.92-1.596-3.579C2.5 2.454 4.887 0 8 0s5.5 2.454 5.5 5.25c0 1.659-.968 2.823-1.596 3.58a8.463 8.463 0 0 0-.541.679c-.208.3-.33.565-.371.847a.75.75 0 0 1-1.485-.21c.084-.595.337-1.08.62-1.492.204-.291.451-.583.675-.848.064-.076.134-.16.213-.253.56-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5Zm1 3h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1 0-1.5Z"></path></svg>',
+            important: '<svg class="markdown-alert-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H9.06l-2.573 2.573A1.458 1.458 0 0 1 4 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .25.25.25.25.25h3a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h5.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm6.25 2.5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5a.75.75 0 0 1 .75-.75Zm0 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>',
+            warning: '<svg class="markdown-alert-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>',
+            caution: '<svg class="markdown-alert-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>'
+        };
+
+        const DEFAULT_ALERT_TITLES = {
+            note: 'Nota',
+            tip: 'Dica',
+            important: 'Importante',
+            warning: 'Atenção',
+            caution: 'Cuidado'
+        };
+
+        function renderAlerts(html) {
+            if (!html || html.indexOf('[!') === -1) return html;
+            html = html.replace(/<blockquote>([\\s\\S]*?)<\\/blockquote>/gi, function(match, inner) {
+                var pMatch = inner.match(/^\\s*<p>([\\s\\S]*?)<\\/p>([\\s\\S]*)$/i);
+                if (!pMatch) return match;
+                var firstPara = pMatch[1];
+                var remaining = pMatch[2] ? pMatch[2].trim() : '';
+                var headerMatch = firstPara.match(/^[^\\S\\r\\n]*\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\][^\\S\\r\\n]*([^\\r\\n<]*)(?:(?:\\r?\\n|<br\\s*\\/?>)([\\s\\S]*))?$/i);
+                if (!headerMatch) return match;
+                var type = headerMatch[1].toLowerCase();
+                var rawTitle = (headerMatch[2] || '').replace(/^[\\s:\\-–—]+/, '').trim();
+                var restOfFirstPara = (headerMatch[3] || '').trim();
+                var title = rawTitle || DEFAULT_ALERT_TITLES[type] || type.toUpperCase();
+                var bodyHtml = '';
+                if (restOfFirstPara) bodyHtml += '<p>' + restOfFirstPara + '</p>';
+                if (remaining) bodyHtml += (bodyHtml ? '\\n' : '') + remaining;
+                var icon = ALERT_ICONS[type] || '';
+                return '<div class="markdown-alert markdown-alert-' + type + '" data-alert-type="' + type + '"><div class="markdown-alert-title"><span class="markdown-alert-icon-wrapper">' + icon + '</span><span class="markdown-alert-title-text">' + title + '</span></div>' + (bodyHtml ? '<div class="markdown-alert-content">' + bodyHtml + '</div>' : '') + '</div>';
+            });
+            html = html.replace(/<p>([^\\S\\r\\n]*\\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\][\\s\\S]*?)<\\/p>/gi, function(match, pInner) {
+                var headerMatch = pInner.match(/^[^\\S\\r\\n]*\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\][^\\S\\r\\n]*([^\\r\\n<]*)(?:(?:\\r?\\n|<br\\s*\\/?>)([\\s\\S]*))?$/i);
+                if (!headerMatch) return match;
+                var type = headerMatch[1].toLowerCase();
+                var rawTitle = (headerMatch[2] || '').replace(/^[\\s:\\-–—]+/, '').trim();
+                var rest = (headerMatch[3] || '').trim();
+                var title = rawTitle || DEFAULT_ALERT_TITLES[type] || type.toUpperCase();
+                var bodyHtml = rest ? '<p>' + rest + '</p>' : '';
+                var icon = ALERT_ICONS[type] || '';
+                return '<div class="markdown-alert markdown-alert-' + type + '" data-alert-type="' + type + '"><div class="markdown-alert-title"><span class="markdown-alert-icon-wrapper">' + icon + '</span><span class="markdown-alert-title-text">' + title + '</span></div>' + (bodyHtml ? '<div class="markdown-alert-content">' + bodyHtml + '</div>' : '') + '</div>';
+            });
+            return html;
+        }
+
         function preprocessMDX(text) {
             if (!text) return '';
             text = text.replace(/<Theory>/g, '<details class="theory"><summary>[ § ] Explicação Teórica Necessária</summary><div>');
@@ -812,7 +966,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
                 optionsHtml += '</ul>\\n';
             }
             
-            let bodyParsed = marked.parse(preprocessMDX(q.body));
+            let bodyParsed = renderAlerts(marked.parse(preprocessMDX(q.body)));
             
             if (q.frontmatter.correctOption) {
                  bodyParsed = bodyParsed.replace('</div></details>', '<br><strong style="color:#27ae60;">Gabarito Oficial: (' + q.frontmatter.correctOption + ')</strong></div></details>');
@@ -820,7 +974,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
                  bodyParsed = bodyParsed.replace('</div></details>', '<br><strong style="color:#27ae60;">Resposta Esperada: ' + q.frontmatter.expectedAnswer + '</strong></div></details>');
             }
             
-            let topPart = marked.parse(preprocessMDX(statement + optionsHtml));
+            let topPart = renderAlerts(marked.parse(preprocessMDX(statement + optionsHtml)));
             html += topPart + image + bodyParsed;
             html += '</div>';
             return html;
@@ -941,7 +1095,7 @@ export function generateStandaloneHtml(materiaSlug: string = 'pds', customMateri
                 return '\\n\\n' + renderQuestion(id, true) + '\\n\\n';
             });
 
-            const html = marked.parse(preprocessMDX(body));
+            const html = renderAlerts(marked.parse(preprocessMDX(body)));
             contentEl.innerHTML = '<h2>' + cap.frontmatter.title + '</h2>' + html;
             
             applyQuestionSequenceCollapsing(contentEl);
