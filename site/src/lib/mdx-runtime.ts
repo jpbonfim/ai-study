@@ -898,8 +898,7 @@ export function renderQuestionCardHtml(
       href="/${materiaSlug}/questoes/${q.id}"
       class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1.5"
     >
-      <span>Consultar Resolução Passo a Passo</span>
-      <span>&rarr;</span>
+      <span>Resolução</span>
     </a>
   </div>
 </div>
