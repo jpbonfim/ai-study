@@ -1428,7 +1428,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       }
 
       // Navegação Adaptativa e Carregamento sob Demanda para Seções e Sumário
-      async function navigateToStudySection(targetId, smooth = true) {
+      async function navigateToStudySection(targetId, preferSmooth = true) {
         if (!targetId) return false;
 
         const isMobile = window.innerWidth < 1024;
@@ -1440,12 +1440,25 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         const tocItem = document.querySelector(`.toc-item[data-toc-id="${targetId}"]`);
         const parentId = tocItem?.getAttribute('data-parent-id');
 
+        let wasLazyLoaded = false;
+
+        // Se o elemento não existe e loadSingleChapter ainda está inicializando, aguarda brevemente
+        if (!targetEl && (parentId || targetId)) {
+          if (typeof window.loadSingleChapter !== 'function') {
+            for (let i = 0; i < 20; i++) {
+              await new Promise((r) => setTimeout(r, 50));
+              if (typeof window.loadSingleChapter === 'function') break;
+            }
+          }
+        }
+
         // Se o elemento não existe diretamente no DOM, verifica se pertence a um capítulo lazy
         if (!targetEl && parentId) {
           const parentSection = document.getElementById(parentId);
           if (parentSection) {
             const placeholder = parentSection.querySelector('.chapter-lazy-content[data-loaded="false"]');
             if (placeholder && typeof window.loadSingleChapter === 'function') {
+              wasLazyLoaded = true;
               await window.loadSingleChapter(placeholder);
             }
           }
@@ -1456,6 +1469,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         if (targetEl && targetEl.classList.contains('chapter-section')) {
           const placeholder = targetEl.querySelector('.chapter-lazy-content[data-loaded="false"]');
           if (placeholder && typeof window.loadSingleChapter === 'function') {
+            wasLazyLoaded = true;
             await window.loadSingleChapter(placeholder);
           }
         }
@@ -1470,25 +1484,51 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         }
 
         const headerOffset = isMobile ? 70 : 40;
+        const currentScroll = window.scrollY;
         const targetPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+        const distance = Math.abs(targetPos - currentScroll);
+
+        // Regra Estrita de Animação:
+        // Mantém a rolagem suave (smooth) APENAS para seções próximas (<= 1.5 * altura da tela)
+        // que JÁ ESTAVAM renderizadas no DOM. Para todo o resto (capítulos lazy, seções distantes ou reload),
+        // remove a animação completamente (salto instantâneo: behavior: 'auto').
+        const isClose = distance <= window.innerHeight * 1.5;
+        const shouldUseSmooth = Boolean(preferSmooth) && !wasLazyLoaded && isClose;
 
         window.scrollTo({
           top: targetPos,
-          behavior: smooth ? 'smooth' : 'auto',
+          behavior: shouldUseSmooth ? 'smooth' : 'auto',
         });
 
-        // Verificação secundária para compensar reflow assíncrono de fórmulas e fontes
-        setTimeout(() => {
-          if (targetEl && document.contains(targetEl)) {
-            const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
-            if (Math.abs(updatedPos - window.scrollY) > 20) {
-              window.scrollTo({ top: updatedPos, behavior: 'auto' });
+        // Quando o salto for instantâneo, executa confirmação em RAF e tick curto para absorver qualquer reflow de KaTeX/fontes
+        if (!shouldUseSmooth) {
+          requestAnimationFrame(() => {
+            if (targetEl && document.contains(targetEl)) {
+              const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+              if (Math.abs(updatedPos - window.scrollY) > 2) {
+                window.scrollTo({ top: updatedPos, behavior: 'auto' });
+              }
             }
-          }
-        }, 120);
+          });
+
+          setTimeout(() => {
+            if (targetEl && document.contains(targetEl)) {
+              const updatedPos = Math.max(0, targetEl.getBoundingClientRect().top + window.scrollY - headerOffset);
+              if (Math.abs(updatedPos - window.scrollY) > 4) {
+                window.scrollTo({ top: updatedPos, behavior: 'auto' });
+              }
+            }
+          }, 80);
+        }
 
         if (history.replaceState) {
-          history.replaceState(null, '', `#${targetId}`);
+          try {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.hash = `#${targetId}`;
+            history.replaceState(null, '', currentUrl.toString());
+          } catch(e) {
+            history.replaceState(null, '', `#${targetId}`);
+          }
         }
 
         if (typeof updateActiveSection === 'function') {
@@ -1609,9 +1649,10 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         const allTocItems = Array.from(document.querySelectorAll('.toc-item'));
         if (allTocItems.length === 0) return;
 
-        // Coleta itens ativos que realmente estão presentes no DOM neste instante
-        const sections = [];
+        // Coleta itens do sumário cujos elementos alvos estão presentes no documento
+        const candidates = [];
         for (const item of allTocItems) {
+          // Ignora se o capítulo estiver oculto pelo filtro de tags
           const parentChap = item.closest('.sidebar-chapter-item');
           if (parentChap && parentChap.classList.contains('hidden')) continue;
 
@@ -1620,44 +1661,72 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
           const el = document.getElementById(id);
           if (el) {
-            sections.push({
+            const rect = el.getBoundingClientRect();
+            // Ignora se o elemento estiver com display: none (rects zerados)
+            if (rect.top === 0 && rect.bottom === 0 && rect.width === 0 && rect.height === 0) {
+              continue;
+            }
+
+            candidates.push({
               id,
               el,
               title: item.getAttribute('data-toc-title') || '',
               parentId: item.getAttribute('data-parent-id'),
               itemEl: item,
+              top: rect.top,
+              docTop: rect.top + window.scrollY,
             });
           }
         }
 
-        if (sections.length === 0) return;
+        if (candidates.length === 0) return;
 
-        const headerOffset = (window.innerWidth < 1024) ? 80 : 50;
-        const scrollPos = window.scrollY + headerOffset + 25;
-        let activeSection = sections[0];
+        // CRUCIAL: Ordena os candidatos estritamente pela coordenada vertical real no documento
+        candidates.sort((a, b) => a.docTop - b.docTop);
 
-        for (let i = 0; i < sections.length; i++) {
-          const sec = sections[i];
-          const top = sec.el.getBoundingClientRect().top + window.scrollY;
-          if (top <= scrollPos) {
-            activeSection = sec;
-          } else {
-            break;
+        const isMobile = window.innerWidth < 1024;
+        const threshold = isMobile ? 90 : 70;
+
+        let activeCandidate = candidates[0];
+
+        // Se o leitor chegou ao fim do documento (rodapé), ativa a última seção disponível
+        const isAtBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 60);
+
+        if (isAtBottom) {
+          activeCandidate = candidates[candidates.length - 1];
+        } else {
+          for (let i = 0; i < candidates.length; i++) {
+            if (candidates[i].top <= threshold) {
+              activeCandidate = candidates[i];
+            } else {
+              break;
+            }
           }
         }
 
-        if (activeSection && activeSection.id !== currentActiveId) {
-          currentActiveId = activeSection.id;
+        if (activeCandidate && activeCandidate.id !== currentActiveId) {
+          currentActiveId = activeCandidate.id;
 
-          if (mobileSectionEl && activeSection.title) {
-            mobileSectionEl.textContent = activeSection.title;
+          if (mobileSectionEl && activeCandidate.title) {
+            mobileSectionEl.textContent = activeCandidate.title;
+          }
+
+          // Se a seção ativa pertence a um grupo colapsável recolhido, expande-o automaticamente
+          const collContent = activeCandidate.itemEl.closest('.toc-collapsible-content');
+          if (collContent && collContent.classList.contains('hidden')) {
+            collContent.classList.remove('hidden');
+            const grp = collContent.getAttribute('data-group-content');
+            const btn = document.querySelector(`.toc-collapsible-btn[data-target-group="${grp}"]`);
+            btn?.setAttribute('aria-expanded', 'true');
+            const chevron = btn?.querySelector('.toc-collapsible-chevron');
+            chevron?.classList.remove('-rotate-90');
           }
 
           allTocItems.forEach((item) => {
             const id = item.getAttribute('data-toc-id');
-            if (id === activeSection.id) {
+            if (id === activeCandidate.id) {
               item.classList.add('is-active');
-              item.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+              item.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
             } else {
               item.classList.remove('is-active');
             }
@@ -1665,7 +1734,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
 
           document.querySelectorAll('.toc-chapter-link').forEach((chapLink) => {
             const chapId = chapLink.getAttribute('data-toc-id');
-            if (chapId === activeSection.parentId) {
+            if (activeCandidate.parentId && chapId === activeCandidate.parentId) {
               chapLink.classList.add('is-parent-active');
             } else {
               chapLink.classList.remove('is-parent-active');
@@ -1673,7 +1742,7 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
           });
 
           if (window._saveCurrentStudyPosition) {
-            window._saveCurrentStudyPosition(activeSection.title, '#' + activeSection.id);
+            window._saveCurrentStudyPosition(activeCandidate.title, '#' + activeCandidate.id);
           }
         }
       }
@@ -1698,14 +1767,32 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
         setTimeout(updateActiveSection, 60);
       });
 
-      // Se a página carregar com âncora na URL, salta para a seção
-      if (window.location.hash) {
-        const initialHashId = window.location.hash.slice(1);
-        setTimeout(() => {
-          navigateToStudySection(initialHashId, false);
-        }, 80);
+      // Restauração Resiliente da Âncora na URL no recarregamento da página
+      function restoreInitialHash() {
+        if (!window.location.hash) {
+          updateActiveSection();
+          return;
+        }
+        const targetId = window.location.hash.slice(1);
+        if (!targetId) return;
+
+        let attempts = 0;
+        async function tryRestore() {
+          attempts++;
+          const success = await navigateToStudySection(targetId, false);
+          if (!success && attempts < 15) {
+            setTimeout(tryRestore, 80);
+          }
+        }
+        tryRestore();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(restoreInitialHash, 50);
+        });
       } else {
-        setTimeout(updateActiveSection, 80);
+        setTimeout(restoreInitialHash, 50);
       }
     </script>
 
@@ -1745,11 +1832,6 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
     </script>
 
     <style is:global>
-      .chapter-section {
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 1200px;
-      }
-
       @media (min-width: 1024px) {
         html.sidebar-collapsed #academic-sidebar {
           transform: translateX(-100%) !important;
