@@ -95,8 +95,40 @@ marked.use({
   },
 });
 
-// Cache em memória de itens processados: chave = filePath + mtimeMs
+// Versão do pipeline de renderização MDX. Incrementar esta constante invalida caches legados automaticamente
+export const MDX_CACHE_VERSION = 'v4';
+
+// Cache em memória de itens processados: chave = cacheKey
 const renderCache = new Map<string, { mtime: number; data: any }>();
+
+let lastEpochCheckTime = 0;
+let lastKnownEpochMtime = 0;
+
+/**
+ * Sincroniza o cache em memória com o epoch do servidor.
+ * Se o script clear-server-cache.sh atualizar data/.cache_epoch, o cache em memória
+ * do processo Node ativo (dev ou produção) é imediatamente limpo.
+ */
+export function syncServerCacheEpoch(): void {
+  const now = Date.now();
+  if (now - lastEpochCheckTime < 1000) return;
+  lastEpochCheckTime = now;
+
+  try {
+    const epochFile = path.join(getDataDirectory(), '.cache_epoch');
+    if (fs.existsSync(epochFile)) {
+      const stat = fs.statSync(epochFile);
+      if (lastKnownEpochMtime > 0 && stat.mtimeMs !== lastKnownEpochMtime) {
+        renderCache.clear();
+      }
+      lastKnownEpochMtime = stat.mtimeMs;
+    }
+  } catch {}
+}
+
+export function clearServerRenderCache(): void {
+  renderCache.clear();
+}
 
 /**
  * Converte URLs relativas de imagens em endpoints de mídia autenticados
@@ -269,8 +301,9 @@ export function processChapterFile(
   ownerUserId: number,
   materiaSlug: string
 ): ChapterItem {
+  syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `chap:${filePath}`;
+  const cacheKey = `chap:${MDX_CACHE_VERSION}:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -337,8 +370,9 @@ export function processQuestionFile(
   ownerUserId: number,
   materiaSlug: string
 ): QuestionItem {
+  syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `quest:${filePath}`;
+  const cacheKey = `quest:${MDX_CACHE_VERSION}:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -472,8 +506,9 @@ export function processChapterMetadata(
   ownerUserId: number,
   materiaSlug: string
 ): ChapterMetadata {
+  syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `chap_meta:${filePath}`;
+  const cacheKey = `chap_meta:${MDX_CACHE_VERSION}:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -528,8 +563,9 @@ export function processQuestionMetadata(
   ownerUserId: number,
   materiaSlug: string
 ): QuestionMetadata {
+  syncServerCacheEpoch();
   const stat = fs.statSync(filePath);
-  const cacheKey = `quest_meta:${filePath}`;
+  const cacheKey = `quest_meta:${MDX_CACHE_VERSION}:${filePath}`;
   const cached = renderCache.get(cacheKey);
 
   if (cached && cached.mtime === stat.mtimeMs) {
@@ -860,28 +896,28 @@ export function renderQuestionCardHtml(
     const badgeType = q.type === 'discursiva' ? 'Dissertativa' : 'Múltipla Escolha';
 
     return `
-<div class="question-card-preview my-1.5 px-3 py-2 sm:px-3.5 sm:py-2 rounded-md border border-[var(--border-strong)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] not-prose shadow-2xs transition-all">
-  <div class="sans-ui flex items-center justify-between gap-1 pb-1 mb-1 border-b border-[var(--border-subtle)] text-[10px] leading-none">
+<div class="question-card-preview my-1.5 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] not-prose shadow-2xs transition-all">
+  <div class="sans-ui flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-[var(--border-subtle)] text-xs leading-none">
     <div class="flex items-center gap-1.5 min-w-0">
-      <span class="font-bold text-[var(--accent)] uppercase tracking-wider shrink-0 text-[9.5px]">
+      <span class="font-bold text-[var(--accent)] uppercase tracking-wider shrink-0 text-[11px] sm:text-xs">
         Exercício • ${q.exam} (${q.year})
       </span>
       <span class="text-[var(--text-muted)] shrink-0">•</span>
-      <span class="text-[var(--text-secondary)] font-medium truncate">
+      <span class="text-[var(--text-secondary)] font-medium truncate text-xs sm:text-[13px]">
         ${q.topic}
       </span>
     </div>
-    <div class="flex items-center gap-1 shrink-0">
-      <span class="rounded px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[9px] uppercase font-semibold text-[var(--text-muted)]">
+    <div class="flex items-center gap-1.5 shrink-0">
+      <span class="rounded px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[10px] sm:text-[11px] uppercase font-semibold text-[var(--text-muted)]">
         ${badgeType}
       </span>
-      <span class="text-[var(--text-muted)] italic text-[9px]">
+      <span class="text-[var(--text-muted)] italic text-[11px] sm:text-xs">
         ${q.difficulty}
       </span>
     </div>
   </div>
 
-  <h4 class="font-serif text-xs sm:text-[13px] font-bold text-[var(--text-primary)] mb-0.5 leading-snug line-clamp-1">
+  <h4 class="font-serif text-sm sm:text-[15px] font-bold text-[var(--text-primary)] mb-1 leading-snug line-clamp-1">
     <a href="/${materiaSlug}/questoes/${q.id}" class="hover:text-[var(--accent)] transition-colors">
       ${q.title}
     </a>
@@ -889,18 +925,17 @@ export function renderQuestionCardHtml(
 
   ${
     statementPreview
-      ? `<div class="font-serif text-[11px] sm:text-xs text-[var(--text-secondary)] line-clamp-1 mb-1 leading-snug">${statementPreview}</div>`
+      ? `<div class="font-serif text-xs sm:text-[13px] text-[var(--text-secondary)] line-clamp-1 mb-1.5 leading-relaxed">${statementPreview}</div>`
       : ''
   }
 
-  <div class="sans-ui flex items-center justify-between pt-1 border-t border-[var(--border-subtle)] text-[10px] leading-none">
-    <span class="font-mono text-[9px] text-[var(--text-muted)] truncate max-w-[130px]">${q.id}</span>
+  <div class="sans-ui flex items-center justify-between pt-1.5 border-t border-[var(--border-subtle)] text-xs leading-none">
+    <span class="font-mono text-[11px] sm:text-xs text-[var(--text-muted)] truncate max-w-[150px]">${q.id}</span>
     <a
       href="/${materiaSlug}/questoes/${q.id}"
-      class="font-semibold text-[var(--accent)] hover:underline inline-flex items-center gap-1 shrink-0"
+      class="font-semibold text-xs sm:text-[13px] text-[var(--accent)] hover:underline inline-flex items-center gap-1 shrink-0"
     >
       <span>Resolução</span>
-      <span>&rarr;</span>
     </a>
   </div>
 </div>

@@ -57,11 +57,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const ttlMinutes = parseInt(process.env.CLIENT_CACHE_TTL_MINUTES || '1440', 10);
-  const cacheSeconds = ttlMinutes * 60;
   const cacheHeaders = {
     'Content-Type': 'application/json',
-    'Cache-Control': `private, max-age=${cacheSeconds}, stale-while-revalidate=86400`,
+    'Cache-Control': 'no-cache, must-revalidate',
+    'Pragma': 'no-cache',
   };
 
   try {
