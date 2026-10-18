@@ -8,7 +8,7 @@ The platform pairs rigorous, sequential theoretical notebooks with step-by-step 
 
 ## 1. Key Features
 
-### 📖 Reading & Mathematical Typography
+### Reading & Mathematical Typography
 - **Three Publication Themes**: Paper/Sepia, Dark Library, and OLED Pure Black with persistent local preferences and custom SVG icons.
 - **Advanced KaTeX Rendering**: Fast inline/display math with horizontal overflow protection, font-size limits, and dynamic scaling.
 - **Equation Grouping**: Automatically merges consecutive LaTeX equation blocks into clean visual cards.
@@ -16,7 +16,7 @@ The platform pairs rigorous, sequential theoretical notebooks with step-by-step 
 - **Interactive Diagram Viewer**: Click-to-zoom modal with pan/zoom support for schematics, curves, and Mermaid diagrams.
 - **Reading Comfort Controls**: Customize font family (Newsreader, Lora, Inter, JetBrains Mono), font size (16–22px), and reading column width (672–1088px).
 
-### 🧩 Active Learning & Question Solver
+### Active Learning & Question Solver
 - **Split-Screen Workspace**: Question prompts and figures stay sticky on the left, while independent theory prerequisites and solutions scroll on the right.
 - **Dual Accordion Toggles**:
   - `[ § ] Theoretical Review`: Explains the underlying principles and prerequisite formulas without problem spoilers.
@@ -24,20 +24,20 @@ The platform pairs rigorous, sequential theoretical notebooks with step-by-step 
 - **Sequential Question Cards**: Compact question previews grouped by evaluation tag with collapsible card flows.
 - **Evaluation Tag Filtering**: Instant filtering by exam or assignment tag (e.g., `p1`, `teste-1`, `final`).
 
-### 👥 Multi-User Isolation & Security
+### Multi-User Isolation & Security
 - **Role-Based Access Control (RBAC)**: `admin` and `normal` roles with protected routes and middleware.
 - **Isolated User Archives**: Each user's study materials reside in isolated directories (`data/archives/<userId>/`).
 - **Granular Course Sharing**: Administrators can grant per-course access across users; shared courses display distinct badges and merge into the unified tag filter.
 - **Secure Authentication**: Salted password hashing with `bcryptjs`, secure HTTP-only session cookies with expiration tracking, and rate limiting on `/api/login`.
 - **Audit & Activity Logs**: Filterable administrative event tracking (logins, failed attempts, uploads, downloads, and permission changes).
 
-### 🔄 Archive Management, Sync CLI & Offline Export
+### Archive Management, Sync CLI & Offline Export
 - **Bidirectional Sync CLI (`scripts/sync_archive.py`)**: Incremental SHA-256 diff synchronization between local workstation and remote VPS via HTTP/REST. Supports push, pull, dry-run, and automatic conflict detection.
 - **In-Browser ZIP Import/Export**: Upload single courses or full archives with Zip Slip protection; download on-the-fly streaming ZIP backups.
 - **Standalone Offline Bundling**: Generates self-contained, single-file HTML exports (`downloads/[materia].html`) with embedded math, fonts, and scripts for completely offline studying.
 - **Smart Client Caching**: Client-side storage with TTL validation, cache-busting headers, and one-click server/browser cache invalidation.
 
-### 🤖 Autonomous Agentic Skills
+### Autonomous Agentic Skills
 - Built-in skills under `.agents/skills/` compatible with **Antigravity** and **Claude Code**:
   - `question-study-generator`: Orchestrates syllabus structure, continuous theory notebooks, and subagent problem solving.
   - `summary-study-generator`: Drafts comprehensive lecture summaries directly from slides and textbooks with selective diagram extraction.
@@ -236,6 +236,8 @@ Skills located in `.agents/skills/` empower Antigravity and Claude Code to autho
 
 ---
 
-## 8. License & Fair Use
+## 8. License
 
-Educational software and platform developed for university engineering studies. All intellectual rights to original examination sheets, handouts, and problem statements belong to their respective professors, institutions, and publishers.
+This project is open-source software provided under the [MIT License](LICENSE).
+
+This repository contains exclusively the web platform source code, UI components, server utilities, and agentic workflows. It does not contain proprietary course materials, exam sheets, or copyrighted textbooks; all study notebooks, question banks, and course assets are created and maintained independently by users outside version control.
