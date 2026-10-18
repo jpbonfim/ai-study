@@ -112,9 +112,12 @@ const hasBothTocTypes = materiaToc.length > 0 && questoesToc.length > 0;
       const font = localStorage.getItem('study_font_family');
       const size = localStorage.getItem('study_font_size');
       const width = localStorage.getItem('study_max_width');
+      const textAlign = localStorage.getItem('study_text_align') || 'justify';
       if (font) root.style.setProperty('--reader-font-family', font);
       if (size) root.style.setProperty('--reader-font-size', size);
       if (width) root.style.setProperty('--reader-max-width', width);
+      root.style.setProperty('--reader-text-align', textAlign);
+      root.setAttribute('data-text-align', textAlign);
 
       // Preferências de código (tema e fonte monoespaçada reduzida)
       const codeTheme = localStorage.getItem('study_code_theme') || 'mocha';
