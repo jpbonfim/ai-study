@@ -69,6 +69,7 @@
   --reader-font-family: 'Newsreader', 'EB Garamond', 'Lora', Charter, 'Bitstream Charter', Cambria, Georgia, serif;
   --reader-font-size: 1.125rem;
   --reader-max-width: 48rem; /* 768px */
+  --reader-text-align: justify;
   --code-font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
   --code-font-size: 0.8125rem; /* ~13px */
   --code-line-height: 1.58;
@@ -119,6 +120,7 @@ h1, h2, h3, h4, h5, h6 {
 .resolution-content {
   font-family: var(--reader-font-family) !important;
   font-size: var(--reader-font-size) !important;
+  text-align: var(--reader-text-align, justify);
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
@@ -142,6 +144,54 @@ h1, h2, h3, h4, h5, h6 {
 table.academic-table th,
 table.academic-table td {
   font-family: var(--reader-font-family) !important;
+}
+
+.academic-prose p,
+.reader-text p,
+.reader-content p,
+.resolution-content p {
+  text-align: var(--reader-text-align, justify);
+}
+
+/* Regras refinadas de alinhamento para leitura acadêmica e impressão */
+html[data-text-align="justify"] .academic-prose p,
+html[data-text-align="justify"] .reader-text p,
+html[data-text-align="justify"] .reader-content p,
+html[data-text-align="justify"] .resolution-content p,
+:root:not([data-text-align]) .academic-prose p,
+:root:not([data-text-align]) .reader-text p,
+:root:not([data-text-align]) .reader-content p,
+:root:not([data-text-align]) .resolution-content p {
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+html[data-text-align="left"] .academic-prose p,
+html[data-text-align="left"] .reader-text p,
+html[data-text-align="left"] .reader-content p,
+html[data-text-align="left"] .resolution-content p {
+  text-align: left;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+}
+
+html[data-text-align="center"] .academic-prose p,
+html[data-text-align="center"] .reader-text p,
+html[data-text-align="center"] .reader-content p,
+html[data-text-align="center"] .resolution-content p {
+  text-align: center;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+}
+
+html[data-text-align="right"] .academic-prose p,
+html[data-text-align="right"] .reader-text p,
+html[data-text-align="right"] .reader-content p,
+html[data-text-align="right"] .resolution-content p {
+  text-align: right;
+  hyphens: manual;
+  -webkit-hyphens: manual;
 }
 
 /* Blocos de Equações Matemáticas com Scroll Horizontal Independente */
@@ -440,6 +490,7 @@ table.academic-table tbody tr:hover {
   border-radius: 6px;
   border: 1px solid var(--border-subtle);
   background-color: var(--code-bg);
+  text-align: left !important;
 }
 
 /* ============================================================
@@ -460,6 +511,7 @@ table.academic-table tbody tr:hover {
   padding-bottom: 0.35rem !important;
   border-bottom: 1px solid var(--border-subtle) !important;
   letter-spacing: -0.01em !important;
+  text-align: left;
 }
 
 /* 2. Subtítulo H3 (Subseções, Conceitos e Tópicos Maiores) */
@@ -476,6 +528,7 @@ table.academic-table tbody tr:hover {
   letter-spacing: -0.005em !important;
   border-left: 2.5px solid var(--accent) !important;
   padding-left: 0.65rem !important;
+  text-align: left;
 }
 
 /* 3. Subtítulo H4 (Etapas, Propriedades e Passos da Resolução) */

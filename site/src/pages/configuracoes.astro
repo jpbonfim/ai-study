@@ -46,9 +46,12 @@ const previewMathDisplay = katex.renderToString(
       const font = localStorage.getItem('study_font_family');
       const size = localStorage.getItem('study_font_size');
       const width = localStorage.getItem('study_max_width');
+      const textAlign = localStorage.getItem('study_text_align') || 'justify';
       if (font) root.style.setProperty('--reader-font-family', font);
       if (size) root.style.setProperty('--reader-font-size', size);
       if (width) root.style.setProperty('--reader-max-width', width);
+      root.style.setProperty('--reader-text-align', textAlign);
+      root.setAttribute('data-text-align', textAlign);
 
       // Preferências de código
       const codeTheme = localStorage.getItem('study_code_theme') || 'mocha';
@@ -490,12 +493,90 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 4. Exibição de Código (Tema e Fonte Monoespaçada) -->
+            <!-- 4. Alinhamento do Texto -->
+            <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">4. Alinhamento do Texto</label>
+                  <p class="text-xs text-[var(--text-secondary)] mt-0.5">
+                    Defina o alinhamento das linhas dos cadernos teóricos e resoluções:
+                  </p>
+                </div>
+                <span id="active-align-badge" class="font-mono text-xs text-[var(--accent)] font-semibold bg-[var(--bg-subtle)] px-2.5 py-1 rounded border border-[var(--border-subtle)]">
+                  Justificado (Salvo)
+                </span>
+              </div>
+
+              <!-- Botões Pré-definidos de Alinhamento -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <button
+                  type="button"
+                  data-align-opt="justify"
+                  class="align-opt-btn relative p-3 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                >
+                  <div class="flex items-center justify-center mb-1 text-[var(--accent)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </div>
+                  <span class="font-bold block text-sm">Justificado</span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Padrão Livro</span>
+                  <span class="align-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-align-opt="left"
+                  class="align-opt-btn relative p-3 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                >
+                  <div class="flex items-center justify-center mb-1 text-[var(--accent)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h12M4 14h16M4 18h10" />
+                    </svg>
+                  </div>
+                  <span class="font-bold block text-sm">À Esquerda</span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Padrão Web</span>
+                  <span class="align-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-align-opt="center"
+                  class="align-opt-btn relative p-3 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                >
+                  <div class="flex items-center justify-center mb-1 text-[var(--accent)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M6 10h12M4 14h16M7 18h10" />
+                    </svg>
+                  </div>
+                  <span class="font-bold block text-sm">Centralizado</span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Simétrico</span>
+                  <span class="align-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-align-opt="right"
+                  class="align-opt-btn relative p-3 rounded-lg border text-center transition-all cursor-pointer bg-[var(--bg-page)]"
+                >
+                  <div class="flex items-center justify-center mb-1 text-[var(--accent)]">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M8 10h12M4 14h16M10 18h10" />
+                    </svg>
+                  </div>
+                  <span class="font-bold block text-sm">À Direita</span>
+                  <span class="text-[11px] text-[var(--text-muted)] font-mono">Margem Direita</span>
+                  <span class="align-status-tag text-[9px] font-mono block mt-1 font-bold text-[var(--accent)] hidden">✓ Salvo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 5. Exibição de Código (Tema e Fonte Monoespaçada) -->
             <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
               <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
                 <div>
                   <label class="font-bold text-[var(--text-primary)] text-base block">
-                    4. Exibição de Blocos de Código
+                    5. Exibição de Blocos de Código
                   </label>
                   <p class="text-xs text-[var(--text-secondary)] mt-0.5">
                     Personalize o tema visual, a fonte monoespaçada e o tamanho das fontes dos algoritmos:
@@ -718,12 +799,12 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 5. Fórmulas Matemáticas (LaTeX / KaTeX) -->
+            <!-- 6. Fórmulas Matemáticas (LaTeX / KaTeX) -->
             <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6">
               <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
                 <div>
                   <label class="font-bold text-[var(--text-primary)] text-base block">
-                    5. Fórmulas Matemáticas e Índices (LaTeX / KaTeX)
+                    6. Fórmulas Matemáticas e Índices (LaTeX / KaTeX)
                   </label>
                   <p class="text-xs text-[var(--text-secondary)] mt-0.5">
                     Controle o tamanho relativo de subscritos, sobrescritos e estabeleça um limite mínimo de legibilidade para frações:
@@ -891,12 +972,12 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 6. Demonstração Dinâmica da Pré-Visualização -->
+            <!-- 7. Demonstração Dinâmica da Pré-Visualização -->
             <div class="space-y-2 pt-2">
               <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 <span>Pré-Visualização em Tempo Real</span>
                 <span id="preview-meta-info" class="font-mono lowercase font-normal text-[var(--accent)]">
-                  Garamond • 18px • 768px
+                  Garamond • 18px • 768px • Justificado
                 </span>
               </div>
 
@@ -978,11 +1059,11 @@ const previewMathDisplay = katex.renderToString(
               </div>
             </div>
 
-            <!-- 7. Gerenciamento de Armazenamento e Cache do Navegador -->
+            <!-- 8. Gerenciamento de Armazenamento e Cache do Navegador -->
             <div class="p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <label class="font-bold text-[var(--text-primary)] text-base block">7. Armazenamento e Cache do Navegador</label>
+                  <label class="font-bold text-[var(--text-primary)] text-base block">8. Armazenamento e Cache do Navegador</label>
                   <p class="text-xs text-[var(--text-secondary)] mt-0.5">
                     Limpe os cadernos e metadados salvos localmente no seu navegador para liberar espaço e forçar a busca das versões mais recentes.
                   </p>
@@ -1036,7 +1117,7 @@ const previewMathDisplay = katex.renderToString(
               <div id="cache-feedback-message" class="hidden text-xs py-2 px-3 rounded-md bg-[var(--bg-subtle)] border border-[var(--border-subtle)]"></div>
             </div>
 
-            <!-- 8. Barra Inferior de Ações (Salvar e Restaurar) -->
+            <!-- 9. Barra Inferior de Ações (Salvar e Restaurar) -->
             <div class="pt-6 border-t border-[var(--border-strong)] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div class="flex items-center gap-2 w-full sm:w-auto">
                 <button
@@ -1167,11 +1248,19 @@ const previewMathDisplay = katex.renderToString(
       const defaultFontKey = 'garamond';
       const defaultSize = '18px';
       const defaultWidth = '768px';
+      const defaultTextAlign = 'justify';
       const defaultCodeTheme = 'mocha';
       const defaultCodeFontKey = 'jetbrains';
       const defaultCodeSize = '13px';
       const defaultMathScriptScale = '0.64';
       const defaultMathMinSize = '10.5px';
+
+      const textAlignLabels = {
+        justify: 'Justificado',
+        left: 'À Esquerda',
+        center: 'Centralizado',
+        right: 'À Direita'
+      };
 
       // 1. Estado Salvo Atualmente no Sistema
       let savedState = {
@@ -1179,6 +1268,7 @@ const previewMathDisplay = katex.renderToString(
         fontFamily: localStorage.getItem('study_font_family') || fontsMap[defaultFontKey],
         fontSize: localStorage.getItem('study_font_size') || defaultSize,
         maxWidth: localStorage.getItem('study_max_width') || defaultWidth,
+        textAlign: localStorage.getItem('study_text_align') || defaultTextAlign,
         codeTheme: localStorage.getItem('study_code_theme') || defaultCodeTheme,
         codeFontKey: localStorage.getItem('study_code_font_key') || defaultCodeFontKey,
         codeFont: localStorage.getItem('study_code_font') || codeFontsMap[defaultCodeFontKey],
@@ -1232,21 +1322,34 @@ const previewMathDisplay = katex.renderToString(
         if (previewText) {
           previewText.style.fontFamily = draftState.fontFamily;
           previewText.style.fontSize = draftState.fontSize;
+          previewText.style.textAlign = draftState.textAlign;
           previewText.style.setProperty('--reader-font-family', draftState.fontFamily);
           previewText.style.setProperty('--reader-font-size', draftState.fontSize);
+          previewText.style.setProperty('--reader-text-align', draftState.textAlign);
+          if (draftState.textAlign === 'justify') {
+            previewText.style.textJustify = 'inter-word';
+            previewText.style.hyphens = 'auto';
+          } else {
+            previewText.style.textJustify = 'auto';
+            previewText.style.hyphens = 'manual';
+          }
         }
         if (previewWrapper) {
           previewWrapper.style.maxWidth = draftState.maxWidth;
           previewWrapper.style.setProperty('--reader-font-family', draftState.fontFamily);
           previewWrapper.style.setProperty('--reader-font-size', draftState.fontSize);
+          previewWrapper.style.setProperty('--reader-text-align', draftState.textAlign);
           previewWrapper.style.setProperty('--katex-script-scale', draftState.mathScriptScale);
           previewWrapper.style.setProperty('--katex-min-font-size', draftState.mathMinSize);
         }
+        document.documentElement.style.setProperty('--reader-text-align', draftState.textAlign);
+        document.documentElement.setAttribute('data-text-align', draftState.textAlign);
         document.documentElement.style.setProperty('--katex-script-scale', draftState.mathScriptScale);
         document.documentElement.style.setProperty('--katex-min-font-size', draftState.mathMinSize);
         if (previewMeta) {
           const fName = fontLabels[draftState.fontKey] || draftState.fontKey;
-          previewMeta.textContent = `${fName} • ${draftState.fontSize} • ${draftState.maxWidth}`;
+          const aName = textAlignLabels[draftState.textAlign] || draftState.textAlign;
+          previewMeta.textContent = `${fName} • ${draftState.fontSize} • ${draftState.maxWidth} • ${aName}`;
         }
         if (previewCode) {
           previewCode.style.fontFamily = draftState.codeFont;
@@ -1381,7 +1484,30 @@ const previewMathDisplay = katex.renderToString(
           activeWidthBadge.textContent = `${savedState.maxWidth} (Salvo)`;
         }
 
-        // 4. Atualiza seleção de Tema do Código
+        // 4. Atualiza seleção de Alinhamento do Texto
+        document.querySelectorAll('.align-opt-btn').forEach((btn) => {
+          const a = btn.getAttribute('data-align-opt');
+          const isDraft = a === draftState.textAlign;
+          const isSaved = a === savedState.textAlign;
+
+          const tag = btn.querySelector('.align-status-tag');
+          if (tag) tag.classList.toggle('hidden', !isSaved);
+
+          if (isDraft) {
+            btn.classList.add('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.remove('border-[var(--border-subtle)]');
+          } else {
+            btn.classList.remove('border-2', 'border-[var(--accent)]', 'bg-[var(--accent-subtle)]');
+            btn.classList.add('border-[var(--border-subtle)]');
+          }
+        });
+
+        const activeAlignBadge = document.getElementById('active-align-badge');
+        if (activeAlignBadge) {
+          activeAlignBadge.textContent = `${textAlignLabels[savedState.textAlign] || savedState.textAlign} (Salvo)`;
+        }
+
+        // 5. Atualiza seleção de Tema do Código
         document.querySelectorAll('.code-theme-opt-btn').forEach((btn) => {
           const t = btn.getAttribute('data-code-theme-opt');
           const isDraft = t === draftState.codeTheme;
@@ -1496,11 +1622,12 @@ const previewMathDisplay = katex.renderToString(
           activeMathBadge.textContent = `${pct}% • Mín ${savedState.mathMinSize} (Salvo)`;
         }
 
-        // 9. Verifica se há alterações pendentes de salvamento
+        // 10. Verifica se há alterações pendentes de salvamento
         const hasUnsavedChanges =
           draftState.fontKey !== savedState.fontKey ||
           draftState.fontSize !== savedState.fontSize ||
           draftState.maxWidth !== savedState.maxWidth ||
+          draftState.textAlign !== savedState.textAlign ||
           draftState.codeTheme !== savedState.codeTheme ||
           draftState.codeFontKey !== savedState.codeFontKey ||
           draftState.codeSize !== savedState.codeSize ||
@@ -1577,6 +1704,17 @@ const previewMathDisplay = katex.renderToString(
       }
       customWidthInput?.addEventListener('input', handleCustomWidth);
       document.getElementById('apply-custom-width-btn')?.addEventListener('click', handleCustomWidth);
+
+      // Eventos de clique nas opções de Alinhamento
+      document.querySelectorAll('.align-opt-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const a = btn.getAttribute('data-align-opt');
+          if (a && ['justify', 'left', 'center', 'right'].includes(a)) {
+            draftState.textAlign = a;
+            updateUI();
+          }
+        });
+      });
 
       // Eventos de clique nas opções de Código: Tema
       document.querySelectorAll('.code-theme-opt-btn').forEach((btn) => {
@@ -1674,6 +1812,7 @@ const previewMathDisplay = katex.renderToString(
         localStorage.setItem('study_font_family', savedState.fontFamily);
         localStorage.setItem('study_font_size', savedState.fontSize);
         localStorage.setItem('study_max_width', savedState.maxWidth);
+        localStorage.setItem('study_text_align', savedState.textAlign);
 
         localStorage.setItem('study_code_theme', savedState.codeTheme);
         localStorage.setItem('study_code_font_key', savedState.codeFontKey);
@@ -1688,6 +1827,8 @@ const previewMathDisplay = katex.renderToString(
         root.style.setProperty('--reader-font-family', savedState.fontFamily);
         root.style.setProperty('--reader-font-size', savedState.fontSize);
         root.style.setProperty('--reader-max-width', savedState.maxWidth);
+        root.style.setProperty('--reader-text-align', savedState.textAlign);
+        root.setAttribute('data-text-align', savedState.textAlign);
 
         root.setAttribute('data-code-theme', savedState.codeTheme);
         root.style.setProperty('--code-font-family', savedState.codeFont);
@@ -1716,6 +1857,7 @@ const previewMathDisplay = katex.renderToString(
           fontFamily: fontsMap[defaultFontKey],
           fontSize: defaultSize,
           maxWidth: defaultWidth,
+          textAlign: defaultTextAlign,
           codeTheme: defaultCodeTheme,
           codeFontKey: defaultCodeFontKey,
           codeFont: codeFontsMap[defaultCodeFontKey],
