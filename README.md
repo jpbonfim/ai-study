@@ -2,7 +2,7 @@
 
 A production-ready, full-stack academic study and exam preparation platform developed with Astro (SSR Node.js), KaTeX, SQLite, and Tailwind CSS, orchestrated by Antigravity and Claude Code agentic skills.
 
-The platform pairs rigorous theoretical course notes with step-by-step resolved university exam problems, featuring a textbook-inspired reading experience, responsive split-screen problem solving, tag-based syllabus filtering, multi-user isolation with granular cross-user permissions, ZIP upload/backup download, and automated deployment scripts for production VPS environments (with zero conflict for existing VPN services like Amnezia).
+The platform pairs rigorous theoretical course notes with step-by-step resolved university exam problems, featuring a textbook-inspired reading experience, responsive split-screen problem solving, tag-based syllabus filtering, multi-user isolation with granular cross-user permissions, ZIP upload/backup download, and automated deployment scripts for production VPS environments (with zero conflict for existing VPN services).
 
 ---
 
@@ -18,7 +18,7 @@ Key goals and capabilities of the project:
 - **Archive Management & Backups**: In-browser ZIP archive upload (full archive or single-course) with Zip Slip protection and one-click ZIP backup downloads.
 - **Publication-Grade Reading Experience**: Distraction-free reading across paper, dark, and OLED display modes with reader-customizable typography and split-screen sticky question solvers.
 - **Autonomous Agentic Automation**: Automates syllabus generation, PDF exam extraction, figure cropping, and vector block diagram rendering via Antigravity and Claude Code skills.
-- **Production-Ready VPS Deployment**: Fully automated server provisioning script (`scripts/setup-vps.sh`), Caddy reverse proxy with automatic self-signed or Let's Encrypt TLS, systemd service hardening, and full compatibility with existing server services (such as Amnezia VPN and Docker).
+- **Production-Ready VPS Deployment**: Fully automated server provisioning script (`scripts/setup-vps.sh`), Caddy reverse proxy with automatic self-signed or Let's Encrypt TLS, systemd service hardening, and full compatibility with existing server services (such as VPN tunnels and Docker).
 
 ---
 
@@ -246,7 +246,7 @@ This platform is configured for self-hosting on any Ubuntu/Debian VPS. The deplo
 - **Node.js 24 LTS** running the standalone Astro SSR server on `127.0.0.1:3000`.
 - **systemd** managing the service with automatic restarts and security sandboxing.
 - **Caddy** acting as a high-performance reverse proxy with automatic TLS (self-signed `tls internal` for direct IP access or Let's Encrypt for a custom domain).
-- **Firewall & VPN Coexistence**: The setup automatically preserves existing services running on the VPS, including UDP ports and packet forwarding for VPNs such as **Amnezia VPN** (`30388/udp`).
+- **Firewall & VPN Coexistence**: The setup automatically preserves existing services running on the VPS, including packet forwarding and optional UDP ports for VPNs (such as WireGuard via `VPN_PORT`).
 
 ### 5.1 Step 1: Clone the Repository on the VPS
 Connect to your VPS via SSH and clone the repository:
@@ -286,7 +286,7 @@ What this script automatically does:
 3. Installs the official Caddy web server.
 4. **Configures the UFW Firewall safely**:
    - Opens SSH (`22/tcp`), HTTP (`80/tcp`), and HTTPS (`443/tcp`).
-   - Automatically preserves and permits existing UDP services (specifically **Amnezia VPN** on port `30388/udp`).
+   - Automatically preserves and permits existing UDP services (optionally opens custom ports via `VPN_PORT`).
    - Enables packet forwarding (`DEFAULT_FORWARD_POLICY="ACCEPT"` in `/etc/default/ufw` and `net.ipv4.ip_forward=1` in `/etc/sysctl.conf`), ensuring existing VPN tunnels and Docker bridge networks are not disrupted.
 5. Installs npm packages in `site/` and builds the Astro application.
 6. Populates initial course content via `migrate-archive.sh`.
