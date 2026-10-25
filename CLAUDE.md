@@ -1,23 +1,27 @@
 # Claude Code Configuration for Academic Study Platform
 
-This repository contains an academic study platform for Digital Signal Processing (PDS) built with Astro, KaTeX, Tailwind CSS, and MDX.
+This repository contains an academic study platform (theory notebooks and solved exam questions) built as an npm workspaces monorepo: a React + Vite SPA (`apps/web`), a Hono API server on Node.js with SQLite (`apps/server`), and a shared content pipeline with marked, KaTeX and Shiki (`packages/content`).
 
 ## Primary Commands
 
 ```bash
-# Install dependencies
-cd site && npm install
+# Install dependencies (from the repository root)
+npm install
 
-# Run local development server (http://localhost:4321)
-cd site && npm run dev
+# Run local development servers (API on :3000, web app on http://localhost:5173)
+npm run dev
 
-# Build production static site
-cd site && npm run build
+# Validate the frontmatter of every document in archive/ (after generating content)
+npm run validate:archive
 
-# Synchronize standalone offline export (after build)
-cp site/dist/downloads/pds.html export/processamento-digital-de-sinais/main.html
-cp site/dist/downloads/pds.html export/processamento-digital-de-sinais/processamento-digital-de-sinais.html
+# Typecheck, lint and unit/integration tests
+npm run check
+
+# Production build (apps/web/dist + apps/server/dist/server.mjs)
+npm run build
 ```
+
+Deployment builds a release locally and activates it on the VPS (`scripts/deploy.sh`); see `docs/deploy.md`.
 
 ## Agentic Skills Reference
 
@@ -42,7 +46,7 @@ Specialized agent workflows and instructions are located in `.agents/skills/`. W
    - CLI utility: `python3 .agents/skills/explain-question/scripts/extract_question.py`
    - Output destination: `archive/<subject>/questoes/<slug>.mdx`
    - Format: Must use `<Theory>` for pedagogical background (no spoilers) and `<Resolution>` for step-by-step algebra and answer keys.
-   - Figure cropping: Use `crop-figure` command with `--padding 25` and preserve upper mathematical definitions and equations. Save cropped figures directly to `archive/<subject>/questoes/<figure>.png` and reference via `image: "./<figure>.png"` (never save to `site/public/`).
+   - Figure cropping: Use `crop-figure` command with `--padding 25` and preserve upper mathematical definitions and equations. Save cropped figures directly to `archive/<subject>/questoes/<figure>.png` and reference via `image: "./<figure>.png"` (never save inside `apps/` or `packages/`).
 
 4. **Vector Block Diagrams (`block-diagram-generator`)**:
    - Location: `.agents/skills/block-diagram-generator/SKILL.md`

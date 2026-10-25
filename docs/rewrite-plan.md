@@ -42,38 +42,55 @@ e as decisões tomadas durante a execução (seção "Registro de decisões").
 | Admin → logs (horário) | Horário UTC exibido como se fosse local | Convertido para o fuso local |
 | Diagramas Mermaid | `securityLevel: 'loose'` (scripts e cliques em diagramas de conteúdo) | `strict` |
 | Admin → logs | Detalhes dos logs inseridos com `innerHTML` (XSS via nome de usuário no login) | Renderizados como texto |
+| Página 404 | Página padrão do Astro (logo do framework, fundo escuro), `Path: ...` | Página no visual do site com link "Voltar à Biblioteca" (mesmo título e mesma exigência de login) |
+| Validação do conteúdo | `npm run build` em `site/` validava o frontmatter de `archive/` (content collections) | `npm run validate:archive`, com as mesmas regras (incluindo imagens referenciadas que precisam existir) |
+| `DATA_DIR` relativo | Relativo a `site/` (`../data`) | Relativo à raiz do repositório / `APP_ROOT` (`./data`); o deploy recusa um `.env` antigo que apontaria para outro lugar |
 
 ## Fases
 
 ### Fase 0 — congelar o comportamento atual
 - [x] Branch `rewrite` + worktree `../rewrite/`; `../data-dev/` com cópia dos dados.
-- [ ] Fixture reprodutível (`tests/parity/fixture`): conteúdo do `archive/` + segundo usuário com
-      matéria compartilhada, para exercitar tags cruzadas e matérias de outros usuários.
-- [ ] Inventário de features (`baseline/FEATURES.md`).
-- [ ] Snapshots do conteúdo renderizado pela versão atual (todo capítulo e questão).
-- [ ] Contrato da API gravado (incluindo sync).
-- [ ] Screenshots de referência (3 temas × desktop/mobile).
+- [x] Fixture reprodutível (`tests/parity/prepare-fixture.mjs`): conteúdo do `archive/` + segundo
+      usuário com matéria compartilhada, para exercitar tags cruzadas e matérias de outros usuários.
+- [x] Inventário de features (`docs/FEATURES.md`).
+- [x] Snapshots do conteúdo renderizado pela versão atual (todo capítulo e questão) em `.parity/`.
+- [x] Contrato da API (testes do servidor + `sync_archive.py` sem alterações contra o servidor novo).
+- [x] Screenshots de referência (3 temas × desktop/mobile) na comparação visual.
 
 ### Fase 1 — monorepo e tooling
-npm workspaces (pnpm não está disponível no ambiente), TypeScript strict, Biome, Vitest,
-Playwright, workflow de CI (só roda quando houver push).
+- [x] npm workspaces (pnpm não está disponível no ambiente), TypeScript strict, Biome, Vitest,
+      Playwright. Workflow de CI (`.github/workflows/ci.yml`: check + build) — só roda quando houver
+      push; paridade e e2e dependem do archive privado e rodam localmente.
 
 ### Fase 2 — `packages/content`
-Pipeline único, isomórfico (Node para testes/CLI, Web Worker no app), testado contra os snapshots.
+- [x] Pipeline único, isomórfico (Node para testes/CLI, Web Worker no app), testado contra os
+      snapshots (283/283 documentos idênticos). Shiki só com as 15 linguagens e 5 temas usados.
+- [x] `npm run validate:archive` substitui a validação que o build do Astro fazia.
 
 ### Fase 3 — `apps/server`
-Hono + Drizzle + better-sqlite3, migration `0000` que adota o schema atual, módulos de auth,
-autorização, subjects, documents, media, sync, archive, admin, logs.
+- [x] Hono + Drizzle + better-sqlite3, migration `0000` que adota o schema atual, módulos de auth,
+      autorização, subjects, documents, media, sync, archive, admin, logs. Bundle único com esbuild.
 
 ### Fase 4 — `apps/web`
-React + Vite SPA com as mesmas URLs, o mesmo CSS e o mesmo comportamento.
+- [x] React + Vite SPA com as mesmas URLs, o mesmo CSS e o mesmo comportamento; páginas carregadas
+      sob demanda (rota `lazy`) com pré-carregamento dos dados da página de entrada.
 
 ### Fase 5 — paridade e limpeza
-Comparação lado a lado, medição de desempenho, documentação, remoção do `site/` antigo (só no
-branch `rewrite`).
+- [x] Comparação lado a lado: e2e (115 nas duas versões), visual (28 cenários idênticos, também no
+      build de produção), conteúdo (283 documentos).
+- [x] Desempenho (`tests/parity/tools/perf.mjs`, CPU 4× mais lenta, primeiro capítulo visível):
+      visita quente 169 ms (antigo: 36 ms, HTML vindo do servidor); fria 321 ms (antigo: 143 ms).
+      O servidor deixa de renderizar markdown/KaTeX/Shiki (RSS 227 MB × 295 MB do antigo em uso).
+      Bundle inicial 255 kB (79 kB gzip).
+- [x] Documentação (README, CLAUDE.md, AGENTS.md, skills, `tests/parity/README.md`).
+- [x] Remoção do `site/` antigo e de `clear-server-cache.sh` (só no branch `rewrite`).
 
 ### Fase 6 — preparar a subida (nada executado)
-Script de deploy, unit systemd, Caddyfile e runbook com backup e rollback.
+- [x] `scripts/build-release.mjs` + `scripts/deploy.sh` (build local, envio por rsync) e
+      `scripts/activate-release.sh` (backup do banco, unit systemd, troca atômica, health check e
+      rollback automático), testados num servidor simulado localmente.
+- [x] `scripts/study-site.service`, `scripts/Caddyfile.example` (SPA estático + proxy da API,
+      validado com o Caddy 2.11 e com os e2e passando através dele) e runbook `docs/deploy.md`.
 
 ## Registro de decisões
 
@@ -86,3 +103,12 @@ Script de deploy, unit systemd, Caddyfile e runbook com backup e rollback.
   constante) e substituição atômica. Descompactar no cliente exigiria uma substituição
   transacional espalhada em várias requisições, sem ganho real para o usuário.
 - **npm workspaces** no lugar de pnpm, porque pnpm não está instalado no ambiente.
+- **Rotas carregadas com `lazy` do react-router, não `React.lazy`.** Com `Suspense`, o React 19
+  segura a revelação de conteúdo suspenso por 300 ms; o primeiro capítulo aparecia ~300 ms depois.
+- **Caddy serve o SPA.** O Node só atende `/api/*` e `/admin/api/*`, poupando o VPS. O servidor
+  ainda serve o SPA com `WEB_DIST_DIR` (testes locais de produção).
+- **Releases montados localmente.** O VPS recebe `server.mjs`, `web/` e um `package-lock.json` com
+  as 6 dependências de runtime; não há build nem checkout git no servidor.
+- **Fontes por página como antes.** O conjunto de fontes do Google muda por página (itálicos da
+  JetBrains Mono só nas configurações), então o script inline do `<head>` escolhe o conjunto pela
+  URL antes da pintura e o layout troca nas navegações internas.
