@@ -9,7 +9,7 @@ import {
   normalizeChapterMeta,
   normalizeQuestionMeta,
   type QuestionMeta,
-} from '@ai-study/content';
+} from '@ai-study/content/model';
 import { parseDocument } from '@ai-study/content/node';
 
 export interface StoredDocument<TMeta> {

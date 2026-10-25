@@ -1,4 +1,5 @@
-import { createHighlighter, type Highlighter } from 'shiki';
+import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
+import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 
 /** Code themes the reader can switch between instantly (all are embedded as CSS variables). */
 export const CODE_THEMES = {
@@ -11,24 +12,35 @@ export const CODE_THEMES = {
 
 export type CodeThemeKey = keyof typeof CODE_THEMES;
 
-const SUPPORTED_LANGUAGES = [
-  'python',
-  'javascript',
-  'typescript',
-  'c',
-  'cpp',
-  'matlab',
-  'bash',
-  'json',
-  'html',
-  'css',
-  'http',
-  'markdown',
-  'yaml',
-  'latex',
-  'diff',
-  'text',
-] as const;
+/**
+ * Grammars and themes are imported one by one so bundles only ship what the renderer uses
+ * (`text` is built in). Code in other languages is rendered as plain text.
+ */
+const loadGrammars = () => [
+  import('shiki/langs/python.mjs'),
+  import('shiki/langs/javascript.mjs'),
+  import('shiki/langs/typescript.mjs'),
+  import('shiki/langs/c.mjs'),
+  import('shiki/langs/cpp.mjs'),
+  import('shiki/langs/matlab.mjs'),
+  import('shiki/langs/bash.mjs'),
+  import('shiki/langs/json.mjs'),
+  import('shiki/langs/html.mjs'),
+  import('shiki/langs/css.mjs'),
+  import('shiki/langs/http.mjs'),
+  import('shiki/langs/markdown.mjs'),
+  import('shiki/langs/yaml.mjs'),
+  import('shiki/langs/latex.mjs'),
+  import('shiki/langs/diff.mjs'),
+];
+
+const loadThemes = () => [
+  import('shiki/themes/catppuccin-mocha.mjs'),
+  import('shiki/themes/tokyo-night.mjs'),
+  import('shiki/themes/dracula.mjs'),
+  import('shiki/themes/one-dark-pro.mjs'),
+  import('shiki/themes/monokai.mjs'),
+];
 
 const LANGUAGE_ALIASES: Record<string, string> = {
   py: 'python',
@@ -47,7 +59,7 @@ export interface CodeHighlighter {
 }
 
 class ShikiCodeHighlighter implements CodeHighlighter {
-  constructor(private readonly shiki: Highlighter) {}
+  constructor(private readonly shiki: HighlighterCore) {}
 
   highlight(code: string, rawLang: string): string | null {
     const requested = LANGUAGE_ALIASES[rawLang] ?? rawLang;
@@ -65,9 +77,10 @@ let highlighterPromise: Promise<CodeHighlighter> | null = null;
 
 /** Lazily creates the shared highlighter (loads grammars, themes and the regex engine once). */
 export function loadCodeHighlighter(): Promise<CodeHighlighter> {
-  highlighterPromise ??= createHighlighter({
-    themes: Object.values(CODE_THEMES),
-    langs: [...SUPPORTED_LANGUAGES],
+  highlighterPromise ??= createHighlighterCore({
+    themes: loadThemes(),
+    langs: loadGrammars(),
+    engine: createOnigurumaEngine(import('shiki/wasm')),
   }).then((shiki) => new ShikiCodeHighlighter(shiki));
   return highlighterPromise;
 }

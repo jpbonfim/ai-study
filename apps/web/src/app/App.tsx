@@ -1,21 +1,25 @@
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation, useNavigate } from 'react-router';
 import { ApiError, api } from '../api/client';
-import { AccountPage } from '../features/account/AccountPage';
-import { AdminPage } from '../features/admin/AdminPage';
 import { HomePage } from '../features/home/HomePage';
 import { LoginPage } from '../features/login/LoginPage';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
-import { NotebookPage } from '../features/notebook/NotebookPage';
-import { QuestionBankPage } from '../features/notebook/QuestionBankPage';
-import { QuestionPage } from '../features/notebook/QuestionPage';
-import { SettingsPage } from '../features/settings/SettingsPage';
 import { trackLocation } from '../lib/navigation-history';
 import { installCacheShortcut } from '../lib/study-cache';
 import { applyDocumentPreferences, scopeForPath } from '../preferences/document-preferences';
 import { ThemeProvider } from '../preferences/theme';
 import { loginRedirectPath, RequireSession } from './session';
+
+// Pages load on demand (the home and login pages stay in the main bundle).
+const AccountPage = lazy(() => import('../features/account/AccountPage').then((m) => ({ default: m.AccountPage })));
+const AdminPage = lazy(() => import('../features/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
+const NotebookPage = lazy(() => import('../features/notebook/NotebookPage').then((m) => ({ default: m.NotebookPage })));
+const QuestionBankPage = lazy(() =>
+  import('../features/notebook/QuestionBankPage').then((m) => ({ default: m.QuestionBankPage })),
+);
+const QuestionPage = lazy(() => import('../features/notebook/QuestionPage').then((m) => ({ default: m.QuestionPage })));
+const SettingsPage = lazy(() => import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false } },
@@ -81,7 +85,11 @@ function RootLayout() {
     if (!location.hash) window.scrollTo({ top: 0, behavior: 'auto' });
   }, [location.pathname, location.hash]);
 
-  return <Outlet />;
+  return (
+    <Suspense fallback={null}>
+      <Outlet />
+    </Suspense>
+  );
 }
 
 const router = createBrowserRouter([

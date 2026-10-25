@@ -6,7 +6,7 @@ import {
   normalizeSubject,
   type QuestionMeta,
   type Subject,
-} from '@ai-study/content';
+} from '@ai-study/content/model';
 import type { SubjectAccessPolicy } from '../permissions/authorization';
 import type { PermissionRepository } from '../permissions/permission-repository';
 import type { PublicUser } from '../users/user-repository';

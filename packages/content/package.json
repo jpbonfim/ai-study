@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./model": "./src/model/index.ts",
     "./node": "./src/node/index.ts",
     "./sanitize": "./src/sanitize.ts"
   },

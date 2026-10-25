@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { isMarkdownFile } from '@ai-study/content';
+import { isMarkdownFile } from '@ai-study/content/model';
 import { parseDocument } from '@ai-study/content/node';
 
 interface RawDocument {

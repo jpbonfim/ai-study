@@ -300,7 +300,6 @@ export function SettingsPage(_props: { session: SessionInfo }) {
   const [cacheInfo, setCacheInfo] = useState('Calculando tamanho...');
   const [cacheClearing, setCacheClearing] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
-  const previewTextRef = useRef<HTMLDivElement>(null);
   const previewCardRef = useRef<HTMLDivElement>(null);
   const previewCodeRef = useRef<HTMLPreElement>(null);
 
@@ -310,7 +309,6 @@ export function SettingsPage(_props: { session: SessionInfo }) {
   };
 
   useEffect(() => {
-    initTableOptimizer();
     void cacheStats().then((stats) => {
       setCacheInfo(
         stats.count === 0
@@ -323,17 +321,6 @@ export function SettingsPage(_props: { session: SessionInfo }) {
   // Live preview: draft values on the preview box, plus the document-wide properties the
   // previous version also previewed (alignment, math sizes, code theme).
   useEffect(() => {
-    const text = previewTextRef.current;
-    if (text) {
-      text.style.fontFamily = draft.fontFamily;
-      text.style.fontSize = draft.fontSize;
-      text.style.textAlign = draft.textAlign;
-      text.style.setProperty('--reader-font-family', draft.fontFamily);
-      text.style.setProperty('--reader-font-size', draft.fontSize);
-      text.style.setProperty('--reader-text-align', draft.textAlign);
-      text.style.setProperty('text-justify', draft.textAlign === 'justify' ? 'inter-word' : 'auto');
-      text.style.hyphens = draft.textAlign === 'justify' ? 'auto' : 'manual';
-    }
     const root = document.documentElement;
     root.style.setProperty('--reader-text-align', draft.textAlign);
     root.setAttribute('data-text-align', draft.textAlign);
@@ -376,6 +363,8 @@ export function SettingsPage(_props: { session: SessionInfo }) {
         });
       }
     }
+    // The sample table is sized once, with the preview typography already applied.
+    initTableOptimizer();
   }, [draft]);
 
   function save(next: ReadingSettings, message: StatusKind = 'saved') {
@@ -1026,8 +1015,21 @@ export function SettingsPage(_props: { session: SessionInfo }) {
 
                     <div
                       id="preview-text-content"
-                      ref={previewTextRef}
                       className="space-y-3 leading-relaxed transition-all duration-150"
+                      // Applied at render time (not in an effect) so the first paint already uses the
+                      // saved typography instead of transitioning into it.
+                      style={
+                        {
+                          fontFamily: draft.fontFamily,
+                          fontSize: draft.fontSize,
+                          textAlign: draft.textAlign,
+                          textJustify: draft.textAlign === 'justify' ? 'inter-word' : 'auto',
+                          hyphens: draft.textAlign === 'justify' ? 'auto' : 'manual',
+                          '--reader-font-family': draft.fontFamily,
+                          '--reader-font-size': draft.fontSize,
+                          '--reader-text-align': draft.textAlign,
+                        } as React.CSSProperties
+                      }
                     >
                       <h3 className="font-bold text-xl text-[var(--text-primary)]">
                         Teorema da Amostragem de Nyquist-Shannon
