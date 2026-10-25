@@ -61,7 +61,14 @@ export function createApp(config: AppConfig, db: AppDatabase): { app: Hono<AppEn
 /** Serves the built SPA; unknown paths fall back to index.html (client-side routing). */
 function mountSpa(app: Hono<AppEnv>, distDir: string): void {
   const indexHtml = path.join(distDir, 'index.html');
-  app.use('/assets/*', serveStatic({ root: distDir }));
+  // Asset file names carry a content hash, so they never change.
+  app.use(
+    '/assets/*',
+    serveStatic({
+      root: distDir,
+      onFound: (_path, c) => c.header('Cache-Control', 'public, max-age=31536000, immutable'),
+    }),
+  );
   app.use('*', serveStatic({ root: distDir }));
   app.get('*', (c) => {
     if (!fs.existsSync(indexHtml)) return c.text('SPA não compilado (apps/web/dist).', 500);

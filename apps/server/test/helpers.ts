@@ -23,6 +23,8 @@ export async function startTestServer(env: Record<string, string> = {}): Promise
     ADMIN_PASSWORD: ADMIN.password,
     LOGIN_MAX_ATTEMPTS: '3',
     MAX_UPLOAD_MB_NORMAL: '1',
+    // Tests never read a local archive/ that happens to exist in the checkout.
+    ENABLE_LOCAL_ARCHIVE: 'false',
     ...env,
   });
   const database = openDatabase(config.databasePath);

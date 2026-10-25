@@ -5,10 +5,14 @@ import { createApp } from './app';
 import { loadEnvFile, readConfig } from './config';
 import { openDatabase } from './db/client';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-loadEnvFile(path.join(repoRoot, '.env'));
+// Directory holding `.env`, against which relative paths (DATA_DIR, ...) resolve: the repository
+// root (src/ and dist/ are both three levels down), or APP_ROOT for a deployed release.
+const appRoot = process.env.APP_ROOT
+  ? path.resolve(process.env.APP_ROOT)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+loadEnvFile(path.join(appRoot, '.env'));
 
-const config = readConfig(process.env, process.env.APP_CWD ? path.resolve(process.env.APP_CWD) : repoRoot);
+const config = readConfig(process.env, appRoot);
 const database = openDatabase(config.databasePath);
 const { app, services } = createApp(config, database.db);
 

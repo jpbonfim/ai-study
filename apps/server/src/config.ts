@@ -17,8 +17,12 @@ const envSchema = z.object({
   DATA_DIR: z.string().default('./data'),
   /** Optional: directory with the built SPA (apps/web/dist) to serve from this process. */
   WEB_DIST_DIR: z.string().optional(),
-  /** Optional dev overlay: read this user's archive from a local folder (e.g. the skills' archive/). */
-  LOCAL_ARCHIVE_DIR: z.string().optional(),
+  /**
+   * Local archive overlay: one user's archive is read from a local folder (the skills' archive/)
+   * instead of DATA_DIR. On by default outside production, as in the Astro site.
+   */
+  ENABLE_LOCAL_ARCHIVE: z.string().optional(),
+  LOCAL_ARCHIVE_DIR: z.string().default('archive'),
   LOCAL_ARCHIVE_USER_ID: intFromEnv(1),
 
   ADMIN_USERNAME: z.string().default('admin'),
@@ -55,6 +59,13 @@ export function loadEnvFile(envPath: string): void {
   if (fs.existsSync(envPath)) process.loadEnvFile(envPath);
 }
 
+/** Explicit ENABLE_LOCAL_ARCHIVE wins; otherwise the overlay is used outside production when the folder exists. */
+function localArchiveEnabled(flag: string | undefined, nodeEnv: string | undefined, dir: string): boolean {
+  if (flag === 'true' || flag === '1') return true;
+  if (flag === 'false' || flag === '0') return false;
+  return nodeEnv !== 'production' && fs.existsSync(dir) && fs.statSync(dir).isDirectory();
+}
+
 export function readConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): AppConfig {
   const parsed = envSchema.parse(env);
   const resolve = (p: string) => (path.isAbsolute(p) ? p : path.resolve(cwd, p));
@@ -67,7 +78,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.c
     dataDir,
     databasePath: path.join(dataDir, 'study.db'),
     webDistDir: parsed.WEB_DIST_DIR ? resolve(parsed.WEB_DIST_DIR) : null,
-    localArchive: parsed.LOCAL_ARCHIVE_DIR
+    localArchive: localArchiveEnabled(parsed.ENABLE_LOCAL_ARCHIVE, env.NODE_ENV, resolve(parsed.LOCAL_ARCHIVE_DIR))
       ? { dir: resolve(parsed.LOCAL_ARCHIVE_DIR), userId: parsed.LOCAL_ARCHIVE_USER_ID }
       : null,
     initialAdmin: {
