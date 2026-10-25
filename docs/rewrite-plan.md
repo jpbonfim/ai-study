@@ -76,8 +76,9 @@ e as decisões tomadas durante a execução (seção "Registro de decisões").
       sob demanda (rota `lazy`) com pré-carregamento dos dados da página de entrada.
 
 ### Fase 5 — paridade e limpeza
-- [x] Comparação lado a lado: e2e (115 nas duas versões), visual (28 cenários idênticos, também no
-      build de produção), conteúdo (283 documentos).
+- [x] Comparação lado a lado, item a item do inventário (tabela "Evidência" em `docs/FEATURES.md`):
+      e2e (175 nas duas versões + limite de login opcional), visual (28 cenários idênticos, também
+      no build de produção), conteúdo (283 documentos), `sync_archive.py` (dry-run, push, pull).
 - [x] Desempenho (`tests/parity/tools/perf.mjs`, CPU 4× mais lenta, primeiro capítulo visível):
       visita quente 169 ms (antigo: 36 ms, HTML vindo do servidor); fria 321 ms (antigo: 143 ms).
       O servidor deixa de renderizar markdown/KaTeX/Shiki (RSS 227 MB × 295 MB do antigo em uso).
@@ -112,3 +113,8 @@ e as decisões tomadas durante a execução (seção "Registro de decisões").
 - **Fontes por página como antes.** O conjunto de fontes do Google muda por página (itálicos da
   JetBrains Mono só nas configurações), então o script inline do `<head>` escolhe o conjunto pela
   URL antes da pintura e o layout troca nas navegações internas.
+- **Efeitos repetidos não podem reaplicar estado.** O `StrictMode` roda efeitos duas vezes; uma
+  guarda "primeira execução" fez `?type=materia` com uma tag sem capítulos de matéria mostrar um
+  fluxo vazio. A regra "seção sem capítulos da tag → outra seção" é uma função pura do modelo
+  (`sectionForTag`), aplicada antes do primeiro fluxo, e o efeito de troca de tag compara com a
+  última tag vista.
