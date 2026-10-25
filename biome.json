@@ -6,16 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": [
-      "**",
-      "!site",
-      "!.agents",
-      "!scripts",
-      "!**/dist",
-      "!**/*.astro",
-      "!**/*.md",
-      "!**/*.css"
-    ]
+    "includes": ["**", "!site", "!.agents", "!scripts", "!**/dist", "!**/*.astro", "!**/*.md", "!**/*.css"]
   },
   "formatter": {
     "enabled": true,
