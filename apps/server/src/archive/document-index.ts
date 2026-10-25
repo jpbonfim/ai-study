@@ -19,10 +19,13 @@ export interface StoredDocument<TMeta> {
   sha: string;
 }
 
+/** Metadata plus a cheap version id of the file (changes whenever the file changes). */
+export type Indexed<TMeta> = TMeta & { version: string };
+
 interface CachedMeta<TMeta> {
   mtimeMs: number;
   size: number;
-  meta: TMeta;
+  meta: Indexed<TMeta>;
 }
 
 function listMarkdownFiles(dir: string): string[] {
@@ -46,9 +49,9 @@ export class DocumentIndex {
   private readonly chapterCache = new Map<string, CachedMeta<ChapterMeta>>();
   private readonly questionCache = new Map<string, CachedMeta<QuestionMeta>>();
 
-  listChapters(subjectDir: string, materiaSlug: string): ChapterMeta[] {
+  listChapters(subjectDir: string, materiaSlug: string): Indexed<ChapterMeta>[] {
     const seen = new Set<string>();
-    const result: ChapterMeta[] = [];
+    const result: Indexed<ChapterMeta>[] = [];
     for (const file of listMarkdownFiles(path.join(subjectDir, 'resumos'))) {
       const meta = this.readMeta(this.chapterCache, file, (fm) =>
         normalizeChapterMeta(fm, toRelative(subjectDir, file), materiaSlug),
@@ -62,9 +65,9 @@ export class DocumentIndex {
     return result.sort(compareChapters);
   }
 
-  listQuestions(subjectDir: string, materiaSlug: string): QuestionMeta[] {
+  listQuestions(subjectDir: string, materiaSlug: string): Indexed<QuestionMeta>[] {
     const seen = new Set<string>();
-    const result: QuestionMeta[] = [];
+    const result: Indexed<QuestionMeta>[] = [];
     for (const file of listMarkdownFiles(path.join(subjectDir, 'questoes'))) {
       const meta = this.readMeta(this.questionCache, file, (fm) =>
         normalizeQuestionMeta(fm, toRelative(subjectDir, file), materiaSlug),
@@ -76,12 +79,16 @@ export class DocumentIndex {
     return result.sort(compareQuestions);
   }
 
-  readChapter(subjectDir: string, materiaSlug: string, chapterId: string): StoredDocument<ChapterMeta> | null {
+  readChapter(subjectDir: string, materiaSlug: string, chapterId: string): StoredDocument<Indexed<ChapterMeta>> | null {
     const meta = this.listChapters(subjectDir, materiaSlug).find((c) => c.id === chapterId);
     return meta ? readDocument(subjectDir, meta) : null;
   }
 
-  readQuestion(subjectDir: string, materiaSlug: string, questionId: string): StoredDocument<QuestionMeta> | null {
+  readQuestion(
+    subjectDir: string,
+    materiaSlug: string,
+    questionId: string,
+  ): StoredDocument<Indexed<QuestionMeta>> | null {
     const meta = this.listQuestions(subjectDir, materiaSlug).find((q) => q.id === questionId);
     return meta ? readDocument(subjectDir, meta) : null;
   }
@@ -90,13 +97,13 @@ export class DocumentIndex {
     cache: Map<string, CachedMeta<TMeta>>,
     file: string,
     normalize: (frontmatter: Record<string, unknown>) => TMeta,
-  ): TMeta | null {
+  ): Indexed<TMeta> | null {
     try {
       const stat = fs.statSync(file);
       const cached = cache.get(file);
       if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return cached.meta;
       const { frontmatter } = parseDocument(fs.readFileSync(file, 'utf8'));
-      const meta = normalize(frontmatter);
+      const meta = { ...normalize(frontmatter), version: `${Math.floor(stat.mtimeMs)}-${stat.size}` };
       cache.set(file, { mtimeMs: stat.mtimeMs, size: stat.size, meta });
       return meta;
     } catch (err) {

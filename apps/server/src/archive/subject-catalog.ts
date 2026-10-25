@@ -11,7 +11,7 @@ import type { SubjectAccessPolicy } from '../permissions/authorization';
 import type { PermissionRepository } from '../permissions/permission-repository';
 import type { PublicUser } from '../users/user-repository';
 import type { ArchiveStore } from './archive-store';
-import { countMarkdownFiles, type DocumentIndex } from './document-index';
+import { countMarkdownFiles, type DocumentIndex, type Indexed } from './document-index';
 
 /** A subject as seen by a given user: their own, or shared with them by its owner. */
 export interface SubjectView extends Subject {
@@ -27,16 +27,16 @@ export interface OtherSource {
   ownerDisplayName: string;
   ownerUsername: string;
   materiaSlug: string;
-  chapters: ChapterMeta[];
-  questions: QuestionMeta[];
+  chapters: Indexed<ChapterMeta>[];
+  questions: Indexed<QuestionMeta>[];
 }
 
 export interface Notebook {
   subject: SubjectView;
   primaryOwnerId: number;
   isOwnSubject: boolean;
-  chapters: ChapterMeta[];
-  questions: QuestionMeta[];
+  chapters: Indexed<ChapterMeta>[];
+  questions: Indexed<QuestionMeta>[];
   otherSources: OtherSource[];
 }
 

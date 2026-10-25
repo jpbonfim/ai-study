@@ -7,6 +7,7 @@ import { type AppContext, type AppEnv, currentUser, jsonError, parsePositiveInt 
 import type { SubjectAccessPolicy } from '../permissions/authorization';
 import { type ArchiveStore, InvalidPathError, resolveInside } from './archive-store';
 import type { DocumentIndex, StoredDocument } from './document-index';
+import { buildOfflineExport } from './offline-export';
 import type { SubjectCatalog } from './subject-catalog';
 
 const MEDIA_TYPES: Record<string, string> = {
@@ -35,6 +36,7 @@ export function archiveRoutes(deps: ArchiveRouteDeps) {
   app.use('/api/subjects/*', requireUser);
   app.use('/api/documents/*', requireUser);
   app.use('/api/media', requireUser);
+  app.use('/api/exports/*', requireUser);
 
   app.get('/api/subjects', (c) => c.json(deps.catalog.listAccessible(currentUser(c).id)));
 
@@ -78,19 +80,13 @@ export function archiveRoutes(deps: ArchiveRouteDeps) {
     return documentResponse(c, deps.documents.readQuestion(subject.dir, subject.slug, c.req.param('questionId')));
   });
 
-  /** Every document of a subject (used to build the offline export in the browser). */
-  app.get('/api/documents/:ownerId/:slug', (c) => {
+  /** Raw documents and question figures of a subject, for the offline export built in the browser. */
+  app.get('/api/exports/:ownerId/:slug', (c) => {
     const subject = readableSubjectDir(c);
     if (subject instanceof Response) return subject;
-    const chapters = deps.documents
-      .listChapters(subject.dir, subject.slug)
-      .map((meta) => deps.documents.readChapter(subject.dir, subject.slug, meta.id))
-      .filter((doc) => doc !== null);
-    const questions = deps.documents
-      .listQuestions(subject.dir, subject.slug)
-      .map((meta) => deps.documents.readQuestion(subject.dir, subject.slug, meta.id))
-      .filter((doc) => doc !== null);
-    return c.json({ chapters, questions });
+    const ownerId = parsePositiveInt(c.req.param('ownerId')) as number;
+    const name = deps.catalog.readSubject(ownerId, subject.slug)?.name ?? subject.slug;
+    return c.json({ name, ...buildOfflineExport(subject.dir) });
   });
 
   app.get('/api/media', (c) => {

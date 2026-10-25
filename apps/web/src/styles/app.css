@@ -1,0 +1,18 @@
+/* Sources Tailwind must scan besides this app: HTML classes emitted by the content renderer. */
+@source "../../../../packages/content/src";
+
+/* The React root must not introduce a layout box: pages style <body> exactly like before. */
+#root {
+  display: contents;
+}
+
+/* Question statement column stays in view while reading the resolution (desktop). */
+@media (min-width: 1280px) {
+  .question-sticky-col {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 1.5rem !important;
+    align-self: flex-start !important;
+    z-index: 20;
+  }
+}
