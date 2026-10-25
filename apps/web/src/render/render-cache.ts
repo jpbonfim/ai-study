@@ -58,6 +58,9 @@ function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequ
   );
 }
 
+// Open the database early; the first read then does not pay for it.
+void openDb();
+
 export async function readCache<T>(key: string): Promise<T | null> {
   const entry = await run<CacheEntry | undefined>('readonly', (s) => s.get(key));
   if (!entry) return null;

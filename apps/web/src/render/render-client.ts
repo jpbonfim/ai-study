@@ -29,6 +29,10 @@ function getWorker(): Worker {
   return worker;
 }
 
+// Start the worker as soon as a page that renders content loads, so its code downloads and
+// initializes while the page fetches its data.
+getWorker();
+
 function renderInWorker<K extends RenderRequest['kind']>(
   request: Extract<RenderRequest, { kind: K }>,
 ): Promise<RenderResult<K>> {

@@ -1,7 +1,8 @@
-import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { lazy, Suspense, useEffect } from 'react';
+import type { SessionInfo } from '@ai-study/server/api-types';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { type ReactNode, useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation, useNavigate } from 'react-router';
-import { ApiError, api } from '../api/client';
+import { api } from '../api/client';
 import { HomePage } from '../features/home/HomePage';
 import { LoginPage } from '../features/login/LoginPage';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
@@ -9,29 +10,26 @@ import { trackLocation } from '../lib/navigation-history';
 import { installCacheShortcut } from '../lib/study-cache';
 import { applyDocumentPreferences, scopeForPath } from '../preferences/document-preferences';
 import { ThemeProvider } from '../preferences/theme';
-import { loginRedirectPath, RequireSession } from './session';
+import { queryClient } from './query-client';
+import { pageModules } from './route-preload';
+import { RequireSession } from './session';
 
-// Pages load on demand (the home and login pages stay in the main bundle).
-const AccountPage = lazy(() => import('../features/account/AccountPage').then((m) => ({ default: m.AccountPage })));
-const AdminPage = lazy(() => import('../features/admin/AdminPage').then((m) => ({ default: m.AdminPage })));
-const NotebookPage = lazy(() => import('../features/notebook/NotebookPage').then((m) => ({ default: m.NotebookPage })));
-const QuestionBankPage = lazy(() =>
-  import('../features/notebook/QuestionBankPage').then((m) => ({ default: m.QuestionBankPage })),
-);
-const QuestionPage = lazy(() => import('../features/notebook/QuestionPage').then((m) => ({ default: m.QuestionPage })));
-const SettingsPage = lazy(() => import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
-
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false } },
-  queryCache: new QueryCache({
-    onError: (error) => {
-      // An expired session anywhere sends the user back to the login page.
-      if (error instanceof ApiError && error.status === 401 && window.location.pathname !== '/login') {
-        window.location.href = loginRedirectPath(window.location.pathname, window.location.search);
-      }
-    },
-  }),
-});
+/**
+ * Route that loads its page module before rendering (route `lazy`, not React.lazy: no Suspense
+ * boundary, so the page appears as soon as it is ready, without React's fallback throttling).
+ */
+function protectedPage<M>(
+  loadModule: () => Promise<M>,
+  render: (module: M, session: SessionInfo) => ReactNode,
+  options: { admin?: boolean } = {},
+) {
+  return async () => {
+    const module = await loadModule();
+    return {
+      element: <RequireSession admin={options.admin}>{(session) => render(module, session)}</RequireSession>,
+    };
+  };
+}
 
 /** Cross-page effects: preferences scope per route, page-view audit, scroll reset, Alt+C. */
 /** Plain links (e.g. inside rendered content) navigate inside the app instead of reloading it. */
@@ -85,11 +83,7 @@ function RootLayout() {
     if (!location.hash) window.scrollTo({ top: 0, behavior: 'auto' });
   }, [location.pathname, location.hash]);
 
-  return (
-    <Suspense fallback={null}>
-      <Outlet />
-    </Suspense>
-  );
+  return <Outlet />;
 }
 
 const router = createBrowserRouter([
@@ -98,18 +92,21 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/', element: <RequireSession>{(s) => <HomePage session={s} />}</RequireSession> },
-      { path: '/configuracoes', element: <RequireSession>{(s) => <SettingsPage session={s} />}</RequireSession> },
-      { path: '/conta', element: <RequireSession>{(s) => <AccountPage session={s} />}</RequireSession> },
+      { path: '/configuracoes', lazy: protectedPage(pageModules.settings, (m, s) => <m.SettingsPage session={s} />) },
+      { path: '/conta', lazy: protectedPage(pageModules.account, (m, s) => <m.AccountPage session={s} />) },
       { path: '/upload', element: <Navigate to="/conta" replace /> },
-      { path: '/admin', element: <RequireSession admin>{(s) => <AdminPage session={s} />}</RequireSession> },
-      { path: '/:materia', element: <RequireSession>{(s) => <NotebookPage session={s} />}</RequireSession> },
+      {
+        path: '/admin',
+        lazy: protectedPage(pageModules.admin, (m, s) => <m.AdminPage session={s} />, { admin: true }),
+      },
+      { path: '/:materia', lazy: protectedPage(pageModules.notebook, (m, s) => <m.NotebookPage session={s} />) },
       {
         path: '/:materia/questoes',
-        element: <RequireSession>{(s) => <QuestionBankPage session={s} />}</RequireSession>,
+        lazy: protectedPage(pageModules.questionBank, (m, s) => <m.QuestionBankPage session={s} />),
       },
       {
         path: '/:materia/questoes/:slug',
-        element: <RequireSession>{(s) => <QuestionPage session={s} />}</RequireSession>,
+        lazy: protectedPage(pageModules.question, (m, s) => <m.QuestionPage session={s} />),
       },
       { path: '*', element: <NotFoundPage /> },
     ],
