@@ -117,4 +117,7 @@ test('offline export downloads the subject as a single HTML file', async ({ page
   const html = await (await import('node:fs')).promises.readFile((await file.path()) as string, 'utf8');
   expect(html).toContain('Caderno de Estudos Offline');
   expect(html).toContain('Capítulo 2: Amostragem e Reconstrução de Sinais');
+  // Self-contained: theory/resolution become <details> and question figures travel as data URIs.
+  expect(html).toContain('<details class="theory">');
+  expect(html).toMatch(/"\.\/[^"]+\.png":"data:image\/png;base64,/);
 });

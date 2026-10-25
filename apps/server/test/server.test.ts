@@ -105,6 +105,17 @@ describe('authentication', () => {
     const { logs } = server.services.activity.query({ limit: 10, offset: 0 });
     expect(logs.map((l) => l.action)).toContain('login');
   });
+
+  it('records a page view at most once per session and path within 5 minutes', async () => {
+    const cookie = await login(server, ADMIN.username, ADMIN.password);
+    const view = (path: string) => server.request('/api/activity/page-view', json(cookie, { path }));
+    expect((await view('/pds')).status).toBe(204);
+    await view('/pds');
+    await view('/conta');
+    const { logs } = server.services.activity.query({ limit: 50, offset: 0 });
+    const viewed = logs.filter((l) => l.action === 'page_view').map((l) => JSON.parse(l.details ?? '{}').path);
+    expect(viewed.sort()).toEqual(['/conta', '/pds']);
+  });
 });
 
 describe('admin', () => {
