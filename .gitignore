@@ -51,7 +51,7 @@ archive/*
 /archive
 !archive/.gitkeep
 material/
-export/
+/export/
 
 # ============================================================
 # Dados do Servidor, Banco e Variáveis de Ambiente
