@@ -48,7 +48,7 @@ usando `NEW_URL=http://127.0.0.1:4300` nos comandos abaixo.
 | :--- | :--- |
 | `OLD_SITE_URL=http://127.0.0.1:4100 node tests/parity/capture-baseline.mjs` | Grava o HTML de todo capítulo/questão da versão atual em `.parity/baseline` (gitignored: o conteúdo é privado) |
 | `npm run test:parity` | HTML renderizado pelo `packages/content` × baseline, documento a documento |
-| `npm run test:e2e` | Specs do Playwright nos projetos `old` e `new` (`--project=new` para só um) |
+| `npm run test:e2e` | Specs do Playwright nos projetos `old` e `new` (`--project=new` para só um). O teste do limite de login só roda com `RUN_RATE_LIMIT=1`, por último: ele bloqueia logins desta máquina, então reinicie os servidores depois |
 | `node tests/parity/tools/visual-diff.mjs [filtro]` | Screenshots dos mesmos cenários nas duas versões, diferença pixel a pixel (`.parity/visual`) |
 | `node tests/parity/tools/perf.mjs <url> [caminho] [lentidão-cpu]` | Tempo até o primeiro capítulo aparecer, visita fria e quente |
 
