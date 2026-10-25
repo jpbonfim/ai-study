@@ -24,7 +24,10 @@ async function submitUpload(form: HTMLFormElement): Promise<Feedback> {
       ? { type: 'success', message: data.message || 'Upload concluído com sucesso!' }
       : { type: 'error', message: data.error || 'Erro ao processar upload.' };
   } catch (err) {
-    return { type: 'error', message: `Falha ao enviar: ${err instanceof Error ? err.message : 'Erro de conexão com o servidor.'}` };
+    return {
+      type: 'error',
+      message: `Falha ao enviar: ${err instanceof Error ? err.message : 'Erro de conexão com o servidor.'}`,
+    };
   }
 }
 
@@ -49,7 +52,6 @@ export function AccountPage({ session }: { session: SessionInfo }) {
 
   async function onFullUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // biome-ignore lint/suspicious/noAlert: destructive action confirmation, as before.
     if (!window.confirm('Deseja realmente substituir TODO o seu acervo de estudos?')) return;
     const form = event.currentTarget;
     setFullUploading(true);
@@ -134,7 +136,12 @@ export function AccountPage({ session }: { session: SessionInfo }) {
                     strokeWidth="2"
                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
                   />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 <span>Painel Admin</span>
               </Link>
@@ -178,7 +185,12 @@ export function AccountPage({ session }: { session: SessionInfo }) {
           >
             <div className="space-y-1">
               <span className="font-bold text-sm text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors flex items-center gap-2">
-                <svg className="w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-[var(--accent)] shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -202,7 +214,12 @@ export function AccountPage({ session }: { session: SessionInfo }) {
             <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-page)] flex flex-col justify-between space-y-3 shadow-2xs min-w-0">
               <div className="space-y-1">
                 <span className="font-bold text-sm text-[var(--text-primary)] flex items-center gap-2 sans-ui">
-                  <svg className="w-4 h-4 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-4 h-4 text-[var(--accent)] shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -275,7 +292,8 @@ export function AccountPage({ session }: { session: SessionInfo }) {
           </div>
           <p>
             O envio de um novo archive completo <strong>eliminará e substituirá permanentemente</strong> todas as suas
-            matérias, resumos, questões e imagens existentes no servidor. Recomenda-se baixar um backup antes de prosseguir.
+            matérias, resumos, questões e imagens existentes no servidor. Recomenda-se baixar um backup antes de
+            prosseguir.
           </p>
           <p className="text-[11px] opacity-90">
             Limite de upload: <strong>{uploadLimitMb} MB</strong>. O arquivo ZIP será automaticamente descompactado e
@@ -296,8 +314,8 @@ export function AccountPage({ session }: { session: SessionInfo }) {
 
           <div className="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-2">
             <label htmlFor="confirm-text-full" className="block sans-ui text-xs font-bold text-[var(--text-primary)]">
-              Digite <span className="font-mono text-red-500 font-extrabold tracking-wider">CONFIRMAR</span> para liberar o
-              envio:
+              Digite <span className="font-mono text-red-500 font-extrabold tracking-wider">CONFIRMAR</span> para
+              liberar o envio:
             </label>
             <input
               type="text"
@@ -348,8 +366,8 @@ export function AccountPage({ session }: { session: SessionInfo }) {
             <span>Aviso de Substituição Parcial</span>
           </div>
           <p>
-            O envio atualizará exclusivamente o conteúdo da matéria indicada. Se a pasta já existir, ela será substituída
-            pelos novos arquivos do ZIP.
+            O envio atualizará exclusivamente o conteúdo da matéria indicada. Se a pasta já existir, ela será
+            substituída pelos novos arquivos do ZIP.
           </p>
         </div>
 

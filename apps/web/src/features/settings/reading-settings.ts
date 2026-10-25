@@ -42,7 +42,10 @@ export const CODE_THEME_LABELS: Record<string, string> = {
 };
 
 /** Card colors of the code preview for each code theme. */
-export const CODE_THEME_COLORS: Record<string, { bg: string; headerBg: string; border: string; text: string; badge: string }> = {
+export const CODE_THEME_COLORS: Record<
+  string,
+  { bg: string; headerBg: string; border: string; text: string; badge: string }
+> = {
   mocha: { bg: '#1e1e2e', headerBg: '#181825', border: '#313244', text: '#cdd6f4', badge: '#cba6f7' },
   tokyo: { bg: '#1a1b26', headerBg: '#16161e', border: '#292e42', text: '#c0caf5', badge: '#7aa2f7' },
   dracula: { bg: '#282a36', headerBg: '#21222c', border: '#44475a', text: '#f8f8f2', badge: '#bd93f9' },
@@ -136,4 +139,3 @@ export function persistSettings(settings: ReadingSettings): void {
   root.style.setProperty('--katex-script-scale', settings.mathScriptScale);
   root.style.setProperty('--katex-min-font-size', settings.mathMinSize);
 }
-

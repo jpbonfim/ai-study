@@ -41,7 +41,10 @@ export function useContentEnhancers(): () => void {
         }
       }
     });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-code-theme'] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-code-theme'],
+    });
     return () => observer.disconnect();
   }, []);
 

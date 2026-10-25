@@ -21,7 +21,11 @@ export function replaceQueryParam(name: string, value: string | null): void {
  * @param defaultTag tag implied by the page (e.g. the tag of the open question).
  * @param otherTagsToggleAvailable whether the page offers the "Tags de outros" switch.
  */
-export function useStudyState(materiaSlug: string, defaultTag: string | null, otherTagsToggleAvailable: boolean): StudyState {
+export function useStudyState(
+  materiaSlug: string,
+  defaultTag: string | null,
+  otherTagsToggleAvailable: boolean,
+): StudyState {
   const [tag, setTag] = useState<string | null>(() => {
     const urlTag = new URLSearchParams(window.location.search).get('tag');
     return urlTag || defaultTag || readItem(STORAGE_KEYS.selectedTag(materiaSlug)) || null;

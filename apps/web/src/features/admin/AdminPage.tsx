@@ -39,7 +39,8 @@ const LOG_ACTIONS: [string, string][] = [
 const formatDate = (value: string | null | undefined) => (value ? new Date(value).toLocaleDateString('pt-BR') : '');
 
 /** SQLite timestamps are UTC without a zone marker. */
-const parseTimestamp = (value: string | null) => new Date(value && !value.includes('T') ? `${value.replace(' ', 'T')}Z` : (value ?? ''));
+const parseTimestamp = (value: string | null) =>
+  new Date(value && !value.includes('T') ? `${value.replace(' ', 'T')}Z` : (value ?? ''));
 
 function Modal({ open, children }: { open: boolean; children: ReactNode }) {
   return (
@@ -51,7 +52,17 @@ function Modal({ open, children }: { open: boolean; children: ReactNode }) {
   );
 }
 
-function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
+function TabButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: string;
+  label: string;
+}) {
   return (
     <button
       type="button"
@@ -135,7 +146,11 @@ function UsersTab({
                 </td>
                 <td className="p-3.5 text-[var(--text-muted)] font-mono">{formatDate(u.createdAt)}</td>
                 <td className="p-3.5 text-right space-x-2">
-                  <button type="button" onClick={() => onEdit(u)} className="text-[var(--accent)] hover:underline cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(u)}
+                    className="text-[var(--accent)] hover:underline cursor-pointer"
+                  >
                     Editar
                   </button>
                   <button
@@ -146,7 +161,11 @@ function UsersTab({
                     Senha
                   </button>
                   {u.id !== currentUserId && (
-                    <button type="button" onClick={() => onDelete(u)} className="text-red-500 hover:underline cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => onDelete(u)}
+                      className="text-red-500 hover:underline cursor-pointer"
+                    >
                       Excluir
                     </button>
                   )}
@@ -174,12 +193,10 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
     event.preventDefault();
     const materia = ownerMaterias.find((m) => m.slug === materiaSlug);
     if (!ownerId || !grantedId || !materiaSlug || !materia?.code) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert('Preencha todos os campos da permissão.');
       return;
     }
     if (ownerId === grantedId) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert('O dono e o beneficiado não podem ser a mesma pessoa.');
       return;
     }
@@ -188,20 +205,17 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
       onAlert({ type: 'success', message: 'Permissão concedida com sucesso!' });
       onChanged();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert(err instanceof Error ? err.message : 'Erro ao conceder permissão.');
     }
   }
 
   async function onRevoke(id: number) {
-    // biome-ignore lint/suspicious/noAlert: destructive action confirmation, as before.
     if (!window.confirm('Deseja realmente revogar esta permissão de acesso?')) return;
     try {
       await api.admin.revoke(id);
       onAlert({ type: 'success', message: 'Permissão revogada com sucesso.' });
       onChanged();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert(err instanceof Error ? err.message : 'Erro ao revogar permissão.');
     }
   }
@@ -215,8 +229,8 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
       <div>
         <h2 className="font-serif text-2xl font-bold text-[var(--text-primary)]">Permissões de Compartilhamento</h2>
         <p className="font-serif text-xs text-[var(--text-secondary)] italic">
-          Conceda acesso a uma disciplina de um usuário para outro. Se o código da disciplina coincidir, o usuário verá o
-          toggle de tags cruzadas.
+          Conceda acesso a uma disciplina de um usuário para outro. Se o código da disciplina coincidir, o usuário verá
+          o toggle de tags cruzadas.
         </p>
       </div>
 
@@ -227,7 +241,10 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
 
         <form id="grant-permission-form" className="grid grid-cols-1 sm:grid-cols-3 gap-4" onSubmit={onGrant}>
           <div className="space-y-1">
-            <label htmlFor="perm-owner-select" className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]">
+            <label
+              htmlFor="perm-owner-select"
+              className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]"
+            >
               1. Usuário de Origem (Dono):
             </label>
             <select
@@ -250,7 +267,10 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="perm-materia-select" className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]">
+            <label
+              htmlFor="perm-materia-select"
+              className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]"
+            >
               2. Matéria a Compartilhar:
             </label>
             <select
@@ -271,7 +291,10 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="perm-granted-select" className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]">
+            <label
+              htmlFor="perm-granted-select"
+              className="block sans-ui text-xs font-semibold text-[var(--text-secondary)]"
+            >
               3. Usuário Beneficiado:
             </label>
             <select
@@ -324,7 +347,8 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
                   <td className="p-3.5 font-mono font-bold text-[var(--accent)]">{p.subject_code}</td>
                   <td className="p-3.5 font-mono text-[var(--text-muted)]">{p.materia_slug}</td>
                   <td className="p-3.5 text-[var(--text-primary)]">
-                    {p.owner_display_name} <span className="text-[var(--text-muted)] font-mono">(@{p.owner_username})</span>
+                    {p.owner_display_name}{' '}
+                    <span className="text-[var(--text-muted)] font-mono">(@{p.owner_username})</span>
                   </td>
                   <td className="p-3.5 text-[var(--text-primary)]">
                     {p.granted_display_name}{' '}
@@ -332,7 +356,11 @@ function PermissionsTab({ onAlert, onChanged }: { onAlert: (alert: Alert) => voi
                   </td>
                   <td className="p-3.5 text-[var(--text-muted)] font-mono">{formatDate(p.granted_at)}</td>
                   <td className="p-3.5 text-right">
-                    <button type="button" onClick={() => onRevoke(p.id)} className="text-red-500 hover:underline cursor-pointer">
+                    <button
+                      type="button"
+                      onClick={() => onRevoke(p.id)}
+                      className="text-red-500 hover:underline cursor-pointer"
+                    >
                       Revogar
                     </button>
                   </td>
@@ -380,8 +408,8 @@ function LogsTab({ users }: { users: PublicUser[] }) {
         <div>
           <h2 className="font-serif text-2xl font-bold text-[var(--text-primary)]">Logs de Auditoria e Atividade</h2>
           <p className="font-serif text-xs text-[var(--text-secondary)] italic">
-            Registros detalhados de logins, acessos a cadernos, uploads e ações administrativas com retenção automática de
-            90 dias.
+            Registros detalhados de logins, acessos a cadernos, uploads e ações administrativas com retenção automática
+            de 90 dias.
           </p>
         </div>
         <div className="sans-ui text-xs text-[var(--text-muted)] font-mono" id="logs-total-indicator">
@@ -503,7 +531,10 @@ function LogsTab({ users }: { users: PublicUser[] }) {
                       {log.action}
                     </span>
                   </td>
-                  <td className="p-3 font-sans text-xs text-[var(--text-secondary)] max-w-xs truncate" title={log.details || ''}>
+                  <td
+                    className="p-3 font-sans text-xs text-[var(--text-secondary)] max-w-xs truncate"
+                    title={log.details || ''}
+                  >
                     {log.details || '—'}
                   </td>
                   <td className="p-3 text-[var(--text-muted)] whitespace-nowrap">{log.ip_address || '—'}</td>
@@ -582,7 +613,6 @@ export function AdminPage({ session }: { session: SessionInfo }) {
       form.reset();
       refreshAll();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert(err instanceof Error ? err.message : 'Erro ao criar usuário.');
     }
   }
@@ -597,7 +627,6 @@ export function AdminPage({ session }: { session: SessionInfo }) {
       setEditing(null);
       refreshAll();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as the other admin actions.
       window.alert(err instanceof Error ? err.message : 'Erro ao atualizar usuário.');
     }
   }
@@ -613,14 +642,12 @@ export function AdminPage({ session }: { session: SessionInfo }) {
       setPasswordFor(null);
       form.reset();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert(err instanceof Error ? err.message : 'Erro ao alterar senha.');
     }
   }
 
   async function onDelete(user: PublicUser) {
     if (
-      // biome-ignore lint/suspicious/noAlert: destructive action confirmation, as before.
       !window.confirm(
         `Tem certeza que deseja EXCLUIR permanentemente o usuário @${user.username} e todos os seus cadernos? Esta ação não pode ser desfeita.`,
       )
@@ -632,7 +659,6 @@ export function AdminPage({ session }: { session: SessionInfo }) {
       setAlert({ type: 'success', message: `Usuário @${user.username} excluído com sucesso.` });
       refreshAll();
     } catch (err) {
-      // biome-ignore lint/suspicious/noAlert: same feedback as before.
       window.alert(err instanceof Error ? err.message : 'Erro ao excluir usuário.');
     }
   }
@@ -651,7 +677,9 @@ export function AdminPage({ session }: { session: SessionInfo }) {
                 ADMINISTRADOR
               </span>
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">Painel de Administração</h1>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+              Painel de Administração
+            </h1>
             <p className="font-serif text-sm text-[var(--text-secondary)] italic">
               Gerencie usuários, permissões de compartilhamento de disciplinas e monitore logs do sistema.
             </p>
@@ -741,7 +769,14 @@ export function AdminPage({ session }: { session: SessionInfo }) {
             <label htmlFor="create-display-name" className="block font-semibold text-[var(--text-secondary)]">
               Nome de Exibição:
             </label>
-            <input id="create-display-name" type="text" name="displayName" required placeholder="ex: João Silva" className={MODAL_INPUT} />
+            <input
+              id="create-display-name"
+              type="text"
+              name="displayName"
+              required
+              placeholder="ex: João Silva"
+              className={MODAL_INPUT}
+            />
           </div>
           <div className="space-y-1">
             <label htmlFor="create-password" className="block font-semibold text-[var(--text-secondary)]">
@@ -767,7 +802,12 @@ export function AdminPage({ session }: { session: SessionInfo }) {
             </select>
           </div>
           <div className="flex items-center justify-end gap-2 pt-3">
-            <button type="button" id="close-create-user-modal" className={CANCEL_BUTTON} onClick={() => setCreateOpen(false)}>
+            <button
+              type="button"
+              id="close-create-user-modal"
+              className={CANCEL_BUTTON}
+              onClick={() => setCreateOpen(false)}
+            >
               Cancelar
             </button>
             <button type="submit" className={PRIMARY_BUTTON}>
@@ -843,7 +883,12 @@ export function AdminPage({ session }: { session: SessionInfo }) {
             />
           </div>
           <div className="flex items-center justify-end gap-2 pt-3">
-            <button type="button" id="close-password-modal" className={CANCEL_BUTTON} onClick={() => setPasswordFor(null)}>
+            <button
+              type="button"
+              id="close-password-modal"
+              className={CANCEL_BUTTON}
+              onClick={() => setPasswordFor(null)}
+            >
               Cancelar
             </button>
             <button type="submit" className={PRIMARY_BUTTON}>

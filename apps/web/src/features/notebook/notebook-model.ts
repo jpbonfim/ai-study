@@ -158,7 +158,11 @@ export function buildToc(entries: ChapterEntry[]): TocItem[] {
 }
 
 /** Section shown first on `/:materia`: `?type`, else the one that has chapters for the tag. */
-export function initialSectionFor(entries: ChapterEntry[], typeParam: string | null, tagParam: string | null): StudyType {
+export function initialSectionFor(
+  entries: ChapterEntry[],
+  typeParam: string | null,
+  tagParam: string | null,
+): StudyType {
   if (typeParam === 'materia' || typeParam === 'questoes') return typeParam;
   const hasMateria = entries.some((e) => e.meta.type === 'materia');
   const hasQuestoes = entries.some((e) => e.meta.type !== 'materia');

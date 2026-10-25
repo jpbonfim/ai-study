@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { HeaderActions } from '../../components/HeaderActions';
 import { DesktopSidebarOpenButton, MobileMenuIcon, SidebarBackdrop } from '../../components/SidebarChrome';
 import { usePageChrome } from '../../lib/page-chrome';
-import { recordVisitedQuestion, readRecentQuestions, saveStudyPosition } from '../../lib/study-history';
+import { readRecentQuestions, recordVisitedQuestion, saveStudyPosition } from '../../lib/study-history';
 import { useSidebar } from '../../lib/use-sidebar';
 import { readItem, STORAGE_KEYS, writeItem } from '../../preferences/storage';
 import { downloadOfflineExport } from '../export/offline-export';
@@ -97,7 +97,8 @@ export function StudyLayout({
     const index = new Map<string, { title: string; type: StudyType; parentId: string | null }>();
     for (const chapter of toc) {
       index.set(chapter.id, { title: chapter.title, type: chapter.type, parentId: null });
-      for (const sub of chapter.subsections) index.set(sub.id, { title: sub.title, type: chapter.type, parentId: chapter.id });
+      for (const sub of chapter.subsections)
+        index.set(sub.id, { title: sub.title, type: chapter.type, parentId: chapter.id });
     }
     return index;
   }, [toc]);
@@ -156,7 +157,14 @@ export function StudyLayout({
   // ---------------------------------------------------------------------------------------------
   const activeIdRef = useRef<string | null>(null);
   const updateActiveSection = useCallback(() => {
-    const candidates: { id: string; top: number; docTop: number; title: string; parentId: string | null; type: StudyType }[] = [];
+    const candidates: {
+      id: string;
+      top: number;
+      docTop: number;
+      title: string;
+      parentId: string | null;
+      type: StudyType;
+    }[] = [];
     for (const chapter of toc) {
       if (activeTag && !chapter.tags.includes(activeTag)) continue;
       for (const id of [chapter.id, ...chapter.subsections.map((s) => s.id)]) {
@@ -217,6 +225,7 @@ export function StudyLayout({
     return () => window.removeEventListener('scroll', onScroll);
   }, [updateActiveSection]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-evaluate the active section after a tag change.
   useEffect(() => {
     const timer = setTimeout(updateActiveSection, 60);
     return () => clearTimeout(timer);
@@ -254,7 +263,8 @@ export function StudyLayout({
       if (!target) return false;
 
       const headerOffset = isMobile ? 70 : 40;
-      const top = () => Math.max(0, (target as HTMLElement).getBoundingClientRect().top + window.scrollY - headerOffset);
+      const top = () =>
+        Math.max(0, (target as HTMLElement).getBoundingClientRect().top + window.scrollY - headerOffset);
       const destination = top();
       const isClose = Math.abs(destination - window.scrollY) <= window.innerHeight * 2;
       const smooth = preferSmooth && !lazyLoaded && isClose;
@@ -262,10 +272,12 @@ export function StudyLayout({
       if (!smooth) {
         // Re-align after late reflows (fonts, KaTeX, images).
         requestAnimationFrame(() => {
-          if (target?.isConnected && Math.abs(top() - window.scrollY) > 2) window.scrollTo({ top: top(), behavior: 'auto' });
+          if (target?.isConnected && Math.abs(top() - window.scrollY) > 2)
+            window.scrollTo({ top: top(), behavior: 'auto' });
         });
         setTimeout(() => {
-          if (target?.isConnected && Math.abs(top() - window.scrollY) > 4) window.scrollTo({ top: top(), behavior: 'auto' });
+          if (target?.isConnected && Math.abs(top() - window.scrollY) > 4)
+            window.scrollTo({ top: top(), behavior: 'auto' });
         }, 80);
       }
 
@@ -352,9 +364,12 @@ export function StudyLayout({
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
-      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href*="/questoes/"], a[data-question-id]');
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+        'a[href*="/questoes/"], a[data-question-id]',
+      );
       if (!link) return;
-      const id = link.getAttribute('data-question-id') || link.getAttribute('href')?.match(/\/questoes\/([^/?#]+)/)?.[1];
+      const id =
+        link.getAttribute('data-question-id') || link.getAttribute('href')?.match(/\/questoes\/([^/?#]+)/)?.[1];
       if (!id || id === 'questoes') return;
       recordVisitedQuestion(slug, id);
       if (link.classList.contains('sidebar-question-item')) setRecentIds(readRecentQuestions(slug));
@@ -399,7 +414,10 @@ export function StudyLayout({
             <MobileMenuIcon className="w-4 h-4" />
           </button>
           <div className="min-w-0 flex-1 flex items-center">
-            <span id="mobile-current-section" className="font-serif text-sm font-bold truncate text-[var(--text-primary)] leading-normal">
+            <span
+              id="mobile-current-section"
+              className="font-serif text-sm font-bold truncate text-[var(--text-primary)] leading-normal"
+            >
               {mobileTitle}
             </span>
           </div>
@@ -423,7 +441,12 @@ export function StudyLayout({
                   className="sans-ui inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
                   </svg>
                   <span>Todas as Matérias</span>
                 </Link>
@@ -437,7 +460,10 @@ export function StudyLayout({
                 <div className="flex items-start justify-between gap-2 mt-1">
                   <div className="min-w-0 flex-1">
                     <h2 className="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug">
-                      <Link to={`/${slug}${ownerQuery}`} className="hover:text-[var(--accent)] transition-colors inline">
+                      <Link
+                        to={`/${slug}${ownerQuery}`}
+                        className="hover:text-[var(--accent)] transition-colors inline"
+                      >
                         {subject.name}
                       </Link>
                       {showOwnerBadge && (
@@ -461,7 +487,12 @@ export function StudyLayout({
                     title={`Baixar todo o conteúdo de ${subject.name} em HTML offline standalone`}
                     aria-label={`Baixar ${subject.name} offline`}
                   >
-                    <svg className="w-4 h-4 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-4 h-4 transition-transform group-hover:translate-y-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"

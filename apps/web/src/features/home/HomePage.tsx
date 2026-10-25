@@ -13,12 +13,7 @@ export function subjectHref(subject: SubjectView): string {
   return subject.isShared ? `/${subject.slug}?owner=${subject.ownerUserId}` : `/${subject.slug}`;
 }
 
-const normalizeText = (text: string) =>
-  (text || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim();
+const normalizeText = (text: string) => (text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 
 /** Subjects ordered by recent access (most recent first), then in their default order. */
 function orderByRecentAccess(subjects: SubjectView[]): SubjectView[] {
@@ -57,13 +52,19 @@ function ContinueStudying() {
     href = last.lastUrl || last.url || `/${last.slug}`;
     if (href.includes('/questoes/')) {
       buttonText = 'Continuar Questão';
-      description = last.lastSectionTitle ? `Última questão: ${last.lastSectionTitle}` : `Questão Resolvida — ${last.name}`;
+      description = last.lastSectionTitle
+        ? `Última questão: ${last.lastSectionTitle}`
+        : `Questão Resolvida — ${last.name}`;
     } else if (href.includes('#')) {
       buttonText = 'Continuar Leitura';
-      description = last.lastSectionTitle ? `Continuar em: ${last.lastSectionTitle}` : `${last.period || ''} — Caderno Integral`;
+      description = last.lastSectionTitle
+        ? `Continuar em: ${last.lastSectionTitle}`
+        : `${last.period || ''} — Caderno Integral`;
     } else {
       buttonText = 'Continuar Caderno';
-      description = last.lastSectionTitle ? `Última seção: ${last.lastSectionTitle}` : `${last.period || ''} — Caderno Integral`;
+      description = last.lastSectionTitle
+        ? `Última seção: ${last.lastSectionTitle}`
+        : `${last.period || ''} — Caderno Integral`;
     }
     if (last.visitedAt) {
       const dt = new Date(last.visitedAt);
@@ -72,7 +73,10 @@ function ContinueStudying() {
   }
 
   return (
-    <section id="recent-section" className="p-6 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] space-y-3">
+    <section
+      id="recent-section"
+      className="p-6 rounded-lg border-2 border-[var(--accent)] bg-[var(--bg-surface)] space-y-3"
+    >
       <div className="sans-ui flex items-center justify-between text-xs text-[var(--text-muted)] border-b border-[var(--border-subtle)] pb-2">
         <span className="font-mono font-bold uppercase tracking-wider text-[var(--accent)] flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
@@ -156,6 +160,7 @@ function SubjectNavItem({ subject, index }: { subject: SubjectView; index: numbe
       {content}
     </Link>
   ) : (
+    // biome-ignore lint/a11y/useValidAnchor: subjects without content keep the previous inert "#" link.
     <a href="#" {...props}>
       {content}
     </a>
@@ -168,7 +173,9 @@ function SubjectCard({ subject }: { subject: SubjectView }) {
     <article className="h-[200px] p-4 sm:p-4.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] hover:border-[var(--accent)] transition-all duration-150 flex flex-col justify-between overflow-hidden shadow-2xs group">
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-[var(--border-subtle)] shrink-0 text-xs">
         <div className="sans-ui flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <span className="font-mono font-bold text-[var(--accent)] uppercase tracking-wider shrink-0">{subject.code}</span>
+          <span className="font-mono font-bold text-[var(--accent)] uppercase tracking-wider shrink-0">
+            {subject.code}
+          </span>
           <span className="text-[var(--text-muted)] shrink-0">•</span>
           <span className="text-[var(--text-secondary)] truncate text-[11px] sm:text-xs">{subject.institution}</span>
           {subject.isShared && (
@@ -266,7 +273,9 @@ export function HomePage({ session }: { session: SessionInfo }) {
           >
             <MobileMenuIcon className="w-5 h-5" />
           </button>
-          <span className="font-serif text-sm font-bold truncate text-[var(--text-primary)]">Biblioteca de Estudos</span>
+          <span className="font-serif text-sm font-bold truncate text-[var(--text-primary)]">
+            Biblioteca de Estudos
+          </span>
         </div>
       </header>
 
@@ -287,7 +296,9 @@ export function HomePage({ session }: { session: SessionInfo }) {
                 </span>
                 <HeaderActions onCloseSidebar={sidebar.close} />
               </div>
-              <h2 className="font-serif text-xl font-bold text-[var(--text-primary)] leading-snug">Cadernos de Estudo</h2>
+              <h2 className="font-serif text-xl font-bold text-[var(--text-primary)] leading-snug">
+                Cadernos de Estudo
+              </h2>
               <p className="font-serif text-xs text-[var(--text-secondary)] italic">
                 Selecione a disciplina desejada na lista abaixo para abrir o material.
               </p>
@@ -306,7 +317,12 @@ export function HomePage({ session }: { session: SessionInfo }) {
               <div className="relative group">
                 <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center text-[var(--text-muted)] group-focus-within:text-[var(--accent)] transition-colors duration-200">
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -397,7 +413,10 @@ export function HomePage({ session }: { session: SessionInfo }) {
         <SidebarBackdrop id="home-sidebar-backdrop" open={sidebar.mobileOpen} onClose={sidebar.closeMobile} />
         <DesktopSidebarOpenButton onClick={sidebar.expandDesktop} />
 
-        <main id="main-content-area" className="flex-1 lg:pl-80 w-full min-w-0 transition-[padding] duration-200 overflow-x-clip">
+        <main
+          id="main-content-area"
+          className="flex-1 lg:pl-80 w-full min-w-0 transition-[padding] duration-200 overflow-x-clip"
+        >
           <div className="max-w-3xl mx-auto px-4 sm:px-8 lg:px-12 py-10 sm:py-16 space-y-10 w-full min-w-0">
             <header className="pb-6 border-b border-[var(--border-strong)] space-y-2">
               <span className="sans-ui text-xs font-mono uppercase tracking-widest text-[var(--accent)] font-semibold">
@@ -425,7 +444,9 @@ export function HomePage({ session }: { session: SessionInfo }) {
             </section>
 
             <footer className="pt-8 border-t border-[var(--border-subtle)] sans-ui text-xs text-[var(--text-muted)] flex flex-col sm:flex-row justify-between gap-4 text-center sm:text-left">
-              <div>Renderização matemática completa com KaTeX • Rolagem horizontal independente em tabelas e equações</div>
+              <div>
+                Renderização matemática completa com KaTeX • Rolagem horizontal independente em tabelas e equações
+              </div>
               <div>Estilo clássico de livro acadêmico</div>
             </footer>
           </div>

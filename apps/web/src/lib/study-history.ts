@@ -65,7 +65,8 @@ export function saveStudyPosition(
   let description = sectionTitle || pageTitle;
   if (!sectionTitle) {
     if (pathname.includes('/questoes/')) description = pageTitle;
-    else if (pathname.endsWith('/questoes') || pathname.endsWith('/questoes/')) description = 'Banco de Questões Resolvidas';
+    else if (pathname.endsWith('/questoes') || pathname.endsWith('/questoes/'))
+      description = 'Banco de Questões Resolvidas';
     else if (hash) {
       const anchor = document.querySelector(`a[href*="${hash.replaceAll('"', '\\"')}"]`);
       if (anchor?.textContent) description = anchor.textContent.trim();

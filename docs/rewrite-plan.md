@@ -38,6 +38,9 @@ e as decisões tomadas durante a execução (seção "Registro de decisões").
 | Cache | Três camadas (memória, SQLite `compiled_mdx_cache`, HTML em `localStorage`) + arquivo de epoch | Cache do HTML renderizado em IndexedDB por hash do conteúdo; `clear-server-cache.sh` fica obsoleto |
 | Configurações → "Ir para Disciplina" | Listava sempre as matérias do usuário 1 | Lista as matérias do usuário logado |
 | Admin → "Editar" usuário | Botão chamava função inexistente (não fazia nada) | Abre modal de edição (nome de exibição e perfil), usando a API que já existia |
+| Tags de outros usuários | Capítulos de outro usuário não carregavam quando a matéria dele tinha outro slug (erro "Ocorreu uma falha") | Carregam do slug do dono |
+| Admin → logs (horário) | Horário UTC exibido como se fosse local | Convertido para o fuso local |
+| Diagramas Mermaid | `securityLevel: 'loose'` (scripts e cliques em diagramas de conteúdo) | `strict` |
 | Admin → logs | Detalhes dos logs inseridos com `innerHTML` (XSS via nome de usuário no login) | Renderizados como texto |
 
 ## Fases

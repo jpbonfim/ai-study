@@ -101,7 +101,8 @@ function QuestionView({
 
   const q = question.meta;
   const primaryTag = q.tags[0] || 'teste-1';
-  const activeTagKey = params.get('tag') || (question.isFromOther ? namespacedTag(question.ownerUserId, primaryTag) : primaryTag);
+  const activeTagKey =
+    params.get('tag') || (question.isFromOther ? namespacedTag(question.ownerUserId, primaryTag) : primaryTag);
   const study = useStudyState(slug, activeTagKey, hasOtherUsersTags && notebook.isOwnSubject);
 
   const rendered = useQuery({
@@ -226,7 +227,9 @@ function CollapsibleCard({
           <span className="sans-ui font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--accent)] shrink-0">
             {symbol}
           </span>
-          <span className="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)] tracking-tight">{title}</span>
+          <span className="sans-ui text-xs sm:text-sm font-semibold text-[var(--text-primary)] tracking-tight">
+            {title}
+          </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className={`${kind}-card-status sans-ui text-xs text-[var(--text-muted)] font-medium`}>
@@ -255,7 +258,13 @@ function Html({ html, className }: { html: string; className?: string }) {
  * Two-column question view: sticky statement with figures and options on the left; theory and
  * resolution cards (with the answer key inside the resolution) on the right.
  */
-function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta>; rendered: RenderedQuestion | undefined }) {
+function QuestionToggle({
+  question,
+  rendered,
+}: {
+  question: Indexed<QuestionMeta>;
+  rendered: RenderedQuestion | undefined;
+}) {
   const [theoryOpen, setTheoryOpen] = useState(false);
   const [resolutionOpen, setResolutionOpen] = useState(false);
   const isMultipleChoice = question.type === 'multipla_escolha' && question.options.length > 0;
@@ -305,7 +314,11 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
   const sectionsHidden = rendered !== undefined && !hasResolution && Boolean(rendered.theoryHtml || rendered.bodyHtml);
 
   return (
-    <div className="question-container not-prose" data-question-type={question.type} data-correct={question.correctOption}>
+    <div
+      className="question-container not-prose"
+      data-question-type={question.type}
+      data-correct={question.correctOption}
+    >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
         <div className="question-sticky-col xl:sticky xl:top-6 xl:self-start w-full">
           <article className="p-6 sm:p-8 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] space-y-6 shadow-xs xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto reader-scrollbar">
@@ -319,8 +332,12 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
                     {question.type === 'discursiva' ? 'Questão Dissertativa' : 'Múltipla Escolha'}
                   </span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{question.title}</h1>
-                <div className="sans-ui text-xs text-[var(--text-muted)] italic">Dificuldade estimada: {question.difficulty}</div>
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {question.title}
+                </h1>
+                <div className="sans-ui text-xs text-[var(--text-muted)] italic">
+                  Dificuldade estimada: {question.difficulty}
+                </div>
               </div>
 
               {question.statement && (
@@ -336,8 +353,11 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
               )}
 
               {images.length > 0 && (
-                <div className={`my-6 grid gap-4 items-start ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                <div
+                  className={`my-6 grid gap-4 items-start ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}
+                >
                   {images.map((img, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: the same figure may legitimately repeat.
                     <figure key={`${img.src}-${idx}`} className="flex flex-col items-center justify-center text-center">
                       <img
                         src={img.src}
@@ -349,7 +369,9 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
                         title="Clique para visualizar com zoom e navegação"
                       />
                       {img.caption && (
-                        <figcaption className="sans-ui text-xs text-[var(--text-muted)] italic mt-2 max-w-md">{img.caption}</figcaption>
+                        <figcaption className="sans-ui text-xs text-[var(--text-muted)] italic mt-2 max-w-md">
+                          {img.caption}
+                        </figcaption>
                       )}
                     </figure>
                   ))}
@@ -368,6 +390,7 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
                     const highlighted = resolutionOpen && hasResolution && question.correctOption === opt.label;
                     return (
                       <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: option labels are not guaranteed unique.
                         key={`${opt.label}-${i}`}
                         data-option-label={opt.label}
                         className={`option-item flex items-start gap-3 p-3 sm:p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] transition-all duration-200${
@@ -393,7 +416,9 @@ function QuestionToggle({ question, rendered }: { question: Indexed<QuestionMeta
             ) : (
               <div className="p-3.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3 text-xs pt-4 border-t border-[var(--border-subtle)]">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[var(--accent)] uppercase tracking-wider">Questão Dissertativa Aberta</span>
+                  <span className="font-bold text-[var(--accent)] uppercase tracking-wider">
+                    Questão Dissertativa Aberta
+                  </span>
                   <span className="text-[var(--text-muted)]">•</span>
                   <span className="text-[var(--text-secondary)]">Desenvolvimento formal e demonstração requeridos</span>
                 </div>

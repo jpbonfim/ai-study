@@ -100,7 +100,12 @@ export function TagSelector({
             toggleMenu();
           }}
         >
-          <svg className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-3.5 h-3.5 text-[var(--accent)] shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -110,7 +115,10 @@ export function TagSelector({
           </svg>
           <span>Tag</span>
         </button>
-        <span className="text-[10px] font-mono lowercase tracking-tight text-[var(--text-muted)]" id="sidebar-active-tag-hint">
+        <span
+          className="text-[10px] font-mono lowercase tracking-tight text-[var(--text-muted)]"
+          id="sidebar-active-tag-hint"
+        >
           {activeTag ? `(ativo: ${activeTag})` : '(nenhuma selecionada)'}
         </span>
       </div>
@@ -212,7 +220,12 @@ export function TagSelector({
             />
           </div>
 
-          <TagOptionButton label={ALL_LABEL} active={!activeTag} onClick={() => select(null)} onKeyDown={onOptionKeyDown} />
+          <TagOptionButton
+            label={ALL_LABEL}
+            active={!activeTag}
+            onClick={() => select(null)}
+            onKeyDown={onOptionKeyDown}
+          />
           {tags.map((tag) =>
             isVisible(tag) ? (
               <TagOptionButton
@@ -278,7 +291,9 @@ function TagOptionButton({
           )}
         </div>
       )}
-      <span className={`tag-opt-check text-[var(--accent)] font-bold shrink-0 ml-1.5${active ? '' : ' hidden'}`}>✓</span>
+      <span className={`tag-opt-check text-[var(--accent)] font-bold shrink-0 ml-1.5${active ? '' : ' hidden'}`}>
+        ✓
+      </span>
     </button>
   );
 }

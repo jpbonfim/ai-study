@@ -48,14 +48,15 @@ function TocEntries({
 }) {
   return (
     <>
-      {items.map((chapter) => {
+      {items.map((chapter, index) => {
         const hidden = activeTag !== null && !chapter.tags.includes(activeTag);
         const chapterClasses = `toc-item toc-chapter-link block font-serif font-bold text-sm text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors py-1.5 px-2.5 rounded-md${
           activeId === chapter.id ? ' is-active' : ''
         }${parentActiveId === chapter.id ? ' is-parent-active' : ''}`;
         return (
           <div
-            key={chapter.id}
+            // biome-ignore lint/suspicious/noArrayIndexKey: chapter numbers (and so anchor ids) may repeat across documents.
+            key={`${chapter.id}-${index}`}
             className={`space-y-0.5 sidebar-chapter-item${hidden ? ' hidden' : ''}`}
             data-chapter-tags={chapter.tags.join(',')}
             data-chapter-type={chapter.type}
@@ -146,6 +147,7 @@ export function TocNav({
                   className={`toc-collapsible-group space-y-1${activeTag && !hasVisible ? ' hidden' : ''}`}
                   data-group-type={group.type}
                 >
+                  {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-selected marks the active section, as before. */}
                   <button
                     type="button"
                     className={`toc-collapsible-btn sans-ui w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg border transition-all duration-150 cursor-pointer select-none group shadow-2xs ${

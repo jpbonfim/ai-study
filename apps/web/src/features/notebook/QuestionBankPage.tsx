@@ -24,7 +24,11 @@ function useStatementPreviews(notebook: Notebook) {
     queryFn: async () => {
       const sources = [
         { ownerId: notebook.primaryOwnerId, materiaSlug: notebook.subject.slug, questions: notebook.questions },
-        ...notebook.otherSources.map((s) => ({ ownerId: s.ownerUserId, materiaSlug: s.materiaSlug, questions: s.questions })),
+        ...notebook.otherSources.map((s) => ({
+          ownerId: s.ownerUserId,
+          materiaSlug: s.materiaSlug,
+          questions: s.questions,
+        })),
       ];
       const results = await Promise.all(
         sources.map(async (s) => ({
@@ -107,7 +111,9 @@ export function QuestionBankPage({ session }: { session: SessionInfo }) {
   const notebook = useNotebook(slug, parseOwnerParam(params.get('owner')));
   if (notebook.isPending) return null;
   if (notebook.error || !notebook.data) return <Navigate to="/?error=materia_nao_encontrada" replace />;
-  return <QuestionBankView key={`${slug}:${notebook.data.primaryOwnerId}`} session={session} notebook={notebook.data} />;
+  return (
+    <QuestionBankView key={`${slug}:${notebook.data.primaryOwnerId}`} session={session} notebook={notebook.data} />
+  );
 }
 
 function QuestionBankView({ session, notebook }: { session: SessionInfo; notebook: Notebook }) {
@@ -136,7 +142,6 @@ function QuestionBankView({ session, notebook }: { session: SessionInfo; noteboo
   );
   const hasFilters = Boolean(query || topic || tagFilter);
 
-
   return (
     <StudyLayout
       title={`Banco de Questões | ${subject.name}`}
@@ -153,7 +158,9 @@ function QuestionBankView({ session, notebook }: { session: SessionInfo; noteboo
           <div className="sans-ui text-xs font-mono tracking-wider uppercase text-[var(--accent)]">
             Caderno de Exercícios &amp; Provas Anteriores
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">Banco de Questões Resolvidas</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
+            Banco de Questões Resolvidas
+          </h1>
           <p className="font-serif text-base text-[var(--text-secondary)] italic">
             Questões oficiais de {subject.name} com fundamentação teórica, resolução analítica passo a passo e gabarito.
           </p>
@@ -164,7 +171,12 @@ function QuestionBankView({ session, notebook }: { session: SessionInfo; noteboo
             <div className="relative w-full min-w-0">
               <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
               <input
@@ -193,7 +205,9 @@ function QuestionBankView({ session, notebook }: { session: SessionInfo; noteboo
                     <option
                       key={t.id}
                       value={t.id}
-                      className={t.isFromOtherUser ? `other-user-filter-tag${study.showOtherTags ? '' : ' hidden'}` : ''}
+                      className={
+                        t.isFromOtherUser ? `other-user-filter-tag${study.showOtherTags ? '' : ' hidden'}` : ''
+                      }
                     >
                       {t.label}
                       {t.isFromOtherUser ? ` (${t.ownerDisplayName || t.ownerUsername})` : ''}
@@ -206,7 +220,12 @@ function QuestionBankView({ session, notebook }: { session: SessionInfo; noteboo
                 <label htmlFor="topic-filter" className="sr-only">
                   Filtrar por Tópico
                 </label>
-                <select id="topic-filter" className={FILTER_CLASS} value={topic} onChange={(e) => setTopic(e.target.value)}>
+                <select
+                  id="topic-filter"
+                  className={FILTER_CLASS}
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                >
                   <option value="">Todos os Tópicos</option>
                   {topics.map((t) => (
                     <option key={t} value={t}>

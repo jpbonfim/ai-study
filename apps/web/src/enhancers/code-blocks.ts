@@ -73,7 +73,9 @@ function isMermaidBlock(pre: HTMLPreElement, codeEl: Element | null, rawLang: st
 }
 
 export function initCodeBlocks(root: ParentNode = document): void {
-  const blocks = root.querySelectorAll<HTMLPreElement>('.academic-prose pre, .reader-content pre, .resolution-content pre');
+  const blocks = root.querySelectorAll<HTMLPreElement>(
+    '.academic-prose pre, .reader-content pre, .resolution-content pre',
+  );
   blocks.forEach((pre) => {
     if (pre.dataset.codeBlockProcessed === 'true') return;
     if (pre.closest('.code-block-card') || pre.closest('.diagram-card')) return;

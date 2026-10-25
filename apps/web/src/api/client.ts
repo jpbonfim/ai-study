@@ -1,4 +1,6 @@
+import type { ChapterMeta, QuestionMeta } from '@ai-study/content';
 import type {
+  Indexed,
   LogEntry,
   Notebook,
   PermissionListing,
@@ -6,9 +8,7 @@ import type {
   SessionInfo,
   StoredDocument,
   SubjectView,
-  Indexed,
 } from '@ai-study/server/api-types';
-import type { ChapterMeta, QuestionMeta } from '@ai-study/content';
 
 export class ApiError extends Error {
   constructor(
@@ -49,10 +49,8 @@ export interface AdminUser extends PublicUser {
 
 export const api = {
   session: () => request<SessionInfo>('/api/session'),
-  login: (username: string, password: string) =>
-    fetch('/api/login', jsonInit('POST', { username, password })),
-  recordPageView: (path: string) =>
-    fetch('/api/activity/page-view', jsonInit('POST', { path })).catch(() => undefined),
+  login: (username: string, password: string) => fetch('/api/login', jsonInit('POST', { username, password })),
+  recordPageView: (path: string) => fetch('/api/activity/page-view', jsonInit('POST', { path })).catch(() => undefined),
 
   subjects: () => request<{ own: SubjectView[]; shared: SubjectView[] }>('/api/subjects'),
   notebook: (slug: string, owner: number | null) =>
@@ -60,7 +58,9 @@ export const api = {
   chapter: (owner: number, slug: string, id: string) =>
     request<ChapterDocument>(`/api/documents/${owner}/${encodeURIComponent(slug)}/chapters/${encodeURIComponent(id)}`),
   question: (owner: number, slug: string, id: string) =>
-    request<QuestionDocument>(`/api/documents/${owner}/${encodeURIComponent(slug)}/questions/${encodeURIComponent(id)}`),
+    request<QuestionDocument>(
+      `/api/documents/${owner}/${encodeURIComponent(slug)}/questions/${encodeURIComponent(id)}`,
+    ),
   subjectDocuments: (owner: number, slug: string) =>
     request<{ chapters: ChapterDocument[]; questions: QuestionDocument[] }>(
       `/api/documents/${owner}/${encodeURIComponent(slug)}`,
@@ -73,7 +73,8 @@ export const api = {
       request<{ total: number; logs: LogEntry[] }>(`/admin/api/logs?${params.toString()}`),
     createUser: (payload: Record<string, unknown>) =>
       request<{ success: true; user: PublicUser }>('/admin/api/users', jsonInit('POST', payload)),
-    updateUser: (payload: Record<string, unknown>) => request<{ success: true }>('/admin/api/users', jsonInit('PUT', payload)),
+    updateUser: (payload: Record<string, unknown>) =>
+      request<{ success: true }>('/admin/api/users', jsonInit('PUT', payload)),
     deleteUser: (id: number) => request<{ success: true }>(`/admin/api/users?id=${id}`, { method: 'DELETE' }),
     grant: (payload: Record<string, unknown>) =>
       request<{ success: true }>('/admin/api/permissions', jsonInit('POST', payload)),

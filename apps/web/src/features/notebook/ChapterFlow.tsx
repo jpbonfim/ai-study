@@ -85,8 +85,11 @@ export const ChapterFlow = forwardRef<ChapterFlowHandle, ChapterFlowProps>(funct
     if (chapters[0]) void load(chapters[0]);
   }, [chapters, load]);
 
-  // Lazy loading of the following chapters.
+  // Lazy loading of the following chapters, once the first one is in the page (so the next
+  // placeholders start far below, as when the first chapter arrived already rendered).
+  const firstLoaded = chapters[0] ? loads[chapters[0].anchorId]?.status === 'loaded' : false;
   useEffect(() => {
+    if (!firstLoaded) return;
     if (!('IntersectionObserver' in window)) {
       chapters.slice(1).forEach((c) => void load(c));
       return;
@@ -104,8 +107,9 @@ export const ChapterFlow = forwardRef<ChapterFlowHandle, ChapterFlowProps>(funct
     );
     for (const element of placeholders.current.values()) observer.observe(element);
     return () => observer.disconnect();
-  }, [chapters, load]);
+  }, [chapters, load, firstLoaded]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: enhancers run after each chapter load.
   useEffect(() => {
     refreshContent();
   }, [loads, refreshContent]);
@@ -152,7 +156,9 @@ export const ChapterFlow = forwardRef<ChapterFlowHandle, ChapterFlowProps>(funct
                     </>
                   )}
                 </div>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{chapter.meta.title}</h2>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
+                  {chapter.meta.title}
+                </h2>
                 {chapter.meta.description && (
                   <p className="font-serif text-base text-[var(--text-secondary)] italic">{chapter.meta.description}</p>
                 )}
@@ -169,7 +175,9 @@ export const ChapterFlow = forwardRef<ChapterFlowHandle, ChapterFlowProps>(funct
               ) : state.status === 'error' ? (
                 <div className="chapter-lazy-content" data-chapter-body={chapter.meta.id} data-loaded="false">
                   <div className="py-8 px-6 rounded-xl border border-dashed border-[var(--border-strong)] text-center space-y-3 my-4">
-                    <p className="font-serif text-sm text-[var(--text-muted)]">Ocorreu uma falha ao carregar este capítulo.</p>
+                    <p className="font-serif text-sm text-[var(--text-muted)]">
+                      Ocorreu uma falha ao carregar este capítulo.
+                    </p>
                     <button
                       type="button"
                       className="btn-retry-chapter px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white text-xs font-semibold cursor-pointer"

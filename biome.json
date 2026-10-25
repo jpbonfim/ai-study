@@ -6,7 +6,16 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!site", "!.agents", "!scripts", "!**/dist", "!**/*.astro", "!**/*.md"]
+    "includes": [
+      "**",
+      "!site",
+      "!.agents",
+      "!scripts",
+      "!**/dist",
+      "!**/*.astro",
+      "!**/*.md",
+      "!**/*.css"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -32,6 +41,9 @@
       },
       "complexity": {
         "noForEach": "off"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "off"
       }
     }
   },

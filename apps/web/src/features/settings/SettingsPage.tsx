@@ -49,10 +49,20 @@ type StatusMessage = { kind: StatusKind } | null;
 
 /** Classes of an option card: selected in the draft (accent border) or not. */
 function optionClass(base: string, selected: boolean): string {
-  return selected ? `${base} border-2 border-[var(--accent)] bg-[var(--accent-subtle)]` : `${base} border-[var(--border-subtle)]`;
+  return selected
+    ? `${base} border-2 border-[var(--accent)] bg-[var(--accent-subtle)]`
+    : `${base} border-[var(--border-subtle)]`;
 }
 
-function SavedTag({ className, saved, children = '✓ Salvo' }: { className: string; saved: boolean; children?: ReactNode }) {
+function SavedTag({
+  className,
+  saved,
+  children = '✓ Salvo',
+}: {
+  className: string;
+  saved: boolean;
+  children?: ReactNode;
+}) {
   return <span className={`${className}${saved ? '' : ' hidden'}`}>{children}</span>;
 }
 
@@ -72,8 +82,12 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <div className={`p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] ${bordered ? 'space-y-6' : 'space-y-4'}`}>
-      <div className={`flex items-center justify-between${bordered ? ' border-b border-[var(--border-subtle)] pb-4' : ''}`}>
+    <div
+      className={`p-6 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-surface)] ${bordered ? 'space-y-6' : 'space-y-4'}`}
+    >
+      <div
+        className={`flex items-center justify-between${bordered ? ' border-b border-[var(--border-subtle)] pb-4' : ''}`}
+      >
         <div>
           {/* biome-ignore lint/a11y/noLabelWithoutControl: section heading markup kept as before. */}
           <label className="font-bold text-[var(--text-primary)] text-base block">{title}</label>
@@ -197,10 +211,30 @@ const ALIGN_OPTIONS: [string, string, string, string][] = [
 ];
 
 const FONT_OPTIONS: [string, string, string, string][] = [
-  ['garamond', "'Newsreader', 'EB Garamond', Georgia, serif", 'Garamond / Newsreader', 'Serif clássica de livro didático universitário e LaTeX (Padrão).'],
-  ['lora', "'Lora', Charter, Georgia, serif", 'Lora / Charter', 'Serif moderna editorial com contraste suave e leitura fluida.'],
-  ['sans', "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", 'Inter / Sans-Serif', 'Sans-serif contemporânea de alta legibilidade em monitores.'],
-  ['mono', "'JetBrains Mono', monospace", 'JetBrains Mono', 'Monoespaçada técnica com alinhamento rigoroso caractere a caractere.'],
+  [
+    'garamond',
+    "'Newsreader', 'EB Garamond', Georgia, serif",
+    'Garamond / Newsreader',
+    'Serif clássica de livro didático universitário e LaTeX (Padrão).',
+  ],
+  [
+    'lora',
+    "'Lora', Charter, Georgia, serif",
+    'Lora / Charter',
+    'Serif moderna editorial com contraste suave e leitura fluida.',
+  ],
+  [
+    'sans',
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    'Inter / Sans-Serif',
+    'Sans-serif contemporânea de alta legibilidade em monitores.',
+  ],
+  [
+    'mono',
+    "'JetBrains Mono', monospace",
+    'JetBrains Mono',
+    'Monoespaçada técnica com alinhamento rigoroso caractere a caractere.',
+  ],
 ];
 
 const CODE_THEME_OPTIONS: [string, string, string, string, string][] = [
@@ -212,10 +246,25 @@ const CODE_THEME_OPTIONS: [string, string, string, string, string][] = [
 ];
 
 const CODE_FONT_OPTIONS: [string, string, string, string][] = [
-  ['jetbrains', "'JetBrains Mono', monospace", 'JetBrains Mono', 'Otimizada para leitura técnica de equações e algoritmos.'],
+  [
+    'jetbrains',
+    "'JetBrains Mono', monospace",
+    'JetBrains Mono',
+    'Otimizada para leitura técnica de equações e algoritmos.',
+  ],
   ['fira', "'Fira Code', monospace", 'Fira Code', 'Geométrica e nítida com caracteres diferenciados.'],
-  ['system', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', 'SF Mono / Sistema', 'Nativa do sistema operacional (alta performance gráfica).'],
-  ['courier', "'Courier New', Courier, monospace", 'Courier New (Retrô)', 'Estilo clássico de relatórios científicos impressos.'],
+  [
+    'system',
+    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    'SF Mono / Sistema',
+    'Nativa do sistema operacional (alta performance gráfica).',
+  ],
+  [
+    'courier',
+    "'Courier New', Courier, monospace",
+    'Courier New (Retrô)',
+    'Estilo clássico de relatórios científicos impressos.',
+  ],
 ];
 
 const MATH_SCALE_OPTIONS: [string, string, string][] = [
@@ -240,7 +289,8 @@ export function SettingsPage(_props: { session: SessionInfo }) {
   const navigate = useNavigate();
   const subjectsQuery = useQuery({ queryKey: ['subjects'], queryFn: api.subjects });
   const activeSubjects = useMemo(
-    () => [...(subjectsQuery.data?.own ?? []), ...(subjectsQuery.data?.shared ?? [])].filter((m) => m.status === 'active'),
+    () =>
+      [...(subjectsQuery.data?.own ?? []), ...(subjectsQuery.data?.shared ?? [])].filter((m) => m.status === 'active'),
     [subjectsQuery.data],
   );
 
@@ -417,7 +467,9 @@ export function SettingsPage(_props: { session: SessionInfo }) {
       </>
     );
   } else if (status?.kind === 'reset') {
-    statusContent = <strong className="text-emerald-600 dark:text-emerald-400">✓ Padrões de fábrica restaurados!</strong>;
+    statusContent = (
+      <strong className="text-emerald-600 dark:text-emerald-400">✓ Padrões de fábrica restaurados!</strong>
+    );
   } else if (status?.kind === 'cache-cleared') {
     statusContent = (
       <strong className="text-emerald-600 dark:text-emerald-400">✓ Cache do navegador limpo com sucesso!</strong>
@@ -488,7 +540,12 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                   'sans-ui inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer',
                   <>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                      />
                     </svg>
                     <span>Voltar à Leitura</span>
                   </>,
@@ -499,12 +556,16 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                 <span className="sans-ui text-[11px] font-mono uppercase tracking-widest text-[var(--accent)] block font-semibold">
                   Painel do Estudante
                 </span>
-                <h2 className="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug mt-1">Configurações</h2>
+                <h2 className="font-serif text-lg font-bold text-[var(--text-primary)] leading-snug mt-1">
+                  Configurações
+                </h2>
               </div>
             </div>
 
             <div className="space-y-3">
-              <div className="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Ir para Disciplina</div>
+              <div className="sans-ui text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Ir para Disciplina
+              </div>
               <nav className="space-y-1 text-sm sans-ui">
                 {activeSubjects.map((m) => (
                   <Link
@@ -754,7 +815,10 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                         )}
                       >
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="w-3 h-3 rounded-full border" style={{ backgroundColor: dot, borderColor: ring }} />
+                          <span
+                            className="w-3 h-3 rounded-full border"
+                            style={{ backgroundColor: dot, borderColor: ring }}
+                          />
                           <span className="font-bold text-xs">{label}</span>
                         </div>
                         <span className="text-[11px] text-[var(--text-muted)] block leading-tight">{hint}</span>
@@ -777,7 +841,9 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                         key={key}
                         type="button"
                         data-code-font-opt={key}
-                        onClick={() => update({ codeFontKey: key, codeFont: CODE_FONTS[key]?.family ?? draft.codeFont })}
+                        onClick={() =>
+                          update({ codeFontKey: key, codeFont: CODE_FONTS[key]?.family ?? draft.codeFont })
+                        }
                         className={optionClass(
                           'code-font-opt-btn relative p-3 rounded-lg border text-left transition-all cursor-pointer bg-[var(--bg-page)]',
                           draft.codeFontKey === key,
@@ -849,7 +915,9 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
                       Proporção de Subscritos e Sobrescritos (Escala TeX)
                     </span>
-                    <span className="text-[11px] text-[var(--text-muted)] font-mono">Padrão TeX: 70% • Otimizado: 64%</span>
+                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                      Padrão TeX: 70% • Otimizado: 64%
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {MATH_SCALE_OPTIONS.map(([value, label, hint]) => (
@@ -890,7 +958,9 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] block">
                       Tamanho Mínimo da Fonte (Evita Ilegibilidade em Frações)
                     </span>
-                    <span className="text-[11px] text-[var(--text-muted)] font-mono">Garante leitura em qualquer escala</span>
+                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                      Garante leitura em qualquer escala
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {MATH_MIN_OPTIONS.map(([value, label, hint]) => (
@@ -954,15 +1024,22 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                       Demonstração de Trecho Teórico
                     </div>
 
-                    <div id="preview-text-content" ref={previewTextRef} className="space-y-3 leading-relaxed transition-all duration-150">
-                      <h3 className="font-bold text-xl text-[var(--text-primary)]">Teorema da Amostragem de Nyquist-Shannon</h3>
+                    <div
+                      id="preview-text-content"
+                      ref={previewTextRef}
+                      className="space-y-3 leading-relaxed transition-all duration-150"
+                    >
+                      <h3 className="font-bold text-xl text-[var(--text-primary)]">
+                        Teorema da Amostragem de Nyquist-Shannon
+                      </h3>
                       <p className="text-[var(--text-primary)]">
                         Considere um sinal contínuo{' '}
                         <em>
                           x<sub>c</sub>(t)
                         </em>{' '}
-                        de banda estritamente limitada, amostrado a uma taxa uniforme <em>T</em>. Para que a reconstrução seja
-                        matematicamente perfeita, a frequência de amostragem deve satisfazer a condição fundamental:
+                        de banda estritamente limitada, amostrado a uma taxa uniforme <em>T</em>. Para que a
+                        reconstrução seja matematicamente perfeita, a frequência de amostragem deve satisfazer a
+                        condição fundamental:
                       </p>
 
                       <div className="space-y-2.5 my-3">
@@ -978,13 +1055,16 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static KaTeX output of fixed formulas. */}
                           <div dangerouslySetInnerHTML={{ __html: PREVIEW_MATH.fraction }} />
                         </div>
-                        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static KaTeX output of fixed formulas. */}
-                        <div className="overflow-x-auto text-center" dangerouslySetInnerHTML={{ __html: PREVIEW_MATH.display }} />
+                        <div
+                          className="overflow-x-auto text-center"
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: static KaTeX output of fixed formulas.
+                          dangerouslySetInnerHTML={{ __html: PREVIEW_MATH.display }}
+                        />
                       </div>
 
                       <p className="text-[var(--text-secondary)]">
-                        Caso contrário, ocorre o rebatimento espectral (<em>aliasing</em>), sobrepondo irreversivelmente réplicas
-                        de altas frequências sobre a banda base.
+                        Caso contrário, ocorre o rebatimento espectral (<em>aliasing</em>), sobrepondo irreversivelmente
+                        réplicas de altas frequências sobre a banda base.
                       </p>
 
                       <div className="pt-4 border-t border-[var(--border-subtle)] space-y-2">
@@ -1040,8 +1120,8 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                       8. Armazenamento e Cache do Navegador
                     </label>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                      Limpe os cadernos e metadados salvos localmente no seu navegador para liberar espaço e forçar a busca
-                      das versões mais recentes.
+                      Limpe os cadernos e metadados salvos localmente no seu navegador para liberar espaço e forçar a
+                      busca das versões mais recentes.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1058,7 +1138,12 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                 <div className="p-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-page)] space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
-                      <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4 text-[var(--accent)]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1068,13 +1153,16 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                       </svg>
                       <span>Cache Local no Navegador (localStorage &amp; Sessão)</span>
                     </div>
-                    <span id="browser-cache-stats" className="font-mono text-[11px] font-semibold text-[var(--text-secondary)]">
+                    <span
+                      id="browser-cache-stats"
+                      className="font-mono text-[11px] font-semibold text-[var(--text-secondary)]"
+                    >
                       {cacheInfo}
                     </span>
                   </div>
                   <p className="text-[var(--text-muted)] leading-relaxed">
-                    Armazena os cadernos compilados e manifestos de estudo para permitir navegação imediata. Ao limpar, o
-                    navegador buscará o conteúdo atualizado diretamente no próximo acesso.
+                    Armazena os cadernos compilados e manifestos de estudo para permitir navegação imediata. Ao limpar,
+                    o navegador buscará o conteúdo atualizado diretamente no próximo acesso.
                   </p>
                 </div>
 
@@ -1090,8 +1178,12 @@ export function SettingsPage(_props: { session: SessionInfo }) {
                       onClick={clearBrowserCache}
                       className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--border-strong)] bg-[var(--bg-page)] hover:bg-[var(--bg-subtle)] text-[var(--text-primary)] hover:border-[var(--accent)] text-xs font-bold cursor-pointer transition-all shadow-xs group${cacheClearing ? ' opacity-75 cursor-wait' : ''}`}
                     >
-                      {trashIcon('w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--accent)] transition-colors')}
-                      <span id="clear-site-cache-text">{cacheClearing ? 'Limpando cache...' : 'Limpar Cache do Navegador'}</span>
+                      {trashIcon(
+                        'w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--accent)] transition-colors',
+                      )}
+                      <span id="clear-site-cache-text">
+                        {cacheClearing ? 'Limpando cache...' : 'Limpar Cache do Navegador'}
+                      </span>
                     </button>
                   </div>
                 </div>

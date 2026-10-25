@@ -1,4 +1,4 @@
-let mermaidInstance: any = null;
+let mermaidInstance: typeof import('mermaid')['default'] | null = null;
 
 async function getMermaid() {
   if (!mermaidInstance) {
@@ -186,8 +186,8 @@ function setupModalEvents(modal: HTMLElement): void {
     }
 
     const canvasW = modalCanvas.clientWidth > 0 ? modalCanvas.clientWidth : window.innerWidth;
-    const canvasH = modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : (window.innerHeight - 80);
-    const padW = Math.max(200, canvasW * 0.90);
+    const canvasH = modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : window.innerHeight - 80;
+    const padW = Math.max(200, canvasW * 0.9);
     const padH = Math.max(200, canvasH * 0.85);
 
     const fitScale = Math.min(padW / w, padH / h);
@@ -218,21 +218,25 @@ function setupModalEvents(modal: HTMLElement): void {
   });
 
   // Wheel zoom centered on the cursor.
-  canvas?.addEventListener('wheel', (e: WheelEvent) => {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left - rect.width / 2;
-    const mouseY = e.clientY - rect.top - rect.height / 2;
+  canvas?.addEventListener(
+    'wheel',
+    (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left - rect.width / 2;
+      const mouseY = e.clientY - rect.top - rect.height / 2;
 
-    const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
-    const newScale = Math.max(0.15, Math.min(6.0, modalState.scale * zoomFactor));
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      const newScale = Math.max(0.15, Math.min(6.0, modalState.scale * zoomFactor));
 
-    modalState.panX -= (mouseX - modalState.panX) * (newScale / modalState.scale - 1);
-    modalState.panY -= (mouseY - modalState.panY) * (newScale / modalState.scale - 1);
-    modalState.scale = newScale;
+      modalState.panX -= (mouseX - modalState.panX) * (newScale / modalState.scale - 1);
+      modalState.panY -= (mouseY - modalState.panY) * (newScale / modalState.scale - 1);
+      modalState.scale = newScale;
 
-    applyTransform(false);
-  }, { passive: false });
+      applyTransform(false);
+    },
+    { passive: false },
+  );
 
   // Prevent the browser's native image drag.
   canvas?.addEventListener('dragstart', (e) => e.preventDefault());
@@ -261,46 +265,58 @@ function setupModalEvents(modal: HTMLElement): void {
   });
 
   // Touch: one finger pans, two fingers pinch-zoom.
-  canvas?.addEventListener('touchstart', (e: TouchEvent) => {
-    if (e.touches.length === 1) {
-      modalState.isDragging = true;
-      modalState.startX = e.touches[0]!.clientX - modalState.panX;
-      modalState.startY = e.touches[0]!.clientY - modalState.panY;
-    } else if (e.touches.length === 2) {
-      modalState.isDragging = false;
-      const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
-      const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
-      modalState.initialPinchDist = Math.hypot(dx, dy);
-      modalState.initialScale = modalState.scale;
-    }
-  }, { passive: true });
+  canvas?.addEventListener(
+    'touchstart',
+    (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        modalState.isDragging = true;
+        modalState.startX = e.touches[0]!.clientX - modalState.panX;
+        modalState.startY = e.touches[0]!.clientY - modalState.panY;
+      } else if (e.touches.length === 2) {
+        modalState.isDragging = false;
+        const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
+        const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
+        modalState.initialPinchDist = Math.hypot(dx, dy);
+        modalState.initialScale = modalState.scale;
+      }
+    },
+    { passive: true },
+  );
 
-  canvas?.addEventListener('touchmove', (e: TouchEvent) => {
-    if (e.touches.length === 1 && modalState.isDragging) {
-      modalState.panX = e.touches[0]!.clientX - modalState.startX;
-      modalState.panY = e.touches[0]!.clientY - modalState.startY;
-      applyTransform(false);
-    } else if (e.touches.length === 2 && modalState.initialPinchDist > 0) {
-      const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
-      const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
-      const dist = Math.hypot(dx, dy);
-      const factor = dist / modalState.initialPinchDist;
-      modalState.scale = Math.max(0.15, Math.min(6.0, modalState.initialScale * factor));
-      applyTransform(false);
-    }
-  }, { passive: true });
+  canvas?.addEventListener(
+    'touchmove',
+    (e: TouchEvent) => {
+      if (e.touches.length === 1 && modalState.isDragging) {
+        modalState.panX = e.touches[0]!.clientX - modalState.startX;
+        modalState.panY = e.touches[0]!.clientY - modalState.startY;
+        applyTransform(false);
+      } else if (e.touches.length === 2 && modalState.initialPinchDist > 0) {
+        const dx = e.touches[0]!.clientX - e.touches[1]!.clientX;
+        const dy = e.touches[0]!.clientY - e.touches[1]!.clientY;
+        const dist = Math.hypot(dx, dy);
+        const factor = dist / modalState.initialPinchDist;
+        modalState.scale = Math.max(0.15, Math.min(6.0, modalState.initialScale * factor));
+        applyTransform(false);
+      }
+    },
+    { passive: true },
+  );
 
-  canvas?.addEventListener('touchend', (e: TouchEvent) => {
-    if (e.touches.length === 1) {
-      modalState.isDragging = true;
-      modalState.startX = e.touches[0]!.clientX - modalState.panX;
-      modalState.startY = e.touches[0]!.clientY - modalState.panY;
-      modalState.initialPinchDist = 0;
-    } else if (e.touches.length === 0) {
-      modalState.isDragging = false;
-      modalState.initialPinchDist = 0;
-    }
-  }, { passive: true });
+  canvas?.addEventListener(
+    'touchend',
+    (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        modalState.isDragging = true;
+        modalState.startX = e.touches[0]!.clientX - modalState.panX;
+        modalState.startY = e.touches[0]!.clientY - modalState.panY;
+        modalState.initialPinchDist = 0;
+      } else if (e.touches.length === 0) {
+        modalState.isDragging = false;
+        modalState.initialPinchDist = 0;
+      }
+    },
+    { passive: true },
+  );
 }
 
 /** Opens the modal with a copy of the SVG, sized to its real dimensions. */
@@ -338,8 +354,8 @@ export function openDiagramModal(svgSource: SVGSVGElement, title?: string): void
 
   // Real dimensions from the viewBox.
   const vb = svgSource.viewBox?.baseVal;
-  let w = vb && vb.width > 0 ? vb.width : (svgSource.clientWidth || 800);
-  let h = vb && vb.height > 0 ? vb.height : (svgSource.clientHeight || 600);
+  const w = vb && vb.width > 0 ? vb.width : svgSource.clientWidth || 800;
+  const h = vb && vb.height > 0 ? vb.height : svgSource.clientHeight || 600;
 
   // Explicit intrinsic size so the copy never collapses to 0x0.
   clonedSvg.setAttribute('width', `${w}`);
@@ -361,10 +377,10 @@ export function openDiagramModal(svgSource: SVGSVGElement, title?: string): void
     modalTitleEl.textContent = title || 'Visualizador de Diagrama';
   }
 
-  const canvasW = (modalCanvas && modalCanvas.clientWidth > 0) ? modalCanvas.clientWidth : window.innerWidth;
-  const canvasH = (modalCanvas && modalCanvas.clientHeight > 0) ? modalCanvas.clientHeight : (window.innerHeight - 80);
+  const canvasW = modalCanvas && modalCanvas.clientWidth > 0 ? modalCanvas.clientWidth : window.innerWidth;
+  const canvasH = modalCanvas && modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : window.innerHeight - 80;
 
-  const padW = Math.max(200, canvasW * 0.90);
+  const padW = Math.max(200, canvasW * 0.9);
   const padH = Math.max(200, canvasH * 0.85);
 
   // Initial scale that fits the diagram to the viewport.
@@ -386,7 +402,7 @@ export function openImageModal(imgSrc: string, title?: string): void {
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  const content = modalContent || modal.querySelector('#diagram-content') as HTMLElement;
+  const content = modalContent || (modal.querySelector('#diagram-content') as HTMLElement);
   if (!content) return;
   modalContent = content;
   content.innerHTML = '';
@@ -398,7 +414,7 @@ export function openImageModal(imgSrc: string, title?: string): void {
   img.style.maxWidth = 'none';
   img.style.maxHeight = 'none';
   img.style.userSelect = 'none';
-  (img.style as any).webkitUserDrag = 'none';
+  img.style.setProperty('-webkit-user-drag', 'none');
 
   content.appendChild(img);
   modalState.svgElement = null;
@@ -412,10 +428,10 @@ export function openImageModal(imgSrc: string, title?: string): void {
     modalState.targetWidth = width;
     modalState.targetHeight = height;
 
-    const canvasW = (modalCanvas && modalCanvas.clientWidth > 0) ? modalCanvas.clientWidth : window.innerWidth;
-    const canvasH = (modalCanvas && modalCanvas.clientHeight > 0) ? modalCanvas.clientHeight : (window.innerHeight - 80);
+    const canvasW = modalCanvas && modalCanvas.clientWidth > 0 ? modalCanvas.clientWidth : window.innerWidth;
+    const canvasH = modalCanvas && modalCanvas.clientHeight > 0 ? modalCanvas.clientHeight : window.innerHeight - 80;
 
-    const padW = Math.max(200, canvasW * 0.90);
+    const padW = Math.max(200, canvasW * 0.9);
     const padH = Math.max(200, canvasH * 0.85);
 
     const fitScale = Math.min(padW / width, padH / height);
@@ -520,25 +536,27 @@ export async function initDiagrams(): Promise<void> {
   setupZoomableImages();
 
   // 3. Mermaid: rendered cards (re-render on theme change) and new code blocks.
-  const existingCards = Array.from(
-    document.querySelectorAll<HTMLElement>('.diagram-card[data-mermaid-code]')
-  );
+  const existingCards = Array.from(document.querySelectorAll<HTMLElement>('.diagram-card[data-mermaid-code]'));
 
   const mermaidCodeBlocks = Array.from(
     document.querySelectorAll<HTMLElement>(
-      'pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"], pre.mermaid, pre code.language-mermaid, pre code[class*="mermaid"], .academic-prose pre code[class*="language-mermaid"], .diagram-block'
-    )
+      'pre[data-language="mermaid"], pre.astro-code[data-language="mermaid"], pre.mermaid, pre code.language-mermaid, pre code[class*="mermaid"], .academic-prose pre code[class*="language-mermaid"], .diagram-block',
+    ),
   ).map((el) => (el.tagName.toLowerCase() === 'code' ? el.parentElement! : el) as HTMLElement);
 
   // Also plain code whose text is Mermaid syntax (never code of another language).
   const potentialMermaidPres = Array.from(
-    document.querySelectorAll<HTMLElement>('.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre')
+    document.querySelectorAll<HTMLElement>(
+      '.academic-prose pre, .reader-content pre, .resolution-content pre, .code-block-card pre',
+    ),
   ).filter((pre) => {
     if (pre.dataset.diagramProcessed === 'true') return false;
     const lang = (pre.getAttribute('data-language') || '').toLowerCase();
     if (lang && lang !== 'mermaid' && lang !== 'text' && lang !== 'txt') return false;
     const txt = (pre.textContent || '').trim();
-    return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(txt);
+    return /^(flowchart|graph|sequenceDiagram|stateDiagram|classDiagram|erDiagram|gantt|pie|gitGraph|journey|quadrantChart|xychart-beta)\b/m.test(
+      txt,
+    );
   });
 
   const targets = Array.from(new Set([...mermaidCodeBlocks, ...potentialMermaidPres]));
@@ -550,7 +568,8 @@ export async function initDiagrams(): Promise<void> {
 
   const mermaid = await getMermaid();
 
-  const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('study_theme') || 'paper';
+  const currentTheme =
+    document.documentElement.getAttribute('data-theme') || localStorage.getItem('study_theme') || 'paper';
   const isDark = currentTheme === 'dark' || currentTheme === 'oled';
   const isOled = currentTheme === 'oled';
 
@@ -696,7 +715,6 @@ export function setupZoomableImages(): void {
     });
   }
 }
-
 
 /** Makes an SVG scale to the card without being cut. */
 function setupSvgResponsive(svgEl: SVGSVGElement): void {

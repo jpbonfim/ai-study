@@ -42,9 +42,7 @@ export function SidebarQuestions({
 
   const matching = questions
     .map((entry, order) => ({ entry, order }))
-    .filter(({ entry }) =>
-      activeTag ? entry.matchTags.includes(activeTag) : !entry.isFromOther || showOtherTags,
-    )
+    .filter(({ entry }) => (activeTag ? entry.matchTags.includes(activeTag) : !entry.isFromOther || showOtherTags))
     .sort((a, b) => {
       const posA = recentIds.indexOf(a.entry.meta.id);
       const posB = recentIds.indexOf(b.entry.meta.id);
@@ -127,7 +125,11 @@ export function SidebarQuestions({
         Selecione uma tag acima para visualizar as questões.
       </div>
 
-      <div className={`space-y-1.5${activeTag && visible.length > 0 ? '' : ' hidden'}`} id="sidebar-questions-list" ref={listRef}>
+      <div
+        className={`space-y-1.5${activeTag && visible.length > 0 ? '' : ' hidden'}`}
+        id="sidebar-questions-list"
+        ref={listRef}
+      >
         {visible.map(({ entry, order }) => {
           const isOther = entry.ownerUserId !== subject.ownerUserId;
           const isCurrent = currentQuestionId === entry.meta.id;

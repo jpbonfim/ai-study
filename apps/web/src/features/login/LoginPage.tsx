@@ -23,7 +23,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<SubmitState>('idle');
 
-  if (session.data) return <Navigate to="/" replace />;
+  // Already signed in when arriving here (not when this page just signed the user in).
+  if (session.data && state !== 'success') return <Navigate to="/" replace />;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,7 +48,12 @@ export function LoginPage() {
     }
   }
 
-  const submitText = state === 'submitting' ? 'Autenticando...' : state === 'success' ? 'Sucesso! Redirecionando...' : 'Entrar na Biblioteca';
+  const submitText =
+    state === 'submitting'
+      ? 'Autenticando...'
+      : state === 'success'
+        ? 'Sucesso! Redirecionando...'
+        : 'Entrar na Biblioteca';
 
   return (
     <>

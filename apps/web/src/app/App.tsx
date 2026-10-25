@@ -6,10 +6,10 @@ import { AccountPage } from '../features/account/AccountPage';
 import { AdminPage } from '../features/admin/AdminPage';
 import { HomePage } from '../features/home/HomePage';
 import { LoginPage } from '../features/login/LoginPage';
+import { NotFoundPage } from '../features/not-found/NotFoundPage';
 import { NotebookPage } from '../features/notebook/NotebookPage';
 import { QuestionBankPage } from '../features/notebook/QuestionBankPage';
 import { QuestionPage } from '../features/notebook/QuestionPage';
-import { NotFoundPage } from '../features/not-found/NotFoundPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { trackLocation } from '../lib/navigation-history';
 import { installCacheShortcut } from '../lib/study-cache';
@@ -35,7 +35,14 @@ function useInAppLinks(): void {
   const navigate = useNavigate();
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
         return;
       }
       const anchor = (event.target as Element | null)?.closest('a');
@@ -44,6 +51,8 @@ function useInAppLinks(): void {
       if (anchor.target && anchor.target !== '_self') return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin || /^\/(api|admin\/api)\//.test(url.pathname)) return;
+      // Anchors within the current page are handled by the page (smooth scroll, lazy chapters).
+      if (url.hash && url.pathname.replace(/\/+$/, '') === window.location.pathname.replace(/\/+$/, '')) return;
       event.preventDefault();
       navigate(url.pathname + url.search + url.hash);
     };
@@ -67,6 +76,7 @@ function RootLayout() {
     if (location.pathname !== '/login') void api.recordPageView(location.pathname);
   }, [location.pathname]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new page (path) starts at the top.
   useEffect(() => {
     if (!location.hash) window.scrollTo({ top: 0, behavior: 'auto' });
   }, [location.pathname, location.hash]);

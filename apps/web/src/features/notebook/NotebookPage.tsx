@@ -13,8 +13,8 @@ import {
   type FlowChapter,
   initialSectionFor,
   namespacedTag,
-  tagDisplayName,
   type TocItem,
+  tagDisplayName,
 } from './notebook-model';
 import { type ReadingFlow, StudyLayout } from './StudyLayout';
 import { useStudyState } from './study-state';
@@ -192,7 +192,9 @@ function NotebookView({ session, notebook }: { session: SessionInfo; notebook: N
                 </span>
               )}
             </div>
-            <h1 className="font-serif text-3xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">{subject.name}</h1>
+            <h1 className="font-serif text-3xl sm:text-5xl font-bold text-[var(--text-primary)] leading-tight">
+              {subject.name}
+            </h1>
             <p className="font-serif text-base sm:text-lg text-[var(--text-secondary)] italic max-w-xl mx-auto">
               Para visualizar o caderno de estudos, selecione uma avaliação ou tag no menu lateral esquerdo.
             </p>
@@ -278,7 +280,9 @@ function NotebookView({ session, notebook }: { session: SessionInfo; notebook: N
           id="no-chapters-for-tag"
           className={`${flow && flowChapters.length === 0 ? '' : 'hidden '}p-8 rounded-xl border border-dashed border-[var(--border-strong)] text-center text-sm text-[var(--text-secondary)] space-y-2`}
         >
-          <p className="font-serif text-base font-bold text-[var(--text-primary)]">Nenhum capítulo teórico cadastrado para esta tag.</p>
+          <p className="font-serif text-base font-bold text-[var(--text-primary)]">
+            Nenhum capítulo teórico cadastrado para esta tag.
+          </p>
           <p>Você pode acessar as questões diretamente pelo menu lateral ou escolher outra tag.</p>
         </div>
 
@@ -318,4 +322,3 @@ function NotebookView({ session, notebook }: { session: SessionInfo; notebook: N
     </StudyLayout>
   );
 }
-
