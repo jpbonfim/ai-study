@@ -47,7 +47,7 @@ reinicia o serviço. Nada aqui foi executado no servidor ainda.
 5. **Troque o Caddyfile** para servir o SPA estático:
    ```bash
    scp scripts/Caddyfile.example <usuario>@<ip-do-vps>:/tmp/Caddyfile
-   # no VPS (ajuste o domínio se não usar :443 com TLS interno):
+   # no VPS: troque 203.0.113.10 no arquivo pelo IP do VPS (ou pelo domínio, sem "tls internal")
    sudo cp /tmp/Caddyfile /etc/caddy/Caddyfile
    sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
    ```

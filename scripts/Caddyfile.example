@@ -5,16 +5,19 @@
 # O Caddy serve o SPA compilado (arquivos estáticos do release ativo) e encaminha só a API para
 # o processo Node.js — assim o Node não gasta CPU/memória com arquivos estáticos.
 #
-# Modo 1: Acesso direto por IP com HTTPS Autoassinado (Padrão)
-# Caddy gerencia certificado TLS interno automaticamente.
+# Troque 203.0.113.10 abaixo pelo endereço de acesso:
+#
+# Modo 1: Acesso direto por IP (ex: "45.0.0.1") com HTTPS autoassinado (tls internal).
+# O endereço precisa ser o IP explícito: com ":443" o Caddy não sabe para qual nome emitir o
+# certificado (o navegador não manda SNI para IPs) e o handshake falha com ERR_SSL_PROTOCOL_ERROR.
 # No primeiro acesso pelo navegador, aceite o aviso de segurança do certificado autoassinado.
 #
 # Modo 2: Acesso por Domínio
-# Substitua ":443" pelo seu domínio (ex: "estudos.exemplo.com").
+# Use o domínio (ex: "estudos.exemplo.com") e apague a linha "tls internal".
 # O Caddy obterá certificado Let's Encrypt gratuito automaticamente.
 # ============================================================
 
-:443 {
+203.0.113.10 {
     # Habilita certificado TLS interno gerado pelo Caddy para acesso por IP
     tls internal
 
@@ -63,7 +66,3 @@
     }
 }
 
-# Redirecionamento de HTTP para HTTPS
-:80 {
-    redir https://{host}{uri} permanent
-}
