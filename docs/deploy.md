@@ -11,7 +11,7 @@ reinicia o serviço. Nada aqui foi executado no servidor ainda.
 ├── data/                # study.db + archives/<userId>/ (inalterados pela migração)
 ├── releases/<id>/       # um diretório por release (server.mjs, web/, node_modules/, activate.sh...)
 ├── app -> releases/<id> # release ativo (systemd e Caddy apontam para cá)
-├── backups/             # study-<data>.db (10 últimos) e units systemd anteriores
+├── backups/             # study-<data>.db (10 últimos por padrão) e units systemd anteriores
 └── site/, scripts/ ...  # checkout git da versão Astro (não é mais usado, fica para rollback)
 ```
 
@@ -61,7 +61,9 @@ scripts/deploy.sh <usuario>@<ip-do-vps>
 ```
 
 Cada release é identificado por data e commit (`20261025-101500-abc1234567`); com alterações não
-commitadas o id ganha o sufixo `-dirty`. Os 5 releases mais recentes ficam no servidor.
+commitadas o id ganha o sufixo `-dirty`. Os 5 releases mais recentes (contando o ativo) e os 10 últimos backups do banco ficam no servidor;
+para mudar, defina `DEPLOY_KEEP_RELEASES` e `DEPLOY_KEEP_BACKUPS` no `.env` do servidor (mínimo 1).
+O backup cobre só o `study.db`; os arquivos em `data/archives/` não são copiados pelo deploy.
 
 ## Rollback
 

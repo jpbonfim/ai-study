@@ -24,8 +24,6 @@ SERVICE="study-site"
 UNIT_PATH="/etc/systemd/system/${SERVICE}.service"
 CURRENT_LINK="${APP_DIR}/app"
 BACKUP_DIR="${APP_DIR}/backups"
-KEEP_RELEASES=5
-KEEP_BACKUPS=10
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
 fail() {
@@ -58,6 +56,12 @@ case "${DATA_DIR_SETTING}" in
   *) DATA_DIR="$(realpath -m "${APP_DIR}/${DATA_DIR_SETTING}")" ;;
 esac
 PORT="$(env_value PORT 3000)"
+# Retention: releases kept on disk (the active one included) and database backups.
+KEEP_RELEASES="$(env_value DEPLOY_KEEP_RELEASES 5)"
+KEEP_BACKUPS="$(env_value DEPLOY_KEEP_BACKUPS 10)"
+for setting in KEEP_RELEASES KEEP_BACKUPS; do
+  [[ "${!setting}" =~ ^[1-9][0-9]*$ ]] || fail "DEPLOY_${setting} precisa ser um inteiro >= 1 (valor: ${!setting})."
+done
 if [ ! -f "${DATA_DIR}/study.db" ]; then
   if [ -f "${APP_DIR}/data/study.db" ]; then
     # The Astro server resolved DATA_DIR from site/ (DATA_DIR=../data); this one resolves it from
