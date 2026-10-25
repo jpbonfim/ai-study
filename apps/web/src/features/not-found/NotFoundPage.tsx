@@ -1,7 +1,7 @@
 import { usePageChrome } from '../../lib/page-chrome';
 
 export function NotFoundPage() {
-  usePageChrome('404: Not found');
+  usePageChrome('404: Not Found');
   return (
     <main className="max-w-xl mx-auto px-6 py-24 text-center space-y-3 sans-ui">
       <h1 className="font-serif text-3xl font-bold">404: Not found</h1>

@@ -9,6 +9,7 @@ import { NotFoundPage } from '../features/not-found/NotFoundPage';
 import { trackLocation } from '../lib/navigation-history';
 import { installCacheShortcut } from '../lib/study-cache';
 import { applyDocumentPreferences, scopeForPath } from '../preferences/document-preferences';
+import { applyPageFonts } from '../preferences/page-fonts';
 import { ThemeProvider } from '../preferences/theme';
 import { queryClient } from './query-client';
 import { pageModules } from './route-preload';
@@ -75,6 +76,7 @@ function RootLayout() {
 
   useEffect(() => {
     applyDocumentPreferences(document.documentElement, scopeForPath(location.pathname));
+    applyPageFonts(location.pathname);
     if (location.pathname !== '/login') void api.recordPageView(location.pathname);
   }, [location.pathname]);
 
@@ -108,7 +110,7 @@ const router = createBrowserRouter([
         path: '/:materia/questoes/:slug',
         lazy: protectedPage(pageModules.question, (m, s) => <m.QuestionPage session={s} />),
       },
-      { path: '*', element: <NotFoundPage /> },
+      { path: '*', element: <RequireSession>{() => <NotFoundPage />}</RequireSession> },
     ],
   },
 ]);
