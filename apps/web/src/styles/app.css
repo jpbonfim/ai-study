@@ -1,6 +1,3 @@
-/* Sources Tailwind must scan besides this app: HTML classes emitted by the content renderer. */
-@source "../../../../packages/content/src";
-
 /* The React root must not introduce a layout box: pages style <body> exactly like before. */
 #root {
   display: contents;

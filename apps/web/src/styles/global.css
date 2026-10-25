@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+/* Sources Tailwind must scan besides this app: HTML classes emitted by the content renderer. */
+@source "../../../../packages/content/src";
 @import "katex/dist/katex.min.css";
 
 @layer base {
