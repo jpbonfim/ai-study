@@ -60,6 +60,10 @@ reinicia o serviço. Nada aqui foi executado no servidor ainda.
 scripts/deploy.sh <usuario>@<ip-do-vps>
 ```
 
+A senha SSH é pedida uma vez por deploy (todas as etapas usam a mesma conexão) e, se o usuário não
+for root, a do sudo mais uma vez, na ativação. Para não digitar a senha SSH, instale sua chave no
+servidor uma única vez: `ssh-copy-id <usuario>@<ip-do-vps>`.
+
 Cada release é identificado por data e commit (`20261025-101500-abc1234567`); com alterações não
 commitadas o id ganha o sufixo `-dirty`. Os 5 releases mais recentes (contando o ativo) e os 10 últimos backups do banco ficam no servidor;
 para mudar, defina `DEPLOY_KEEP_RELEASES` e `DEPLOY_KEEP_BACKUPS` no `.env` do servidor (mínimo 1).
