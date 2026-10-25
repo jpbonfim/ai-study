@@ -1,241 +1,99 @@
-# Academic Study Platform
+# ai-study
 
-A modern, full-stack academic study platform and active-learning question solver for engineering disciplines, built with **React + Vite** (SPA), a **Hono** API on Node.js, **KaTeX**, **SQLite (WAL)**, and **Tailwind CSS v4**, orchestrated by autonomous agentic skills.
+A study site for engineering courses. Each course has two kinds of content: theory notebooks,
+organized by exam (`p1`, `teste-1`, ...), and solved exam questions, with the theory you need kept
+apart from the solution. The content is written as MDX by the agent skills in `.agents/skills/`
+from lecture slides, textbooks and past exams. The site renders it with math, code and diagrams.
 
-The platform pairs rigorous, sequential theoretical notebooks with step-by-step resolved university exam problems, featuring textbook-inspired typography, split-screen question solving, granular role-based multi-user isolation, bidirectional CLI archive synchronization, and production-ready VPS deployment scripts.
+It runs on a small VPS and serves a few users, each with a private archive. The admin can share
+courses between users.
 
----
+## What's in it
 
-## 1. Key Features
+- **Reading:** paper, dark and OLED themes. You can adjust font, size, column width, alignment
+  and code theme. Math is rendered with KaTeX, code with Shiki, and diagrams with Mermaid and
+  `<BlockDiagram />`. Figures open in a zoomable viewer.
+- **Questions:** the statement and figure stay fixed on one side. On the other, "Theory" (no
+  spoilers) and "Resolution" open separately. A question bank can be filtered by exam tag.
+- **Accounts:** `admin` and `normal` roles, per-user archives in `data/archives/<userId>/`,
+  per-course sharing, an audit log, and rate-limited login.
+- **Archives:** upload and download courses as ZIP from the account page. A course can also be
+  exported to a single HTML file that works offline. `scripts/sync_archive.py` syncs a local
+  `archive/` folder with the server.
 
-### Reading & Mathematical Typography
-- **Three Publication Themes**: Paper/Sepia, Dark Library, and OLED Pure Black with persistent local preferences and custom SVG icons.
-- **Advanced KaTeX Rendering**: Fast inline/display math with horizontal overflow protection, font-size limits, and dynamic scaling.
-- **Equation Grouping**: Automatically merges consecutive LaTeX equation blocks into clean visual cards.
-- **Multi-Theme Shiki Code Blocks**: Switch syntax highlighting across Catppuccin Mocha, Tokyo Night, Dracula, One Dark Pro, and Monokai.
-- **Interactive Diagram Viewer**: Click-to-zoom modal with pan/zoom support for schematics, curves, and Mermaid diagrams.
-- **Reading Comfort Controls**: Customize font family (Newsreader, Lora, Inter, JetBrains Mono), font size (16–22px), and reading column width (672–1088px).
+## How it's built
 
-### Active Learning & Question Solver
-- **Split-Screen Workspace**: Question prompts and figures stay sticky on the left, while independent theory prerequisites and solutions scroll on the right.
-- **Dual Accordion Toggles**:
-  - `[ § ] Theoretical Review`: Explains the underlying principles and prerequisite formulas without problem spoilers.
-  - `[ ¶ ] Step-by-Step Resolution`: Verified algebraic derivation and highlighted answer key.
-- **Sequential Question Cards**: Compact question previews grouped by evaluation tag with collapsible card flows.
-- **Evaluation Tag Filtering**: Instant filtering by exam or assignment tag (e.g., `p1`, `teste-1`, `final`).
-
-### Multi-User Isolation & Security
-- **Role-Based Access Control (RBAC)**: `admin` and `normal` roles with protected routes and middleware.
-- **Isolated User Archives**: Each user's study materials reside in isolated directories (`data/archives/<userId>/`).
-- **Granular Course Sharing**: Administrators can grant per-course access across users; shared courses display distinct badges and merge into the unified tag filter.
-- **Secure Authentication**: Salted password hashing with `bcryptjs`, secure HTTP-only session cookies with expiration tracking, and rate limiting on `/api/login`.
-- **Audit & Activity Logs**: Filterable administrative event tracking (logins, failed attempts, uploads, downloads, and permission changes).
-
-### Archive Management, Sync CLI & Offline Export
-- **Bidirectional Sync CLI (`scripts/sync_archive.py`)**: Incremental SHA-256 diff synchronization between local workstation and remote VPS via HTTP/REST. Supports push, pull, dry-run, and automatic conflict detection.
-- **In-Browser ZIP Import/Export**: Upload single courses or full archives with Zip Slip protection; download on-the-fly streaming ZIP backups.
-- **Standalone Offline Bundling**: Generates self-contained, single-file HTML exports (`downloads/[materia].html`) with embedded math, fonts, and scripts for completely offline studying.
-- **Client-Side Rendering & Caching**: Chapters are rendered in the browser (Web Worker) and cached in IndexedDB with TTL/LRU limits, keeping the server light; one-click cache invalidation.
-
-### Autonomous Agentic Skills
-- Built-in skills under `.agents/skills/` compatible with **Antigravity** and **Claude Code**:
-  - `question-study-generator`: Orchestrates syllabus structure, continuous theory notebooks, and subagent problem solving.
-  - `summary-study-generator`: Drafts comprehensive lecture summaries directly from slides and textbooks with selective diagram extraction.
-  - `explain-question`: Extracts exam PDF problems, auto-crops figures with margin protection, and structures dual `<Theory>` and `<Resolution>` MDX.
-  - `block-diagram-generator`: Generates vector KaTeX block diagrams for feedback control, IIR/FIR filter structures, and state-space models.
-
----
-
-## 2. Tech Stack & Architecture
-
-| Layer | Technology |
+| Part | Stack |
 | :--- | :--- |
-| **Web app** | React 19 SPA (`apps/web`), react-router 7, TanStack Query, Vite |
-| **API server** | Hono on Node.js 24 (`apps/server`), Drizzle ORM, bundled with esbuild |
-| **Content pipeline** | `packages/content`: marked, KaTeX, Shiki (multi-theme), DOMPurify — shared by browser (Web Worker) and Node (tests/CLI) |
-| **Styling** | Tailwind CSS v4 (`@tailwindcss/vite`), `@tailwindcss/typography` |
-| **Database** | SQLite 3 (`better-sqlite3`) with Write-Ahead Logging (WAL) and versioned migrations |
-| **Diagrams** | Mermaid.js and KaTeX block diagrams |
-| **Security** | `bcryptjs`, HTTP-only session cookies, Zip Slip / zip-bomb limits, brute-force rate limiter, sanitized HTML |
-| **Sync Utility** | Python 3 CLI (`urllib`, `hashlib`, `zipfile`) with HTTP Basic and session auth |
-| **Production Server** | Caddy (static SPA, API reverse proxy, automatic/internal TLS), systemd process supervision |
-| **Tooling** | npm workspaces, TypeScript strict, Biome, Vitest, Playwright |
+| `apps/web` | React 19 SPA, react-router, TanStack Query, Tailwind CSS v4, Vite |
+| `apps/server` | Hono on Node.js 24, SQLite (`better-sqlite3`, WAL) with Drizzle, bundled with esbuild |
+| `packages/content` | MDX subset → HTML: marked, KaTeX, Shiki, DOMPurify; also validates the archive |
+| Tooling | npm workspaces, TypeScript (strict), Biome, Vitest, Playwright |
 
-The heavy lifting (markdown/math/code rendering) happens in the browser so the VPS only serves
-JSON, documents and media. Releases are built on your machine; the server only runs them.
+The VPS is small, so the browser does the heavy work. Chapters are rendered in a Web Worker and
+cached in IndexedDB. The server only handles auth, files and the database, and Caddy serves the
+built SPA. Releases are built on your machine, never on the server.
 
----
+## Running locally
 
-## 3. Repository & Archive Structure
-
-```
-.
-├── .agents/skills/              # Specialized Antigravity and Claude Code agentic skills
-├── apps/
-│   ├── server/                  # Hono API (auth, archives, sync, admin, logs) — bundled to dist/server.mjs
-│   └── web/                     # React SPA (pages, enhancers, render worker, styles)
-├── packages/
-│   └── content/                 # Document model, markdown/math/code rendering, sanitizer, archive validator
-├── archive/                     # Local study archive directory (unversioned, sync target)
-│   └── <subject>/
-│       ├── materia.json         # Subject metadata, syllabus, and evaluation tags
-│       ├── resumos/*.mdx        # Continuous reading theoretical chapters
-│       └── questoes/            # Solved problems (*.mdx) and cropped figures (*.png)
-├── data/                        # Persistent production storage (gitignored)
-│   ├── study.db                 # SQLite database (users, sessions, permissions, logs)
-│   └── archives/<userId>/       # Per-user isolated study archives
-├── docs/                        # Rewrite plan, feature inventory, deploy runbook
-├── scripts/
-│   ├── build-release.mjs        # Builds a self-contained release in release/<id>/
-│   ├── deploy.sh                # Builds locally, uploads and activates a release on the VPS
-│   ├── activate-release.sh      # Runs on the VPS: backup, install, switch, health check, rollback
-│   ├── Caddyfile.example        # Caddy template (static SPA + API proxy, TLS)
-│   ├── study-site.service       # systemd unit (installed by each release)
-│   ├── setup-vps.sh             # Automated Ubuntu server provisioning script
-│   ├── migrate-archive.sh       # Imports root archive/ into admin data/archives/1/
-│   └── sync_archive.py          # Bidirectional CLI synchronization tool
-├── tests/
-│   ├── e2e/                     # Playwright specs (run against old and new site)
-│   └── parity/                  # Fixture, baseline capture and comparison tools
-└── .env.example                 # Environment variables template
-```
-
----
-
-## 4. Getting Started (Local Development)
-
-### 4.1 Prerequisites
-- **Node.js**: 24+ (see `.nvmrc`)
-- **npm**: 11+
-- **Python**: 3.10+ (for PDF question extraction and the sync tool)
-
-### 4.2 Setup & Run
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/jpbonfim/ai-study.git
-   cd ai-study
-   ```
-
-2. **Configure environment variables**:
-   ```bash
-   cp .env.example .env
-   ```
-   Set your initial admin credentials (relative paths start at the repository root):
-   ```env
-   ADMIN_USERNAME=admin
-   ADMIN_PASSWORD=change_this_secure_password
-   PORT=3000
-   DATA_DIR=./data
-   ```
-
-3. **Install dependencies** (npm workspaces, from the repository root):
-   ```bash
-   npm install
-   ```
-
-4. **Start the development servers** (API on `:3000`, web app with hot reload on `:5173`):
-   ```bash
-   npm run dev
-   ```
-   Visit `http://localhost:5173/login` and authenticate with your admin credentials.
-   Outside production, the local `archive/` (where the skills write) is shown in the admin's
-   account automatically; set `ENABLE_LOCAL_ARCHIVE=false` to see `data/archives/1` instead.
-
-### 4.3 Checks
-```bash
-npm run check              # typecheck + lint (Biome) + unit/integration tests (Vitest)
-npm run validate:archive   # validates the frontmatter of every document in archive/
-npm run build              # production build (apps/web/dist + apps/server/dist/server.mjs)
-npm start                  # runs the built server (set WEB_DIST_DIR=apps/web/dist to serve the SPA too)
-```
-End-to-end and parity tests compare this version with the previous (Astro) one; see
-[`tests/parity/README.md`](tests/parity/README.md).
-
----
-
-## 5. Bidirectional CLI Sync (`scripts/sync_archive.py`)
-
-Keep your local `archive/` folder synchronized with a remote VPS instance over the REST API without copying database files or manual FTP:
+Requires Node.js 24+ (see `.nvmrc`) and, for the scripts and skills, Python 3.10+.
 
 ```bash
-# Preview differences without making changes
-python3 scripts/sync_archive.py --dry-run
-
-# Push local changes to the remote server
-python3 scripts/sync_archive.py --push
-
-# Pull server updates down to your workstation
-python3 scripts/sync_archive.py --pull
-
-# Self-signed certificates (skip SSL verification)
-python3 scripts/sync_archive.py --insecure
+cp .env.example .env      # set ADMIN_USERNAME / ADMIN_PASSWORD; paths are relative to the repo root
+npm install
+npm run dev               # API on :3000, web app on http://localhost:5173
 ```
 
-You can pre-configure credentials in your local `.env`:
-```env
-SYNC_SITE_URL=https://your-server-ip-or-domain
-SYNC_USERNAME=admin
-SYNC_PASSWORD=your_password
-SYNC_INSECURE=true  # Set true if using self-signed internal TLS
-```
-
----
-
-## 6. Production Deployment (VPS)
-
-The full runbook (first install, migration from the Astro version, backups and rollback) is in
-[`docs/deploy.md`](docs/deploy.md).
-
-### 6.1 Automated Server Provisioning
-The included [`scripts/setup-vps.sh`](scripts/setup-vps.sh) prepares a clean Ubuntu 22/24 LTS server:
-- Installs Node.js 24 LTS, npm, git, rsync, and Caddy.
-- Creates a dedicated unprivileged `study` system user and `/opt/study-site/{data,releases,backups}`.
-- Safely configures UFW firewall (22/SSH, 80/HTTP, 443/HTTPS) with IP forwarding enabled for Docker or existing VPN tunnels.
-- Supports optional custom VPN UDP ports via `VPN_PORT` (e.g. `VPN_PORT=51820 sudo -E bash scripts/setup-vps.sh`).
+If the database has no admin, one is created on start from `.env`. Outside production, the local `archive/`
+folder (where the skills write) shows up in the admin account. Set `ENABLE_LOCAL_ARCHIVE=false`
+to see `data/archives/1` instead.
 
 ```bash
-sudo bash scripts/setup-vps.sh
+npm run check             # typecheck, lint, unit and integration tests
+npm run validate:archive  # check the frontmatter of every document in archive/
+npm run build             # apps/web/dist and apps/server/dist/server.mjs
+npm run test:e2e          # Playwright; setup in tests/parity/README.md
 ```
 
-### 6.2 Caddy (static SPA + API proxy, TLS)
-Copy [`scripts/Caddyfile.example`](scripts/Caddyfile.example) to `/etc/caddy/Caddyfile`. Caddy
-serves the SPA from the active release (`/opt/study-site/app/web`) and proxies `/api/*` and
-`/admin/api/*` to `127.0.0.1:3000`. Replace `:443` with your domain to get a Let's Encrypt
-certificate instead of the internal one. Then `sudo systemctl reload caddy`.
+## Writing content
 
-### 6.3 Deploying a Release
-From your machine (the build never runs on the VPS):
+The skills are instructions for Claude Code or Antigravity. Each one also has a slash command in
+`.claude/commands/`.
+
+| Skill | Command | Output |
+| :--- | :--- | :--- |
+| `question-study-generator` | `/study-generator <tag>` | Theory notebook for an exam, linked to its questions (`archive/<course>/resumos/`) |
+| `summary-study-generator` | `/summary-study-generator <tag>` | Lecture summary from slides or a textbook (`type: "materia"`) |
+| `explain-question` | `/explain-question <pdf> --tag <tag>` | One question per file, with cropped figures (`archive/<course>/questoes/`) |
+| `block-diagram-generator` | `/block-diagram <preset>` | `<BlockDiagram />` for control loops, filter structures and state space |
+
+`archive/` is gitignored: course material stays out of this repository.
+
+## Syncing with the server
+
+```bash
+python3 scripts/sync_archive.py --dry-run   # show what differs
+python3 scripts/sync_archive.py --push      # upload local changes
+python3 scripts/sync_archive.py --pull      # download server changes
+```
+
+It compares SHA-256 hashes. When a file differs on both sides, the newer one wins. Credentials come from `.env`
+(`SYNC_SITE_URL`, `SYNC_USERNAME`, `SYNC_PASSWORD`; `SYNC_INSECURE=true` for a self-signed
+certificate).
+
+## Deploying
+
 ```bash
 scripts/deploy.sh <user>@<server>
 ```
-It builds `release/<id>/`, uploads it to `/opt/study-site/releases/<id>/` and runs its
-`activate.sh` there: installs the 6 runtime packages, backs up `data/study.db`, installs the
-systemd unit, switches the `app` symlink, restarts and health-checks — rolling back
-automatically if the new release does not come up.
 
----
+This builds a release locally, uploads it to `/opt/study-site/releases/<id>/` and activates it.
+Activation backs up the database, points the `app` symlink at the new release, restarts the
+service and checks its health. If the new release doesn't come up, it rolls back. A new server is
+prepared with `scripts/setup-vps.sh`; Caddy uses `scripts/Caddyfile.example`. Configuration,
+retention and rollback are covered in [`docs/deploy.md`](docs/deploy.md).
 
-## 7. Agentic Skills & Claude Code Integration
+## License
 
-Skills located in `.agents/skills/` empower Antigravity and Claude Code to author academic content autonomously:
-
-| Skill | Role | Key Output / Utility |
-| :--- | :--- | :--- |
-| `question-study-generator` | High-level syllabus & theory orchestrator | Continuous reading chapters under `archive/<subject>/resumos/` |
-| `summary-study-generator` | Slide & textbook chapter summarizer | Theory notes under `archive/<subject>/resumos/materia/` |
-| `explain-question` | PDF question extraction & solver | Dual `<Theory>` and `<Resolution>` MDX with cropped figures |
-| `block-diagram-generator` | Vector control & filter schematics | `<BlockDiagram preset="..." />` components in MDX |
-
-### Claude Code Slash Commands (`.claude/commands/`)
-- `/explain-question <pdf-path> --tag <tag>`: Scans PDF, crops diagrams, and drafts solved MDX problem.
-- `/study-generator <tag>`: Generates complete theoretical chapter linked to solved questions.
-- `/summary-study-generator <tag>`: Summarizes lecture notes directly from slides/handouts.
-- `/block-diagram <preset>`: Configures vector KaTeX block diagram components.
-
----
-
-## 8. License
-
-This project is open-source software provided under the [MIT License](LICENSE).
-
-This repository contains exclusively the web platform source code, UI components, server utilities, and agentic workflows. It does not contain proprietary course materials, exam sheets, or copyrighted textbooks; all study notebooks, question banks, and course assets are created and maintained independently by users outside version control.
+[MIT](LICENSE). The repository has only the code. Course material, notes and exams are not
+included.
