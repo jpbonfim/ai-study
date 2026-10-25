@@ -59,6 +59,14 @@ describe('authentication', () => {
     expect(res.headers.get('www-authenticate')).toContain('Basic');
   });
 
+  it("omits the Basic challenge for the web app's own calls (no native browser dialog)", async () => {
+    for (const path of ['/api/session', '/admin/api/users']) {
+      const res = await server.request(path, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      expect(res.status).toBe(401);
+      expect(res.headers.get('www-authenticate')).toBeNull();
+    }
+  });
+
   it('issues an httpOnly lax session cookie and reports the session', async () => {
     const res = await server.request('/api/login', json('', ADMIN));
     const cookie = res.headers.get('set-cookie') ?? '';

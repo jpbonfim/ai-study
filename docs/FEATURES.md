@@ -12,7 +12,8 @@ cada item; onde a evidência é só a comparação visual ou de conteúdo, ela d
 
 - [x] G1. Todas as páginas exigem login, exceto `/login`. Sem sessão: páginas redirecionam para
       `/login?redirect=<caminho+query>` (ou `/login` quando o caminho é `/`); APIs respondem 401 JSON
-      com `WWW-Authenticate: Basic`.
+      com `WWW-Authenticate: Basic` (exceto as chamadas do próprio app, marcadas com
+      `X-Requested-With`, para o navegador não abrir o diálogo nativo de login sobre o site).
 - [x] G2. `/login` com sessão válida redireciona para `/`.
 - [x] G3. Rotas `/admin*` exigem perfil admin: páginas redirecionam para `/?error=forbidden`, APIs
       `/admin/api/*` respondem 403 JSON.
@@ -235,7 +236,7 @@ registrada (MAN).
 
 | Item | Evidência |
 |---|---|
-| G1 | AH (redirect com destino, `/` → `/login`), DE (404 exige sessão), API (401 JSON + `WWW-Authenticate: Basic`) |
+| G1 | AH (redirect com destino, `/` → `/login`; abrir o site sem sessão não gera nenhum desafio `WWW-Authenticate`), DE (404 exige sessão), API (401 JSON + `WWW-Authenticate: Basic`), SV |
 | G2 | AH |
 | G3 | AH (página → `/?error=forbidden`), API (403 JSON) |
 | G4, G5 | IN (estado do `<html>` no `DOMContentLoaded`, antes dos scripts do app), AH (tema persiste) |

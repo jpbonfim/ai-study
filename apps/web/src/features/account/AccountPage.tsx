@@ -2,7 +2,7 @@ import type { SessionInfo } from '@ai-study/server/api-types';
 import { useQuery } from '@tanstack/react-query';
 import { type FormEvent, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { api } from '../../api/client';
+import { api, apiFetch } from '../../api/client';
 import { HeaderActions } from '../../components/HeaderActions';
 import { usePageChrome } from '../../lib/page-chrome';
 
@@ -14,7 +14,7 @@ const FILE_INPUT_CLASS =
 /** Posts an upload form and turns the response (JSON or plain text) into user feedback. */
 async function submitUpload(form: HTMLFormElement): Promise<Feedback> {
   try {
-    const res = await fetch('/api/upload', { method: 'POST', body: new FormData(form) });
+    const res = await apiFetch('/api/upload', { method: 'POST', body: new FormData(form) });
     if (!(res.headers.get('content-type') || '').includes('application/json')) {
       const raw = await res.text();
       return { type: 'error', message: raw || `Erro no servidor (HTTP ${res.status})` };

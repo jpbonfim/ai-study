@@ -1,3 +1,4 @@
+import type { Context } from 'hono';
 import { deleteCookie, getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import { type AppEnv, jsonError, requestOrigin } from '../http/context';
@@ -55,20 +56,26 @@ export function identify(deps: { sessions: SessionStore; users: UserService; rat
   });
 }
 
-export const requireUser = createMiddleware<AppEnv>(async (c, next) => {
-  if (!c.get('user')) {
+/**
+ * 401 for a request without valid credentials. Tools (sync_archive.py, curl) and API URLs opened
+ * directly get the Basic challenge; the web app's own calls (X-Requested-With) do not, so the
+ * browser does not pop up its native login dialog over the app.
+ */
+function unauthorized(c: Context<AppEnv>) {
+  if (c.req.header('X-Requested-With') !== 'XMLHttpRequest') {
     c.header('WWW-Authenticate', 'Basic realm="Academic Study Platform"');
-    return jsonError(c, 401, 'Não autorizado. Credenciais inválidas ou ausentes.');
   }
+  return jsonError(c, 401, 'Não autorizado. Credenciais inválidas ou ausentes.');
+}
+
+export const requireUser = createMiddleware<AppEnv>(async (c, next) => {
+  if (!c.get('user')) return unauthorized(c);
   await next();
 });
 
 export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
   const user = c.get('user');
-  if (!user) {
-    c.header('WWW-Authenticate', 'Basic realm="Academic Study Platform"');
-    return jsonError(c, 401, 'Não autorizado. Credenciais inválidas ou ausentes.');
-  }
+  if (!user) return unauthorized(c);
   if (user.role !== 'admin') return jsonError(c, 403, 'Acesso negado. Requer privilégios de administrador.');
   await next();
 });

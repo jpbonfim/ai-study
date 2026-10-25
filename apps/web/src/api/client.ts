@@ -19,8 +19,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * fetch() for the app's own API calls. The header tells the server the request comes from the app,
+ * which then answers 401 without a `WWW-Authenticate` challenge: the browser would otherwise show
+ * its native login dialog instead of letting the app go to /login.
+ */
+export function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  headers.set('X-Requested-With', 'XMLHttpRequest');
+  return fetch(path, { credentials: 'same-origin', ...init, headers });
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, { credentials: 'same-origin', ...init });
+  const res = await apiFetch(path, init);
   if (!res.ok) {
     let message = `HTTP ${res.status}`;
     try {
@@ -49,8 +60,9 @@ export interface AdminUser extends PublicUser {
 
 export const api = {
   session: () => request<SessionInfo>('/api/session'),
-  login: (username: string, password: string) => fetch('/api/login', jsonInit('POST', { username, password })),
-  recordPageView: (path: string) => fetch('/api/activity/page-view', jsonInit('POST', { path })).catch(() => undefined),
+  login: (username: string, password: string) => apiFetch('/api/login', jsonInit('POST', { username, password })),
+  recordPageView: (path: string) =>
+    apiFetch('/api/activity/page-view', jsonInit('POST', { path })).catch(() => undefined),
 
   subjects: () => request<{ own: SubjectView[]; shared: SubjectView[] }>('/api/subjects'),
   notebook: (slug: string, owner: number | null) =>

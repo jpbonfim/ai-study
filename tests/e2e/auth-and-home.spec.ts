@@ -9,6 +9,20 @@ test.describe('authentication', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
+  test('opening the site signed out never triggers the browser login dialog', async ({ page }) => {
+    // A 401 with `WWW-Authenticate` makes real browsers show their native login dialog (headless
+    // Chromium does not), covering the site's own login page.
+    const challenges: string[] = [];
+    page.on('response', (res) => {
+      if (res.headers()['www-authenticate']) challenges.push(res.url());
+    });
+    for (const path of ['/', '/pds?tag=teste-1', '/admin', '/conta']) {
+      await page.goto(path);
+      await expect(page.locator('#login-form')).toBeVisible();
+    }
+    expect(challenges).toEqual([]);
+  });
+
   test('wrong credentials show the server message', async ({ page }) => {
     await page.goto('/login');
     await page.fill('#username', 'admin');
