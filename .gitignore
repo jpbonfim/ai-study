@@ -68,3 +68,11 @@ export/
 *.db-journal
 *.db-wal
 *.db-shm
+
+# ============================================================
+# Rewrite: artefatos de paridade (contêm conteúdo privado do archive)
+# ============================================================
+.parity/
+test-results/
+playwright-report/
+*.tsbuildinfo
