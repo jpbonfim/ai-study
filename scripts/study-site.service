@@ -1,0 +1,30 @@
+# systemd unit of the API server. Installed (and kept up to date) by each release's activate.sh.
+# The SPA itself is served by Caddy from /opt/study-site/app/web (see Caddyfile.example).
+[Unit]
+Description=Biblioteca de Estudos Acadêmicos (API Node.js)
+After=network.target
+
+[Service]
+Type=simple
+User=study
+Group=study
+WorkingDirectory=/opt/study-site
+# "app" is a symlink to the active release (releases/<id>/).
+ExecStart=/usr/bin/node /opt/study-site/app/server.mjs
+Restart=always
+RestartSec=3s
+EnvironmentFile=/opt/study-site/.env
+Environment=NODE_ENV=production
+# Defaults; values in .env (EnvironmentFile) take precedence.
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+# Relative paths in .env (DATA_DIR=./data) resolve against this directory.
+Environment=APP_ROOT=/opt/study-site
+
+# Process hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

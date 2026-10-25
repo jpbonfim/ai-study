@@ -7,7 +7,7 @@
 # - Caddy Web Server com proxy reverso e TLS interno
 # - Firewall UFW (portas 22, 80, 443 liberadas)
 # - Usuário de sistema dedicado 'study'
-# - Serviço systemd para a aplicação Astro SSR
+# - Diretórios de releases/backups e serviço systemd (releases enviados por scripts/deploy.sh)
 # ============================================================
 
 set -e
@@ -21,7 +21,7 @@ echo "==> [1/7] Atualizando lista de pacotes do sistema..."
 apt-get update && apt-get upgrade -y
 
 echo "==> [2/7] Instalando dependências essenciais..."
-apt-get install -y curl wget git build-essential ufw debian-keyring debian-archive-keyring apt-transport-https
+apt-get install -y curl wget git rsync build-essential ufw debian-keyring debian-archive-keyring apt-transport-https
 
 echo "==> [3/7] Instalando Node.js 24 LTS..."
 if ! command -v node &>/dev/null; then
@@ -43,7 +43,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "${SCRIPT_DIR}/Caddyfile.example" ]; then
   cp "${SCRIPT_DIR}/Caddyfile.example" /etc/caddy/Caddyfile
   systemctl restart caddy
-  echo "    Caddyfile configurado com proxy reverso e TLS interno na porta 443."
+  echo "    Caddyfile configurado (SPA estático + proxy da API, TLS interno na porta 443)."
 fi
 
 echo "==> [5/7] Configurando o Firewall UFW e Preservando Serviços Existentes (VPN/Docker)..."
@@ -84,14 +84,14 @@ if ! id -u study &>/dev/null; then
 fi
 
 # Cria diretório da aplicação caso não exista
-mkdir -p /opt/study-site /opt/study-site/data/archives
+mkdir -p /opt/study-site/data/archives /opt/study-site/releases /opt/study-site/backups
 chown -R study:study /opt/study-site /home/study
 
 echo "==> [7/7] Configurando serviço systemd..."
-if [ -f "${SCRIPT_DIR}/study-site.service.example" ]; then
-  cp "${SCRIPT_DIR}/study-site.service.example" /etc/systemd/system/study-site.service
+if [ -f "${SCRIPT_DIR}/study-site.service" ]; then
+  cp "${SCRIPT_DIR}/study-site.service" /etc/systemd/system/study-site.service
   systemctl daemon-reload
-  echo "    Unidade systemd study-site.service registrada."
+  echo "    Unidade systemd study-site.service registrada (cada release a mantém atualizada)."
 fi
 
 echo ""
@@ -100,17 +100,15 @@ echo "[✓] Configuração do VPS concluída com sucesso!"
 echo "============================================================"
 echo "Próximos passos para colocar o site no ar:"
 echo ""
-echo "1. Clone o repositório em /opt/study-site:"
-echo "   sudo -u study git clone <URL_DO_REPOSITORIO> /opt/study-site"
+echo "1. Na sua máquina, envie o .env.example e configure /opt/study-site/.env no servidor:"
+echo "   scp .env.example <usuario>@<IP_DO_SEU_VPS>:/tmp/"
+echo "   sudo cp /tmp/.env.example /opt/study-site/.env"
+echo "   sudo nano /opt/study-site/.env  # Defina ADMIN_PASSWORD seguro; mantenha DATA_DIR=./data"
 echo ""
-echo "2. Configure o arquivo de ambiente /opt/study-site/.env:"
-echo "   cp /opt/study-site/.env.example /opt/study-site/.env"
-echo "   nano /opt/study-site/.env  # Defina ADMIN_PASSWORD e SESSION_SECRET seguros"
+echo "2. Na sua máquina (o build roda nela, não no VPS), faça o deploy:"
+echo "   scripts/deploy.sh <usuario>@<IP_DO_SEU_VPS>"
 echo ""
-echo "3. Execute o script de deploy inicial:"
-echo "   sudo bash /opt/study-site/scripts/deploy.sh"
-echo ""
-echo "4. Acesse seu servidor pelo navegador:"
+echo "3. Acesse seu servidor pelo navegador:"
 echo "   https://<IP_DO_SEU_VPS>"
 echo "   (Aceite o certificado autoassinado pelo Caddy)"
 echo "============================================================"

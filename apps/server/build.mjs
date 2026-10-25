@@ -1,6 +1,6 @@
 // Bundles the server into dist/server.mjs (plain Node, no TypeScript loader needed at runtime).
-// Native and CommonJS-heavy packages stay external and are loaded from node_modules.
 import { build } from 'esbuild';
+import { RUNTIME_EXTERNALS } from './runtime-externals.mjs';
 
 await build({
   entryPoints: ['src/main.ts'],
@@ -10,7 +10,7 @@ await build({
   target: 'node24',
   format: 'esm',
   sourcemap: true,
-  external: ['better-sqlite3', 'bcryptjs', 'busboy', 'yauzl', 'yazl', 'gray-matter'],
+  external: RUNTIME_EXTERNALS,
   banner: {
     js: "import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);",
   },

@@ -2,6 +2,9 @@
 # Caddyfile de Exemplo para a Biblioteca de Estudos Acadêmicos
 # ============================================================
 #
+# O Caddy serve o SPA compilado (arquivos estáticos do release ativo) e encaminha só a API para
+# o processo Node.js — assim o Node não gasta CPU/memória com arquivos estáticos.
+#
 # Modo 1: Acesso direto por IP com HTTPS Autoassinado (Padrão)
 # Caddy gerencia certificado TLS interno automaticamente.
 # No primeiro acesso pelo navegador, aceite o aviso de segurança do certificado autoassinado.
@@ -15,12 +18,33 @@
     # Habilita certificado TLS interno gerado pelo Caddy para acesso por IP
     tls internal
 
-    # Proxy reverso para o processo Node.js na porta 3000
-    reverse_proxy 127.0.0.1:3000 {
-        header_up Host {host}
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
+    encode zstd gzip
+
+    # API: proxy reverso para o processo Node.js na porta 3000
+    @api path /api/* /admin/api/*
+    handle @api {
+        reverse_proxy 127.0.0.1:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            # Sobrescreve (não acrescenta) para o cliente não forjar o próprio IP
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # SPA: arquivos do release ativo ("app" aponta para releases/<id>/)
+    handle {
+        root * /opt/study-site/app/web
+
+        # Arquivos em /assets têm hash no nome: nunca mudam
+        @assets path /assets/*
+        header @assets Cache-Control "public, max-age=31536000, immutable"
+        @pages not path /assets/*
+        header @pages Cache-Control "no-cache"
+
+        # Rotas do app (/pds, /conta, ...) caem no index.html
+        try_files {path} /index.html
+        file_server
     }
 
     # Cabeçalhos de Segurança HTTP

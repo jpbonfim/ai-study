@@ -2,15 +2,11 @@
 # Dependências e Módulos
 # ============================================================
 node_modules/
-site/node_modules/
 
 # ============================================================
 # Compilação e Artefatos de Build
 # ============================================================
 dist/
-site/dist/
-.astro/
-site/.astro/
 
 # ============================================================
 # Logs e Arquivos Temporários
@@ -76,3 +72,6 @@ export/
 test-results/
 playwright-report/
 *.tsbuildinfo
+
+# Deploy releases built by scripts/build-release.mjs
+release/
