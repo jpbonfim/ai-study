@@ -18,9 +18,9 @@ You are generating theoretical summaries directly from course materials (lecture
    - No filler introductions: Jump straight to definitions and mathematical formulas.
    - Thorough coverage: Long, exhaustive, and comprehensible explanations are encouraged.
 4. Extract only strictly relevant diagrams and charts using the official script:
-   `python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop <pdf> --page <N> --output site/public/images/resumos/<subject>/<name>.png`
+   `python3 .agents/skills/summary-study-generator/scripts/extract_material_images.py crop <pdf> --page <N> --output archive/<subject>/resumos/materia/<name>.png`
    Do NOT extract purely textual slides, cover pages, decorative illustrations, or logos.
 5. Output destination: `archive/<subject>/resumos/<slug>.mdx` with `type: "materia"` in the frontmatter.
 6. Does NOT require linking question IDs or embedding `<QuestionCard />`.
 7. Appears under the "Resumo da matéria" collapsible tab in the site's sidebar.
-8. Validate compilation with `npm run build` in `site/`.
+8. Validate the frontmatter with `npm run validate:archive` (from the repository root).

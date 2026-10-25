@@ -15,4 +15,4 @@ Este arquivo define regras obrigatórias para todos os agentes e subagentes que 
 - Imagens e diagramas das questões: `archive/<materia>/questoes/`
 - Cadernos teóricos MDX: `archive/<materia>/resumos/` (ou `archive/<materia>/resumos/materia/`)
 - Imagens e diagramas dos resumos: `archive/<materia>/resumos/` (ou `archive/<materia>/resumos/materia/`), referenciadas por caminho relativo (`./<imagem>.png`) no MDX
-- **Proibição de imagens em `site/public/`:** Nenhuma imagem extraída de PDFs ou materiais deve ser salva dentro de `site/public/`. Todo o acervo acadêmico (documentos e imagens) deve residir exclusivamente dentro de `archive/` para não poluir o repositório Git com arquivos binários. O Astro processa e otimiza imagens de `archive/` automaticamente em tempo de build.
+- **Proibição de imagens no código do app:** Nenhuma imagem extraída de PDFs ou materiais deve ser salva em `apps/` ou `packages/`. Todo o acervo acadêmico (documentos e imagens) deve residir exclusivamente dentro de `archive/` para não poluir o repositório Git com arquivos binários. O servidor entrega as imagens de `archive/` pela rota `/api/media`.

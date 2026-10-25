@@ -20,4 +20,4 @@ You are generating theoretical study notebooks using the rules in `.agents/skill
 4. Output destination: `archive/<subject>/resumos/<slug>.mdx`.
 5. Ensure frontmatter includes `tags: ["<tag>"]` and links relevant question IDs in `relatedQuestions`.
 6. Embed `<QuestionCard id="..." />` and `<BlockDiagram />` at strategic points.
-7. Validate compilation with `npm run build` in `site/`.
+7. Validate the frontmatter with `npm run validate:archive` (from the repository root).

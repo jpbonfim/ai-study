@@ -15,7 +15,7 @@ Referência obrigatória para todas as skills. Estas regras se aplicam a toda ge
 | Imagens de resumos (.png) | mesmo diretório do .mdx | `![Legenda](./<nome>.png)` |
 
 **Proibições absolutas:**
-- Nunca salve imagens em `site/public/`.
+- Nunca salve imagens no código do app (`apps/`, `packages/`).
 - Nunca crie arquivos na raiz do projeto (`.`).
 
 ---

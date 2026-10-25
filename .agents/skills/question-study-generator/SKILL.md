@@ -55,7 +55,7 @@ Use este modelo para lançar os subagentes:
     {
       "TypeName": "self",
       "Role": "Resolvedor <prova>",
-      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens e resolver as questões de 'material/provas/<prova>.pdf'. Explique a teoria (<Theory>) e resolva passo a passo (<Resolution>). Adicione a tag no frontmatter: tags: ['<tag>']. Salve cada questão em 'archive/<materia>/questoes/<prova>-qX.mdx'. Recorte figuras para 'archive/<materia>/questoes/<nome_figura>.png' e referencie com 'image: \"./<nome_figura>.png\"'. NUNCA salve em 'site/public/'. Limpe rascunhos. Responda com os IDs das questões criadas e seus tópicos."
+      "Prompt": "Utilize a skill explain-question para inspecionar, recortar imagens e resolver as questões de 'material/provas/<prova>.pdf'. Explique a teoria (<Theory>) e resolva passo a passo (<Resolution>). Adicione a tag no frontmatter: tags: ['<tag>']. Salve cada questão em 'archive/<materia>/questoes/<prova>-qX.mdx'. Recorte figuras para 'archive/<materia>/questoes/<nome_figura>.png' e referencie com 'image: \"./<nome_figura>.png\"'. NUNCA salve em 'apps/' ou 'packages/'. Limpe rascunhos. Responda com os IDs das questões criadas e seus tópicos."
     }
   ]
 }

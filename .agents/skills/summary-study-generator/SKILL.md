@@ -41,7 +41,7 @@ Ao redigir os capítulos teóricos a partir dos materiais didáticos, siga rigor
 4. Gere o texto teórico estruturado seguindo rigorosamente a diretriz de escrita e crie os arquivos `.mdx` em `archive/<materia>/resumos/materia/`.
 5. Referencie as imagens com caminho relativo (`./<imagem>.png`).
 6. Valide o MDX com `python3 .agents/skills/_shared/scripts/validate_mdx.py archive/<materia>/resumos/materia/*.mdx`.
-7. Execute o build (`npm run build`) na pasta `site/` após concluir.
+7. Valide o frontmatter com `npm run validate:archive` (na raiz do repositório) após concluir.
 
 ## 4. Script de Extração
 
