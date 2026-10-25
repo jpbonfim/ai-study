@@ -176,6 +176,20 @@ export function initialSectionFor(
   return hasQuestoes && !hasMateria ? 'questoes' : 'materia';
 }
 
+/**
+ * Section to show for a tag when the table of contents has both sections: `preferred`, unless
+ * only the other section has chapters of the tag.
+ */
+export function sectionForTag(toc: TocItem[], tag: string, preferred: StudyType): StudyType {
+  const grouped = toc.some((t) => t.type === 'materia') && toc.some((t) => t.type !== 'materia');
+  if (!grouped) return preferred;
+  const hasMateria = toc.some((t) => t.type === 'materia' && t.tags.includes(tag));
+  const hasQuestoes = toc.some((t) => t.type !== 'materia' && t.tags.includes(tag));
+  if (preferred === 'materia' && !hasMateria && hasQuestoes) return 'questoes';
+  if (preferred === 'questoes' && !hasQuestoes && hasMateria) return 'materia';
+  return preferred;
+}
+
 export interface FlowChapter {
   meta: Indexed<ChapterMeta>;
   ownerUserId: number;

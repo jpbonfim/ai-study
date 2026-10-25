@@ -9,7 +9,7 @@ import { readRecentQuestions, recordVisitedQuestion, saveStudyPosition } from '.
 import { useSidebar } from '../../lib/use-sidebar';
 import { readItem, STORAGE_KEYS, writeItem } from '../../preferences/storage';
 import { downloadOfflineExport } from '../export/offline-export';
-import type { QuestionEntry, TagOption, TocItem } from './notebook-model';
+import { type QuestionEntry, sectionForTag, type TagOption, type TocItem } from './notebook-model';
 import { SidebarQuestions } from './SidebarQuestions';
 import type { StudyState } from './study-state';
 import { TagSelector } from './TagSelector';
@@ -142,11 +142,7 @@ export function StudyLayout({
   // biome-ignore lint/correctness/useExhaustiveDependencies: reacts to tag changes only (like the tag-changed event).
   useEffect(() => {
     if (!grouped || !activeTag) return;
-    const visibleMateria = toc.some((t) => t.type === 'materia' && t.tags.includes(activeTag));
-    const visibleQuestoes = toc.some((t) => t.type !== 'materia' && t.tags.includes(activeTag));
-    let section = flow?.renderedSection ?? groups.active;
-    if (section === 'materia' && !visibleMateria && visibleQuestoes) section = 'questoes';
-    else if (section === 'questoes' && !visibleQuestoes && visibleMateria) section = 'materia';
+    const section = sectionForTag(toc, activeTag, flow?.renderedSection ?? groups.active);
     if (flow && section !== flow.renderedSection) void flow.switchSection(section);
     activateGroup(section);
     setGroupExpanded(section, true, false);

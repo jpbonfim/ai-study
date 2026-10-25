@@ -13,6 +13,7 @@ import {
   type FlowChapter,
   initialSectionFor,
   namespacedTag,
+  sectionForTag,
   type TocItem,
   tagDisplayName,
 } from './notebook-model';
@@ -104,24 +105,25 @@ function NotebookView({ session, notebook }: { session: SessionInfo; notebook: N
   // Page initialization: the preferred section (URL, hash, last used) and the tag's chapters.
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once when the page opens.
   useEffect(() => {
-    const preferred =
+    const requested =
       (typeParam === 'materia' || typeParam === 'questoes' ? typeParam : null) ||
       sectionFromHash(window.location.hash, toc) ||
       (readItem(STORAGE_KEYS.selectedSection(slug)) as StudyType | null) ||
       initialSection;
+    // Decided here, before the first flow renders, so the layout has nothing left to switch.
+    const preferred = study.tag ? sectionForTag(toc, study.tag, requested) : requested;
     if (preferred !== initialSection) void switchSection(preferred);
     else if (study.tag) showFlow(study.tag, initialSection, tagParam ? 'initial' : 'fetched');
   }, []);
 
-  // Tag changes after the page opened (sidebar selector, prompt cards, "Outras tags").
-  const firstTagRun = useRef(true);
+  // Tag changes after the page opened (sidebar selector, prompt cards, "Outras tags"). Comparing
+  // with the last tag (not a "first run" flag) keeps repeated effect runs from re-applying it.
+  const lastTag = useRef(study.tag);
   // biome-ignore lint/correctness/useExhaustiveDependencies: reacts to the selected tag only.
   useEffect(() => {
-    if (firstTagRun.current) {
-      firstTagRun.current = false;
-      return;
-    }
-    if (study.tag) showFlow(study.tag, section, 'fetched');
+    if (lastTag.current === study.tag) return;
+    lastTag.current = study.tag;
+    if (study.tag) showFlow(study.tag, sectionForTag(toc, study.tag, section), 'fetched');
     else setFlow(null);
   }, [study.tag]);
 
