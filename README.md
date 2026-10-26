@@ -1,9 +1,12 @@
 # ai-study
 
-A study site for engineering courses. Each course has two kinds of content: theory notebooks,
-organized by exam (`p1`, `teste-1`, ...), and solved exam questions, with the theory you need kept
-apart from the solution. The content is written as MDX by the agent skills in `.agents/skills/`
-from lecture slides, textbooks and past exams. The site renders it with math, code and diagrams.
+An AI-assisted study system. You give the AI your course material (lecture slides, textbooks,
+past exams) and it generates the study content from it, using the agent skills in
+`.agents/skills/`. The generated content is then read in a comfortable, practical web interface
+that you can host on your own server, with math, code and diagrams rendered.
+
+Each course has two kinds of content: theory notebooks, organized by exam (`p1`, `teste-1`, ...),
+and solved exam questions, with the theory you need kept apart from the solution.
 
 It runs on a small VPS and serves a few users, each with a private archive. The admin can share
 courses between users.
