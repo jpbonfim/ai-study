@@ -60,15 +60,16 @@ npm run test:e2e          # Playwright; setup in tests/parity/README.md
 
 ## Writing content
 
-The skills are instructions for Claude Code or Antigravity. Each one also has a slash command in
-`.claude/commands/`.
+The skills live in `.agents/skills/` and work with any agent that reads `AGENTS.md` and that folder.
+For Claude Code, `CLAUDE.md` and `.claude/skills` are symlinks to them, so each skill is also a slash
+command (`/<skill> <args>`). Edit only `AGENTS.md` and `.agents/`.
 
-| Skill | Command | Output |
+| Skill | Usage | Output |
 | :--- | :--- | :--- |
-| `question-study-generator` | `/study-generator <tag>` | Theory notebook for an exam, linked to its questions (`archive/<course>/resumos/`) |
+| `question-study-generator` | `/question-study-generator <tag>` | Theory notebook for an exam, linked to its questions (`archive/<course>/resumos/`) |
 | `summary-study-generator` | `/summary-study-generator <tag>` | Lecture summary from slides or a textbook (`type: "materia"`) |
 | `explain-question` | `/explain-question <pdf> --tag <tag>` | One question per file, with cropped figures (`archive/<course>/questoes/`) |
-| `block-diagram-generator` | `/block-diagram <preset>` | `<BlockDiagram />` for control loops, filter structures and state space |
+| `block-diagram-generator` | `/block-diagram-generator <preset>` | `<BlockDiagram />` for control loops, filter structures and state space |
 
 `archive/` is gitignored: course material stays out of this repository.
 
