@@ -1,0 +1,33 @@
+# ============================================================
+# Configuração do setup do VPS (exemplo versionado)
+# ============================================================
+# Copie para scripts/setup-vps.conf (ignorado pelo git) e ajuste:
+#   cp scripts/setup-vps.conf.example scripts/setup-vps.conf
+# Outro caminho: SETUP_VPS_CONFIG=/caminho/setup-vps.conf scripts/setup-vps.sh <destino-ssh>
+# Este arquivo é lido pelo bash (como root, no servidor): use só atribuições.
+# ============================================================
+
+# Endereço público do site, usado no Caddyfile:
+# - IP do VPS (ex.: 45.0.0.1): HTTPS com certificado autoassinado (tls internal);
+# - domínio (ex.: estudos.exemplo.com): certificado Let's Encrypt automático.
+SITE_ADDRESS=
+
+# Tamanho do arquivo de swap em MiB (/swapfile). Swaps já existentes contam para o total:
+# só a diferença é criada. 0 desliga.
+SWAP_SIZE_MB=2048
+
+# Portas SSH extras a liberar (ex.: (2222)). A porta em que o sshd escuta é detectada sozinha;
+# isto é só para casos que a detecção não cobre.
+SSH_EXTRA_PORTS=()
+
+# Portas extras abertas no firewall, além de SSH, 80 e 443: "porta/protocolo" ou
+# "inicio:fim/protocolo", uma por linha (comentários são permitidos). 80/tcp e 443 (tcp/udp)
+# são do Caddy e não podem ser usadas.
+PORTS=(
+  # 51820/udp   # exemplo
+)
+
+# Encaminhamento de pacotes (FORWARD) liberado no firewall e net.ipv4.ip_forward=1, para serviços
+# que roteiam tráfego pelo servidor (VPN, por exemplo). Containers Docker já têm regras próprias
+# de encaminhamento; "false" é mais restrito.
+ALLOW_FORWARDING=true

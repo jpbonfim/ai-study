@@ -94,8 +94,8 @@ scripts/deploy.sh <user>@<server>
 This builds a release locally, uploads it to `/opt/study-site/releases/<id>/` and activates it.
 Activation backs up the database, points the `app` symlink at the new release, restarts the
 service and checks its health. If the new release doesn't come up, it rolls back. A new server is
-prepared with `scripts/setup-vps.sh`; Caddy uses `scripts/Caddyfile.example`. Configuration,
-retention and rollback are covered in [`docs/deploy.md`](docs/deploy.md).
+prepared from your machine with `scripts/setup-vps.sh <user>@<server>`, configured by the
+untracked `scripts/setup-vps.conf`. Configuration, retention and rollback are covered in [`docs/deploy.md`](docs/deploy.md).
 
 ## License
 

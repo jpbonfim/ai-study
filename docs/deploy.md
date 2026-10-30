@@ -19,6 +19,38 @@ reinicia o serviço. Nada aqui foi executado no servidor ainda.
   `APP_ROOT=/opt/study-site` e `EnvironmentFile=/opt/study-site/.env`.
 - **Caddy**: serve `app/web` (SPA) e encaminha `/api/*` e `/admin/api/*` para `127.0.0.1:3000`.
 
+## Servidor novo (ou migração para outro VPS)
+
+`scripts/setup-vps.sh <usuario>@<ip>` roda na sua máquina: valida a configuração, envia
+`scripts/provision-vps.sh` ao servidor por SSH, executa com sudo e apaga os arquivos enviados. O
+provisionamento prepara um Ubuntu 24/26 limpo: pacotes base e atualizações automáticas de
+segurança, swap (2 GiB por padrão) com `vm.swappiness=10`, limite de 200 MB para o journald,
+Node.js 24, Caddy com o Caddyfile já preenchido, firewall UFW, o usuário `study` e os diretórios de
+`/opt/study-site`. Pode ser rodado de novo sem estragar nada.
+
+1. **Configuração** (na sua máquina): `scripts/setup-vps.conf`, que não é versionado.
+   ```bash
+   cp scripts/setup-vps.conf.example scripts/setup-vps.conf
+   # preencha SITE_ADDRESS (IP ou domínio) e PORTS (portas extras a abrir no firewall)
+   ```
+2. **Setup**:
+   ```bash
+   scripts/setup-vps.sh <usuario>@<ip-novo>
+   ```
+3. **Dados** (só na migração): pare o serviço no servidor antigo e copie `.env` e `data/` para
+   `/opt/study-site/` no novo (`sudo chown -R study:study /opt/study-site/data`). Confira no `.env`
+   `HOST=127.0.0.1` (a API fica atrás do Caddy).
+4. **Deploy**: `scripts/deploy.sh <usuario>@<ip-novo>` (a unit systemd é instalada aqui).
+
+**Firewall.** O UFW libera só o SSH (a porta é lida do `sshd` antes de ativar o firewall, para não
+derrubar a sessão), 80/tcp, 443/tcp e 443/udp (HTTP/3) para o Caddy e as portas de `PORTS`. Regras
+que já existiam são mantidas e o script não toca no Docker. Portas publicadas por containers Docker
+são abertas pelas regras do próprio Docker e não passam pelo UFW; o script as lista no fim da etapa
+de firewall para conferência. `ALLOW_FORWARDING=true` (padrão) libera o encaminhamento de pacotes
+para serviços que roteiam tráfego pelo servidor; `false` é mais restrito (containers Docker
+continuam com as regras próprias). Nenhum outro serviço pode usar 80/tcp ou 443 (tcp/udp): o script
+recusa essas portas em `PORTS` e para antes de instalar o Caddy se elas estiverem ocupadas.
+
 ## Primeira subida (migração da versão Astro)
 
 1. **Backup manual antes de tudo** (no VPS):

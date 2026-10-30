@@ -75,3 +75,6 @@ playwright-report/
 
 # Deploy releases built by scripts/build-release.mjs
 release/
+
+# Server setup configuration (VPS address and open ports); see scripts/setup-vps.conf.example
+scripts/setup-vps.conf
